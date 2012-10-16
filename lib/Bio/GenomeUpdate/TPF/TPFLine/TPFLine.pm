@@ -1,4 +1,4 @@
-package TPFGapLine;
+package Bio::GenomeUpdate::TPFGapLine;
 use strict;
 use warnings;
 
@@ -55,9 +55,9 @@ Gets the gap type
 =cut
 
 subtype 'GapType',
-      as 'Str',
-      where { $_ eq "TYPE-1" || $_ eq "TYPE-2" || $_ eq "TYPE-3" || $_ eq "CENTROMERE"|| $_ eq "TELOMERE" || $_ eq "HETEROCHROMATIN" || $_ eq "SHORT-ARM" },
-      message { "The string, $_, was not a valid gap type" };
+  as 'Str',
+  where { $_ eq "TYPE-1" || $_ eq "TYPE-2" || $_ eq "TYPE-3" || $_ eq "CENTROMERE"|| $_ eq "TELOMERE" || $_ eq "HETEROCHROMATIN" || $_ eq "SHORT-ARM" },
+  message { "The string, $_, was not a valid gap type" };
 has 'gap_type' => (isa => 'GapType', is => 'rw', predicate => 'has_gap_type');
 
 =item C<set_gap_size ( $type )>
@@ -72,9 +72,9 @@ Gets the estimated size of the gap.
 =cut
 
 subtype 'PositiveInt',
-      as 'Int',
-      where { $_ > 0 },
-      message { "Int is not larger than 0" };
+  as 'Int',
+  where { $_ > 0 },
+  message { "Int is not larger than 0" };
 has 'gap_size' => (isa => 'PositiveInt', is => 'rw', predicate => 'has_gap_size');
 
 
@@ -86,9 +86,9 @@ Gets the method(s) used to determine the gap size as an array of strings;
 =cut
 
 subtype 'GapMethod',
-      as 'Str',
-      where {  $_ eq "FISH" ||  $_ eq "OPTICAL MAP" ||  $_ eq "RADIATION HYBRID" ||  $_ eq "PCR" ||  $_ eq "FINGERPRINT" ||  $_ eq "PAIRED ENDS" ||  $_ eq "ALIGN GENUS" ||  $_ eq "ALIGN XGENUS" ||  $_ eq "ALIGN TRNSCPT" },
-      message { "The string, $_, was not a valid gap method" };
+  as 'Str',
+  where {  $_ eq "FISH" ||  $_ eq "OPTICAL MAP" ||  $_ eq "RADIATION HYBRID" ||  $_ eq "PCR" ||  $_ eq "FINGERPRINT" ||  $_ eq "PAIRED ENDS" ||  $_ eq "ALIGN GENUS" ||  $_ eq "ALIGN XGENUS" ||  $_ eq "ALIGN TRNSCPT" },
+  message { "The string, $_, was not a valid gap method" };
 has 'gap_methods' => (isa => 'ArrayRef[GapMethod]', is => 'rw', predicate => 'has_gap_methods');
 
 
@@ -108,21 +108,20 @@ ALIGN TRNSCPT
 =cut
 
 sub add_gap_method {
-    my $self = shift;
-    my $method_to_add = shift;
-    if ($self->has_gap_methods()) {
-	my @methods = @{$self->get_gap_methods()};
-	push(@methods, $method_to_add);
-	$self->set_gap_methods([@methods]);
-    }
-    else {
-	$self->set_gap_methods([$method_to_add]);
-    }
+  my $self = shift;
+  my $method_to_add = shift;
+  if ($self->has_gap_methods()) {
+    my @methods = @{$self->get_gap_methods()};
+    push(@methods, $method_to_add);
+    $self->set_gap_methods([@methods]);
+  } else {
+    $self->set_gap_methods([$method_to_add]);
+  }
 }
 
 
 ###
-1;#do not remove
+1;				#do not remove
 ###
 
 =back

@@ -1,4 +1,4 @@
-package AGPLine;
+package Bio::GenomeUpdate::AGPLine;
 use strict;
 use warnings;
 
@@ -29,24 +29,24 @@ has 'object_begin' => (isa => 'Int', is => 'rw', predicate => 'has_object_begin'
 has 'object_end' => (isa => 'Int', is => 'rw', predicate => 'has_object_end');
 has 'line_number' => (isa => 'Int', is => 'rw', predicate => 'has_line_number');
 subtype 'ComponentType',
-    as 'Str',
-    where {$_ eq "A" || $_ eq "D" ||  $_ eq "F" || $_ eq "G" || $_ eq "O" || $_ eq "P" || $_ eq "W"};
+  as 'Str',
+  where {$_ eq "A" || $_ eq "D" ||  $_ eq "F" || $_ eq "G" || $_ eq "O" || $_ eq "P" || $_ eq "W"};
 has 'component_type' => (isa => 'ComponentType', is => 'rw', predicate => 'has_component_type');
 has 'component_id' => (isa => 'Str', is => 'rw', predicate => 'has_component_id');
 has 'component_begin' => (isa => 'Int', is => 'rw', predicate => 'has_component_begin');
 has 'component_end' => (isa => 'Int', is => 'rw', predicate => 'has_component_end');
 subtype 'AGPOrientationType',
-      as 'Str',
-      where { $_ eq "+" || $_ eq "-" || $_ eq "?" || $_ eq "0" || $_ eq "na"},
-      message { "The string, $_, was not a valid orientation type.  Valid types are: + - ? 0 na" };
+  as 'Str',
+  where { $_ eq "+" || $_ eq "-" || $_ eq "?" || $_ eq "0" || $_ eq "na"},
+  message { "The string, $_, was not a valid orientation type.  Valid types are: + - ? 0 na" };
 has 'orientation' => (isa => 'AGPOrientationType', is => 'rw', predicate => 'has_orientation');
 sub get_line_type {
-    return 'sequence';
+  return 'sequence';
 }
 
 
 ###
-1;#do not remove
+1;				#do not remove
 ###
 
 =pod

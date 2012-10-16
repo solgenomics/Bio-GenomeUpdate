@@ -1,13 +1,13 @@
 #!/usr/bin/perl
 use strict;
 
-use TPFSequenceLine;
-use TPFGapLine;
-use TPF;
-use AGPSequenceLine;
-use AGPGapLine;
-use AGP;
-use AGPConvert;
+use Bio::GenomeUpdate::TPF::TPFSequenceLine;
+use Bio::GenomeUpdate::TPF::TPFGapLine;
+use Bio::GenomeUpdate::TPF;
+use Bio::GenomeUpdate::AGP::AGPSequenceLine;
+use Bio::GenomeUpdate::AGP::AGPGapLine;
+use Bio::GenomeUpdate::AGP;
+use Bio::GenomeUpdate::AGP::AGPConvert;
 use File::Slurp;
 
 my $sequence_line = TPFSequenceLine->new();

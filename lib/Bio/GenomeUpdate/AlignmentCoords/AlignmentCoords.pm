@@ -1,4 +1,4 @@
-package AlignmentCoords;
+package Bio::GenomeUpdate::AlignmentCoords;
 use strict;
 use warnings;
 
@@ -37,21 +37,19 @@ Returns 1 if the reference and query sequences are aligned in the same direction
 =cut
 
 sub get_direction {
-    my $self = shift;
-    if (!($self->has_reference_start_coord() && $self->has_reference_end_coord() && $self->has_query_start_coord() && $self->has_query_end_coord())){
-	return undef;
-    }
-    if ((($self->get_reference_start_coord() < $self->get_reference_end_coord()) && ($self->get_query_start_coord < $self->get_query_end_coord))
-		|| (($self->get_reference_start_coord > $self->get_reference_end_coord) && ($self->get_query_start_coord > $self->get_query_end_coord))) {
-	return 1;
-    }
-    elsif ((($self->get_reference_start_coord < $self->get_reference_end_coord) && ($self->get_query_start_coord > $self->get_query_end_coord))
-		|| (($self->get_reference_start_coord > $self->get_reference_end_coord) && ($self->get_query_start_coord < $self->get_query_end_coord))) {
-	return -1;
-    }
-    else {
-	return undef;
-    }
+  my $self = shift;
+  if (!($self->has_reference_start_coord() && $self->has_reference_end_coord() && $self->has_query_start_coord() && $self->has_query_end_coord())) {
+    return undef;
+  }
+  if ((($self->get_reference_start_coord() < $self->get_reference_end_coord()) && ($self->get_query_start_coord < $self->get_query_end_coord))
+      || (($self->get_reference_start_coord > $self->get_reference_end_coord) && ($self->get_query_start_coord > $self->get_query_end_coord))) {
+    return 1;
+  } elsif ((($self->get_reference_start_coord < $self->get_reference_end_coord) && ($self->get_query_start_coord > $self->get_query_end_coord))
+	   || (($self->get_reference_start_coord > $self->get_reference_end_coord) && ($self->get_query_start_coord < $self->get_query_end_coord))) {
+    return -1;
+  } else {
+    return undef;
+  }
 }
 
 =item C<get_reference_length>
@@ -61,13 +59,12 @@ Returns the length of the aligned reference sequence.
 =cut
 
 sub get_reference_length {
-    my $self = shift;
-    if (!($self->has_reference_start_coord() && $self->has_reference_end_coord())){
-	return undef;
-    }
-    else {
-	return (($self->has_reference_end_coord() + 1) - $self->has_reference_start_coord());
-    }
+  my $self = shift;
+  if (!($self->has_reference_start_coord() && $self->has_reference_end_coord())) {
+    return undef;
+  } else {
+    return (($self->has_reference_end_coord() + 1) - $self->has_reference_start_coord());
+  }
 }
 
 =item C<get_query_length>
@@ -77,17 +74,16 @@ Returns the length of the aligned query sequence.
 =cut
 
 sub get_query_length {
-    my $self = shift;
-    if (!($self->has_query_start_coord() && $self->has_query_end_coord())){
-	return undef;
-    }
-    else {
-	return (($self->has_query_end_coord() + 1) - $self->has_query_start_coord());
-    }
+  my $self = shift;
+  if (!($self->has_query_start_coord() && $self->has_query_end_coord())) {
+    return undef;
+  } else {
+    return (($self->has_query_end_coord() + 1) - $self->has_query_start_coord());
+  }
 }
 
 ###
-1;#do not remove
+1;				#do not remove
 ###
 
 =pod
