@@ -410,7 +410,7 @@ sub print_formatted_agp {
 	}
 	print "Parsing line ".$line_counter." of ".$line_count."\t".$tab_parsed_line[0]."\t".$tab_parsed_line[1]."\n";
 	if (($tab_parsed_line[4] eq "N") | ($tab_parsed_line[4] eq "U")) {
-	  my $agp_gap_line = AGPGapLine->new();
+	  my $agp_gap_line = Bio::GenomeUpdate::AGP::AGPGapLine->new();
 	  $agp_gap_line->set_object_being_assembled($tab_parsed_line[0]);
 	  $agp_gap_line->set_object_begin($tab_parsed_line[1]);
 	  $agp_gap_line->set_object_end($tab_parsed_line[2]);
@@ -454,7 +454,7 @@ sub print_formatted_agp {
 	  }
 	  $self->add_line_to_end($agp_gap_line, $line_counter);
 	} else {
-	  my $agp_sequence_line = AGPSequenceLine->new();
+	  my $agp_sequence_line = Bio::GenomeUpdate::AGP::AGPSequenceLine->new();
 	  $agp_sequence_line->set_object_being_assembled($tab_parsed_line[0]);
 	  $agp_sequence_line->set_object_begin($tab_parsed_line[1]);
 	  $agp_sequence_line->set_object_end($tab_parsed_line[2]);

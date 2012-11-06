@@ -30,7 +30,7 @@ Sets the Accessioned Golden Path (AGP) object to convert.
 
 =cut
 
-has 'agp_to_convert' => (isa => 'AGP', is => 'rw', predicate => 'has_agp_to_convert');
+has 'agp_to_convert' => (isa => 'Bio::GenomeUpdate::AGP', is => 'rw', predicate => 'has_agp_to_convert');
 
 =item C<set_component_id_is_local ( $int )>
 
@@ -80,7 +80,7 @@ sub to_tpf {
   my @tpfs_to_return;
     
   foreach my $unique_agp_object (@uniq_agp_objects) {
-    my $tpf = TPF->new();
+    my $tpf = Bio::GenomeUpdate::TPF->new();
     $tpf->set_organism($agp->get_organism());
     $tpf->set_assembly_name($agp->get_assembly_name());
     $tpf->set_strain_haplotype_cultivar($self->get_strain_haplotype_cultivar());
@@ -89,7 +89,7 @@ sub to_tpf {
     foreach my $agp_line_key (@sorted_agp_line_numbers) {
       if ($agp_lines{$agp_line_key}->get_object_being_assembled() eq $unique_agp_object) {
 	if ($agp_lines{$agp_line_key}->get_line_type() eq "sequence") {
-	  my $tpf_sequence_line = TPFSequenceLine->new();
+	  my $tpf_sequence_line = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
 	  if ($self->get_component_id_is_local() == 0) {
 	    print 
 	      $tpf_sequence_line->set_accession($agp_lines{$agp_line_key}->get_component_id());
@@ -130,7 +130,7 @@ sub to_tpf {
 	  $tpf->add_line_to_end($tpf_sequence_line);
 	}
 	if ($agp_lines{$agp_line_key}->get_line_type() eq 'gap') {
-	  my $tpf_gap_line = TPFGapLine->new();
+	  my $tpf_gap_line = Bio::GenomeUpdate::TPF::TPFGapLine->new();
 	  #set to TYPE-2 (clone) gap for gaps of unknown length
 	  if ($agp_lines{$agp_line_key}->get_component_type() eq 'U') {  
 	    $tpf_gap_line->set_gap_type('TYPE-2'); 
