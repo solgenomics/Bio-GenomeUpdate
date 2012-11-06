@@ -1,4 +1,4 @@
-package  Bio::GenomeUpdate::TPFGapLine;
+package  Bio::GenomeUpdate::TPF::TPFGapLine;
 use strict;
 use warnings;
 

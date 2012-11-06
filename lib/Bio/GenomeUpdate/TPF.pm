@@ -101,7 +101,7 @@ Sets a comment for the TPF (optional).
 has 'comment' => (isa => 'Str', is => 'rw', predicate => 'has_comment', clearer => 'clear_comment');
 
 subtype 'TPFLine',
-  as 'TPFSequenceLine | TPFGapLine',
+  as 'Bio::GenomeUpdate::TPF::TPFSequenceLine | Bio::GenomeUpdate::TPF::TPFGapLine',
   message {"The object was not a TPF sequence or gap line"};
 
 has 'tpf_lines' => (isa => 'HashRef[TPFLine]',is => 'rw', predicate => 'has_tpf_lines', clearer => 'clear_tpf_lines');
@@ -451,19 +451,20 @@ sub print_formatted_tpf {
   print OUTFILE "##=== End of TPF Data ===\n";
 }
 
-
-  ###
+###
   1;				#do not remove
 ###
 
-=back
+=pod
 
-=head1 LICENSE
+  =back
 
-    Same as Perl.
+  =head1 LICENSE
 
-=head1 AUTHORS
+  Same as Perl.
 
-    Jeremy D. Edwards <jde22@cornell.edu>   
+  =head1 AUTHORS
 
-=cut
+  Jeremy D. Edwards <jde22@cornell.edu>
+
+  =cut

@@ -1,4 +1,4 @@
-package Bio::GenomeUpdate::AGPConvert;
+package Bio::GenomeUpdate::AGP::AGPConvert;
 use strict;
 use warnings;
 

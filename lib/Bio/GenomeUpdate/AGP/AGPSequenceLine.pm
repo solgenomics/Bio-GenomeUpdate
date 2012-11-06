@@ -1,4 +1,4 @@
-package Bio::GenomeUpdate::AGPSequenceLine;
+package Bio::GenomeUpdate::AGP::AGPSequenceLine;
 use strict;
 use warnings;
 

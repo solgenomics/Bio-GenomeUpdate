@@ -1,4 +1,4 @@
-package Bio::GenomeUpdate::TPFSequenceLine;
+package Bio::GenomeUpdate::TPF::TPFSequenceLine;
 use strict;
 use warnings;
 

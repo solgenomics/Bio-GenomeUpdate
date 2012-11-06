@@ -1,4 +1,4 @@
-package Bio::GenomeUpdate::AGPLine;
+package Bio::GenomeUpdate::AGP::AGPLine;
 use strict;
 use warnings;
 

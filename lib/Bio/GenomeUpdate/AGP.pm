@@ -117,7 +117,7 @@ sub add_comment_line {
 }
 
 subtype 'AGPLine',
-  as 'AGPSequenceLine | AGPGapLine',
+  as 'Bio::GenomeUpdate::AGP::AGPSequenceLine | Bio::GenomeUpdate::AGP::AGPGapLine',
   message {"The object was not an AGP sequence or gap line"};
 
 has 'agp_lines' => (isa => 'HashRef[AGPLine]',is => 'rw', predicate => 'has_agp_lines', clearer => 'clear_agp_lines');
