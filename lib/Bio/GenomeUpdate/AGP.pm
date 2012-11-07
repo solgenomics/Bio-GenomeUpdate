@@ -8,7 +8,7 @@ use Moose::Util::TypeConstraints;
 use Bio::GenomeUpdate::AGP::AGPSequenceLine;
 use Bio::GenomeUpdate::AGP::AGPGapLine;
 use Bio::GenomeUpdate::AGP::AGPConvert;
-use File::Slurp;
+#use File::Slurp;
 
 =head1 NAME
 
@@ -125,18 +125,13 @@ has 'agp_lines' => (isa => 'HashRef[AGPLine]',is => 'rw', predicate => 'has_agp_
 sub add_line_to_end {
   my $self = shift;
   my $line_to_add = shift;
-  my $line_number = shift;
   my %lines;
   if ($self->has_agp_lines()) {
     %lines = %{$self->get_agp_lines()};
   }
-  if (defined($line_number)) {
-    $lines{$line_number} = $line_to_add;
-  } else {
-    my $last_line = $self->get_number_of_lines();
-    $lines{$last_line+1} = $line_to_add;
-    $lines{$last_line+1}->set_line_number($last_line+1);
-  }
+  my $last_line = $self->get_number_of_lines();
+  $lines{$last_line+1} = $line_to_add;
+  $lines{$last_line+1}->set_line_number($last_line+1);
   $self->set_agp_lines({%lines});
 }
 
@@ -252,79 +247,75 @@ sub get_largest_line_number {
   }
 }
 
-sub print_formatted_agp {
+sub get_formatted_agp {
   my $self = shift;
-  my $out_file = shift;
-  $out_file = '>'.$out_file;
-  open(OUTFILE, $out_file) || die ("Unable to open output file $out_file\n");
-
   my %lines;
-  my $default_unknown_gap_size = 100;
-    
-  #Print header info
-  print OUTFILE "##agp-version\t".$self->get_version()."\n";
-  print OUTFILE "# ORGANISM: ".$self->get_organism()."\n";
-  print OUTFILE "# TAX_ID: ".$self->get_tax_id()."\n";
-  print OUTFILE "# ASSEMBLY NAME: ".$self->get_assembly_name()."\n";
-  #print OUTFILE "# ASSEMBLY DATE: ".$self->get_assembly_date()->format_cldr("DD-MMMM-YYYY")."\n";
-  print OUTFILE "# ASSEMBLY DATE: ".$self->get_assembly_date()."\n";
-  print OUTFILE "# GENOME CENTER: ".$self->get_genome_center()."\n";
-  print OUTFILE "# DESCRIPTION: ".$self->get_description()."\n";
+  my $default_unknown_gap_size = 100; #this should be in the AGP object itself
+  my $out_str;
+  #append header info to output string
+  $out_str .= "##agp-version\t".$self->get_version()."\n";
+  $out_str .= "# ORGANISM: ".$self->get_organism()."\n";
+  $out_str .= "# TAX_ID: ".$self->get_tax_id()."\n";
+  $out_str .= "# ASSEMBLY NAME: ".$self->get_assembly_name()."\n";
+  #$out_str .= "# ASSEMBLY DATE: ".$self->get_assembly_date()->format_cldr("DD-MMMM-YYYY")."\n";
+  $out_str .= "# ASSEMBLY DATE: ".$self->get_assembly_date()."\n";
+  $out_str .= "# GENOME CENTER: ".$self->get_genome_center()."\n";
+  $out_str .= "# DESCRIPTION: ".$self->get_description()."\n";
   if ($self->has_comment_lines()) {
-    print OUTFILE "# COMMENTS:\n";
+    $out_str .= "# COMMENTS:\n";
     foreach my $comment (@{$self->get_comment_lines()}) {
-      print OUTFILE "# ".$comment."\n";
+      $out_str .= "# ".$comment."\n";
     }
   }
   if ($self->has_agp_lines()) {
     %lines = %{$self->get_agp_lines()};
     my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
     foreach my $line_key (@sorted_line_numbers) {
-      print OUTFILE $lines{$line_key}->get_object_being_assembled()."\t";
-      print OUTFILE $lines{$line_key}->get_object_begin()."\t";
-      print OUTFILE $lines{$line_key}->get_object_end()."\t";
-      #print OUTFILE $lines{$line_key}->get_line_number()."\t";
-      print OUTFILE $line_key."\t";
-      print OUTFILE $lines{$line_key}->get_component_type()."\t";
+      $out_str .= $lines{$line_key}->get_object_being_assembled()."\t";
+      $out_str .= $lines{$line_key}->get_object_begin()."\t";
+      $out_str .= $lines{$line_key}->get_object_end()."\t";
+      #$out_str .= $lines{$line_key}->get_line_number()."\t";
+      $out_str .= $line_key."\t";
+      $out_str .= $lines{$line_key}->get_component_type()."\t";
       if ($lines{$line_key}->get_line_type() eq "sequence") {
-	print OUTFILE $lines{$line_key}->get_component_id()."\t";
-	print OUTFILE $lines{$line_key}->get_component_begin()."\t";
-	print OUTFILE $lines{$line_key}->get_component_end()."\t";
-	print OUTFILE $lines{$line_key}->get_orientation();
+	$out_str .= $lines{$line_key}->get_component_id()."\t";
+	$out_str .= $lines{$line_key}->get_component_begin()."\t";
+	$out_str .= $lines{$line_key}->get_component_end()."\t";
+	$out_str .= $lines{$line_key}->get_orientation();
 
       } elsif ($lines{$line_key}->get_line_type() eq "gap") {
 	if ($lines{$line_key}->get_component_type() eq "N") {
-	  print OUTFILE $lines{$line_key}->get_gap_length()."\t";
+	  $out_str .= $lines{$line_key}->get_gap_length()."\t";
 	} else {
 		    
-	  print OUTFILE $default_unknown_gap_size."\t";
+	  $out_str .= $default_unknown_gap_size."\t";
 	}
-	print OUTFILE $lines{$line_key}->get_gap_type()."\t";
-	print OUTFILE $lines{$line_key}->get_linkage()."\t";
+	$out_str .= $lines{$line_key}->get_gap_type()."\t";
+	$out_str .= $lines{$line_key}->get_linkage()."\t";
 	my $first_evidence_line=1;
 	if ($lines{$line_key}->get_linkage() eq "yes") {
 	  foreach my $evidence (@{$lines{$line_key}->get_linkage_evidence()}) {
 	    if ($first_evidence_line != 1) {
-	      print OUTFILE ";";
+	      $out_str .= ";";
 	    }
 	    $first_evidence_line=0;
-	    print OUTFILE $evidence;
+	    $out_str .= $evidence;
 	  }
 	} else {
-	  print OUTFILE "na";
+	  $out_str .= "na";
 	}
       } else {
 	#add warning that type is not sequence or gap
       }
-      print OUTFILE "\n";
+      $out_str .= "\n";
     }
   }
-
+  return $out_str;
 }
 
   sub parse_agp {
     my $self = shift;
-    my $input_file = shift;
+    my $input_string = shift;
     $self->clear_version();
     $self->clear_organism();
     $self->clear_tax_id();
@@ -334,12 +325,13 @@ sub print_formatted_agp {
     $self->clear_description();
     $self->clear_comment_lines();
     $self->clear_agp_lines();
-    
-    my @lines = read_file($input_file);
+    #my @lines = read_file($input_file);
+    my @lines = split (/\n/, $input_string);
     my $load_comment_lines = 0;
     my $line_count = scalar(@lines);
     my $line_counter = 0;
     foreach my $line (@lines) {
+      $line_counter++;
       chomp($line);
       if ($line =~m/^#/) {
 	if ($load_comment_lines == 1) {
@@ -403,12 +395,12 @@ sub print_formatted_agp {
 	  next;
 	}
       } else {
-	$line_counter++;
+	#$line_counter++;
 	my @tab_parsed_line = split(/\t/, $line);
 	if (!defined($tab_parsed_line[0])) {
 	  next;
 	}
-	print "Parsing line ".$line_counter." of ".$line_count."\t".$tab_parsed_line[0]."\t".$tab_parsed_line[1]."\n";
+	print STDERR "Parsing line ".$line_counter." of ".$line_count."\t".$tab_parsed_line[0]."\t".$tab_parsed_line[1]."\n";
 	if (($tab_parsed_line[4] eq "N") | ($tab_parsed_line[4] eq "U")) {
 	  my $agp_gap_line = Bio::GenomeUpdate::AGP::AGPGapLine->new();
 	  $agp_gap_line->set_object_being_assembled($tab_parsed_line[0]);
@@ -452,7 +444,7 @@ sub print_formatted_agp {
 	      }
 	    }
 	  }
-	  $self->add_line_to_end($agp_gap_line, $line_counter);
+	  $self->add_line_to_end($agp_gap_line);
 	} else {
 	  my $agp_sequence_line = Bio::GenomeUpdate::AGP::AGPSequenceLine->new();
 	  $agp_sequence_line->set_object_being_assembled($tab_parsed_line[0]);
@@ -464,10 +456,11 @@ sub print_formatted_agp {
 	  $agp_sequence_line->set_component_begin($tab_parsed_line[6]);
 	  $agp_sequence_line->set_component_end($tab_parsed_line[7]);
 	  $agp_sequence_line->set_orientation($tab_parsed_line[8]);
-	  $self->add_line_to_end($agp_sequence_line, $line_counter);
+	  $self->add_line_to_end($agp_sequence_line);
 	}
       }
     }
+    return $self;
   }
 
 ###

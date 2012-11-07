@@ -208,7 +208,7 @@ sub get_number_of_lines {
 
 sub parse_tpf {
   my $self=shift;
-  my $input_file = shift;
+  my $input_string = shift;
   $self->clear_organism();
   $self->clear_assembly_name();
   $self->clear_chromosome();
@@ -217,7 +217,7 @@ sub parse_tpf {
   $self->clear_assembly_version();
   $self->clear_comment();
   $self->clear_tpf_lines();
-  my @lines = read_file($input_file);
+  my @lines = split (/\n/, $input_string);
   my $tpf_data_has_begun = 0;
   my $tpf_data_has_ended = 0;
   foreach my $line (@lines) {
@@ -227,7 +227,7 @@ sub parse_tpf {
     }
     if ($line =~m/^##/) {	#identify comment lines
       if ($line =~ m/Organism: /) {
-	my @organism_line = split(/Organism: /,$line);
+	my @organism_line = split(/ORGANISM: /i,$line);
 	my $organism = $organism_line[-1];
 	$organism =~ s/^\s+|\s+$//g;
 	$self->set_organism($organism);
@@ -295,7 +295,7 @@ sub parse_tpf {
       $tab_parsed_line[0] =~ s/^\s+|\s+$//g;
 
       if ($tab_parsed_line[0] eq "GAP") {
-	my $tpf_gap_line = TPFGapLine->new();
+	my $tpf_gap_line = Bio::GenomeUpdate::TPF::TPFGapLine->new();
 	if (!defined($tab_parsed_line[1])) {
 	  #die with error missing gap line information
 	  print STDERR "error in tpf\n";
@@ -316,7 +316,7 @@ sub parse_tpf {
 	}
 	$self->add_line_to_end($tpf_gap_line);
       } else {
-	my $tpf_sequence_line = TPFSequenceLine->new();
+	my $tpf_sequence_line = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
 	if (defined($tab_parsed_line[0])) {
 	  $tab_parsed_line[0] =~ s/^\s+|\s+$//g;
 	  $tpf_sequence_line->set_accession($tab_parsed_line[0]);
@@ -352,78 +352,74 @@ sub parse_tpf {
   }
 }
 
-sub print_formatted_tpf {
+sub get_formatted_tpf {
   my $self = shift;
-  my $out_file = shift;
-  $out_file = '>'.$out_file;
-  open(OUTFILE, $out_file) || die ("Unable to open output file $out_file\n");
   my %lines;
-    
-
+  my $out_str;
   #Print header info
-  print OUTFILE "##ORGANISM: ".$self->get_organism()."\n";
-  print OUTFILE "##ASSEMBLY NAME: ".$self->get_assembly_name()."\n";
-  print OUTFILE "##CHROMOSOME: ".$self->get_chromosome()."\n";
-  print OUTFILE "##STRAIN/HAPLOTYPE/CULTIVAR: ".$self->get_strain_haplotype_cultivar()."\n";
-  print OUTFILE "##TYPE: ".$self->get_type()."\n";
+  $out_str .= "##ORGANISM: ".$self->get_organism()."\n";
+  $out_str .= "##ASSEMBLY NAME: ".$self->get_assembly_name()."\n";
+  $out_str .= "##CHROMOSOME: ".$self->get_chromosome()."\n";
+  $out_str .= "##STRAIN/HAPLOTYPE/CULTIVAR: ".$self->get_strain_haplotype_cultivar()."\n";
+  $out_str .= "##TYPE: ".$self->get_type()."\n";
   if ($self->has_comment()) {
-    print OUTFILE "##Comment: ".$self->get_comment()."\n";
+    $out_str .= "##Comment: ".$self->get_comment()."\n";
   }
-  print OUTFILE "##=== Beginning of TPF Data ===\n";
+  $out_str .= "##=== Beginning of TPF Data ===\n";
   if ($self->has_tpf_lines()) {
     %lines = %{$self->get_tpf_lines()};
     my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
     foreach my $line_key (@sorted_line_numbers) {
       if ($lines{$line_key}->get_line_type() eq "sequence") {
 	if ($lines{$line_key}->has_accession()) {
-	  print OUTFILE $lines{$line_key}->get_accession()."\t";
+	  $out_str .= $lines{$line_key}->get_accession()."\t";
 	} else {
-	  print OUTFILE "??\t";
+	  $out_str .= "??\t";
 	  print "accession not found\n";
 	}
 	if ($lines{$line_key}->has_clone_name()) {
-	  print OUTFILE $lines{$line_key}->get_clone_name()."\t";
+	  $out_str .= $lines{$line_key}->get_clone_name()."\t";
 	} else {
-	  print OUTFILE "?\t";
+	  $out_str .= "?\t";
 	}
 
-	print OUTFILE $lines{$line_key}->get_local_contig_identifier()."\t";
+	$out_str .= $lines{$line_key}->get_local_contig_identifier()."\t";
 	if ($lines{$line_key}->has_contains()) {
-	  print OUTFILE $lines{$line_key}->get_contains()."\t";
+	  $out_str .= $lines{$line_key}->get_contains()."\t";
 	  if ($lines{$line_key}->has_containing_accession()) {
-	    print OUTFILE $lines{$line_key}->get_containing_accession()."\t";
+	    $out_str .= $lines{$line_key}->get_containing_accession()."\t";
 	  } else {
-	    print OUTFILE "?\t";
+	    $out_str .= "?\t";
 	  }
 	  if ($lines{$line_key}->has_containing_clone_name()) {
-	    print OUTFILE $lines{$line_key}->get_containing_clone_name();
+	    $out_str .= $lines{$line_key}->get_containing_clone_name();
 	  } else {
-	    print OUTFILE "?";
+	    $out_str .= "?";
 	  }
 	} else {
 	  if ($lines{$line_key}->has_orientation()) {
-	    print OUTFILE $lines{$line_key}->get_orientation();
+	    $out_str .= $lines{$line_key}->get_orientation();
 	  }
 	}
       } elsif ($lines{$line_key}->get_line_type() eq "gap") {
-	print OUTFILE $lines{$line_key}->get_gap_identifier()."\t";
-	print OUTFILE $lines{$line_key}->get_gap_type();
+	$out_str .= $lines{$line_key}->get_gap_identifier()."\t";
+	$out_str .= $lines{$line_key}->get_gap_type();
 	if ($lines{$line_key}->has_gap_size()) {
-	  print OUTFILE "\t".$lines{$line_key}->get_gap_size();
+	  $out_str .= "\t".$lines{$line_key}->get_gap_size();
 		    
 	  if (!(($lines{$line_key}->get_gap_type() eq "CENTROMERE"|| 
 		 $lines{$line_key}->get_gap_type() eq "TELOMERE" || 
 		 $lines{$line_key}->get_gap_type() eq "HETEROCHROMATIN" ||
 		 $lines{$line_key}->get_gap_type() eq "SHORT-ARM"))) {
 	    if ( $lines{$line_key}->has_gap_methods()) {
-	      print OUTFILE "\t";
+	      $out_str .= "\t";
 	      my $first_gmethod = 1;
 	      foreach my $gmethod (@{$lines{$line_key}->get_gap_methods()}) {
 		if ($first_gmethod == 0) {
-		  print OUTFILE ";";
+		  $out_str .= ";";
 		}
 		$first_gmethod = 0;
-		print OUTFILE $gmethod; 
+		$out_str .= $gmethod; 
 	      } 
 	    } else {
 	      #add error warning method required
@@ -442,13 +438,14 @@ sub print_formatted_tpf {
       } else {
 	#add error warning;
       }
-      print OUTFILE "\n";
+      $out_str .= "\n";
     }
   } else {
     #add error warning;
   }
-  #print OUTFILE footer
-  print OUTFILE "##=== End of TPF Data ===\n";
+  #$out_str .= footer
+  $out_str .= "##=== End of TPF Data ===\n";
+  return $out_str;
 }
 
 ###

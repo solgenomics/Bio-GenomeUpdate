@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-genome_update.t
+tpf.t
 A test for Bio::GenomeUpdate::TPF class
 
 =cut
@@ -25,8 +25,60 @@ use strict;
 use warnings;
 use autodie;
 
-
-use Test::More tests => 3;
+use Test::More tests => 27;
 BEGIN {use_ok( 'Bio::GenomeUpdate::TPF' ); }
 require_ok( 'Bio::GenomeUpdate::TPF::TPFSequenceLine' );
 require_ok( 'Bio::GenomeUpdate::TPF::TPFGapLine' );
+
+#create a sequence line
+ok(my $sequence_line = Bio::GenomeUpdate::TPF::TPFSequenceLine->new());
+#ok(my$sequence_line->set_contains("CONTAINED_TURNOUT"));
+ok($sequence_line->set_local_contig_identifier("local_contig"));
+ok($sequence_line->set_containing_accession("Accession"));
+ok($sequence_line->set_containing_clone_name("Clone"));
+ok ($sequence_line->set_orientation("PLUS"));
+
+#create a gap line
+ok(my $gap_line = Bio::GenomeUpdate::TPF::TPFGapLine->new());
+ok($gap_line->set_gap_size("100"));
+ok($gap_line->set_gap_type("TYPE-3"));
+ok($gap_line->add_gap_method("PAIRED ENDS"));
+ok($gap_line->add_gap_method("PCR"));
+
+#create a TPF and add lines and gaps
+ok(my $tpf = Bio::GenomeUpdate::TPF->new());
+ok($tpf->add_line_to_end($gap_line));
+ok($tpf->add_line_to_end($sequence_line));
+ok($tpf->add_line_to_beginning($sequence_line));
+ok($tpf->add_line_to_beginning($gap_line));
+ok($tpf->insert_line_before(2,$gap_line));
+ok($tpf->insert_line_after(3,$gap_line));
+ok($tpf->delete_line(2,$gap_line));
+ok($tpf->set_organism("An organism"));
+ok($tpf->set_assembly_name("Assembly name"));
+ok($tpf->set_chromosome("1"));
+ok($tpf->set_strain_haplotype_cultivar("cultivar"));
+
+#get formatted TPF string and compare to expected output
+ok(my $out_str = $tpf->get_formatted_tpf());
+print STDERR $out_str;
+my $compare_str = q(##ORGANISM: An organism
+##ASSEMBLY NAME: Assembly name
+##CHROMOSOME: 1
+##STRAIN/HAPLOTYPE/CULTIVAR: cultivar
+##TYPE: Complete Chromosome
+##=== Beginning of TPF Data ===
+GAP	TYPE-3	100	PAIRED ENDS;PCR
+??	?	local_contig	PLUS
+GAP	TYPE-3	100	PAIRED ENDS;PCR
+GAP	TYPE-3	100	PAIRED ENDS;PCR
+??	?	local_contig	PLUS
+##=== End of TPF Data ===
+);
+is ($out_str,$compare_str,'AGP output string is as expected');
+
+#parse formatted TPF string into an TPF object and compare to expected output
+#ok($tpf->parse_tpf($compare_str));
+#ok(my $out_str_from_tpf_parsed = $tpf->get_formatted_tpf());
+#is ($out_str_from_tpf_parsed,$compare_str,'TPF output from parsed is as expected');
+
