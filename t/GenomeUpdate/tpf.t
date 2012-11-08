@@ -25,7 +25,7 @@ use strict;
 use warnings;
 use autodie;
 
-use Test::More tests => 27;
+use Test::More tests => 30;
 BEGIN {use_ok( 'Bio::GenomeUpdate::TPF' ); }
 require_ok( 'Bio::GenomeUpdate::TPF::TPFSequenceLine' );
 require_ok( 'Bio::GenomeUpdate::TPF::TPFGapLine' );
@@ -75,10 +75,10 @@ GAP	TYPE-3	100	PAIRED ENDS;PCR
 ??	?	local_contig	PLUS
 ##=== End of TPF Data ===
 );
-is ($out_str,$compare_str,'AGP output string is as expected');
+is ($out_str,$compare_str,'TPF output string is as expected');
 
 #parse formatted TPF string into an TPF object and compare to expected output
-#ok($tpf->parse_tpf($compare_str));
-#ok(my $out_str_from_tpf_parsed = $tpf->get_formatted_tpf());
-#is ($out_str_from_tpf_parsed,$compare_str,'TPF output from parsed is as expected');
+ok($tpf->parse_tpf($compare_str));
+ok(my $out_str_from_tpf_parsed = $tpf->get_formatted_tpf());
+is ($out_str_from_tpf_parsed,$compare_str,'TPF output from parsed is as expected');
 

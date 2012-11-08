@@ -226,50 +226,50 @@ sub parse_tpf {
       next;
     }
     if ($line =~m/^##/) {	#identify comment lines
-      if ($line =~ m/Organism: /) {
+      if ($line =~ m/ORGANISM: /i) {
 	my @organism_line = split(/ORGANISM: /i,$line);
 	my $organism = $organism_line[-1];
 	$organism =~ s/^\s+|\s+$//g;
 	$self->set_organism($organism);
 	next;
       }
-      if ($line =~ m/Assembly Name: /i) {
-	my @assembly_name_line = split(/Assembly Name: /i,$line);
+      if ($line =~ m/ASSEMBLY NAME: /i) {
+	my @assembly_name_line = split(/ASSEMBLY NAME: /i,$line);
 	my $assembly_name = $assembly_name_line[-1];
 	$assembly_name =~ s/^\s+|\s+$//g;
 	$self->set_assembly_name($assembly_name);
 	next;
       }
-      if ($line =~ m/Chromosome: /i) {
-	my @chromosome_line = split(/Chromosome: /i,$line);
+      if ($line =~ m/CHROMOSOME: /i) {
+	my @chromosome_line = split(/CHROMOSOME: /i,$line);
 	my $chromosome = $chromosome_line[-1];
 	$chromosome =~ s/^\s+|\s+$//g;
 	$self->set_chromosome($chromosome);
 	next;
       }
-      if ($line =~ m/Strain\/Haplotype\/Cultivar: /i) {
-	my @strain_haplotype_cultivar_line = split(/Strain\/Haplotype\/Cultivar: /i,$line);
+      if ($line =~ m/STRAIN\/HAPLOTYPE\/CULTIVAR: /i) {
+	my @strain_haplotype_cultivar_line = split(/STRAIN\/HAPLOTYPE\/CULTIVAR: /i,$line);
 	my $strain_haplotype_cultivar = $strain_haplotype_cultivar_line[-1];
 	$strain_haplotype_cultivar =~ s/^\s+|\s+$//g;
 	$self->set_strain_haplotype_cultivar($strain_haplotype_cultivar);
 	next;
       }
-      if ($line =~ m/Type: /i) {
-	my @type_line = split(/Type: /i,$line);
+      if ($line =~ m/TYPE: /i) {
+	my @type_line = split(/TYPE: /i,$line);
 	my $type = $type_line[-1];
 	$type =~ s/^\s+|\s+$//g;
 	$self->set_type($type);
 	next;
       }
-      if ($line =~ m/Assembly Version: /i) {
-	my @assembly_version_line = split(/Assembly Version: /i,$line);
+      if ($line =~ m/VERSION: /i) {
+	my @assembly_version_line = split(/VERSION: /i,$line);
 	my $assembly_version = $assembly_version_line[-1];
 	$assembly_version =~ s/^\s+|\s+$//g;
 	$self->set_assembly_version($assembly_version);
 	next;
       }
-      if ($line =~ m/Comment: /i) {
-	my @comment_line = split(/Comment: /i,$line);
+      if ($line =~ m/COMMENT: /i) {
+	my @comment_line = split(/COMMENT: /i,$line);
 	my $comment = $comment_line[-1];
 	$comment =~ s/^\s+|\s+$//g;
 	$self->set_comment($comment);
@@ -350,6 +350,7 @@ sub parse_tpf {
       next;
     }
   }
+  return $self;
 }
 
 sub get_formatted_tpf {
@@ -363,7 +364,7 @@ sub get_formatted_tpf {
   $out_str .= "##STRAIN/HAPLOTYPE/CULTIVAR: ".$self->get_strain_haplotype_cultivar()."\n";
   $out_str .= "##TYPE: ".$self->get_type()."\n";
   if ($self->has_comment()) {
-    $out_str .= "##Comment: ".$self->get_comment()."\n";
+    $out_str .= "##COMMENT: ".$self->get_comment()."\n";
   }
   $out_str .= "##=== Beginning of TPF Data ===\n";
   if ($self->has_tpf_lines()) {
