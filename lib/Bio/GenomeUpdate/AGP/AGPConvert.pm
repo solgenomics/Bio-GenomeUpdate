@@ -67,18 +67,15 @@ has 'strain_haplotype_cultivar' => (isa => 'Str', is => 'rw', default => '?');
 sub to_tpf {
   my $self = shift;
   my $agp = $self->get_agp_to_convert();
-  
-
   my %agp_lines = %{$agp->get_agp_lines()};
   my @sorted_agp_line_numbers = sort { $a <=> $b } keys %agp_lines;
   my %seen_agp_objects = ();
-  my @uniq_agp_objects = (); 
+  my @uniq_agp_objects = ();
   foreach my $agp_line_key (@sorted_agp_line_numbers) {
-    push(@uniq_agp_objects, $agp_lines{$agp_line_key}->get_object_being_assembled()) unless $seen_agp_objects{$agp_lines{$agp_line_key}->get_object_being_assembled()}++;	
+    #not sure if seen objects is working
+    push(@uniq_agp_objects, $agp_lines{$agp_line_key}->get_object_being_assembled()) unless $seen_agp_objects{$agp_lines{$agp_line_key}->get_object_being_assembled()}++;
   }
-    
   my @tpfs_to_return;
-    
   foreach my $unique_agp_object (@uniq_agp_objects) {
     my $tpf = Bio::GenomeUpdate::TPF->new();
     $tpf->set_organism($agp->get_organism());
@@ -91,30 +88,31 @@ sub to_tpf {
 	if ($agp_lines{$agp_line_key}->get_line_type() eq "sequence") {
 	  my $tpf_sequence_line = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
 	  if ($self->get_component_id_is_local() == 0) {
-	    print 
-	      $tpf_sequence_line->set_accession($agp_lines{$agp_line_key}->get_component_id());
+	    #print STDERR 
+	    $tpf_sequence_line->set_accession($agp_lines{$agp_line_key}->get_component_id());
 	    my %clone_lookup = %{$self->get_ncbi_to_local_conversion()};
 	    if (defined($clone_lookup{$agp_lines{$agp_line_key}->get_component_id()})) {
 	      $tpf_sequence_line->set_clone_name($clone_lookup{$agp_lines{$agp_line_key}->get_component_id()});
-	      print "local: ".$clone_lookup{$agp_lines{$agp_line_key}->get_component_id()}.": ",$agp_lines{$agp_line_key}->get_component_id()."\n";
+	      print STDERR "local: ".$clone_lookup{$agp_lines{$agp_line_key}->get_component_id()}.": ",$agp_lines{$agp_line_key}->get_component_id()."\n";
 	    } else {
 	      $tpf_sequence_line->set_clone_name('?');
-	      print "ncbi accession for local clone ID not found\n";
+	      print STDERR "ncbi accession for local clone ID not found\n";
 	    }
 	  } else {
 	    $tpf_sequence_line->set_clone_name($agp_lines{$agp_line_key}->get_component_id());
 	    my %ncbi_lookup = %{$self->get_local_to_ncbi_conversion()};
+	      print STDERR "\n\n\nComponent ID: ".$agp_lines{$agp_line_key}->get_component_id()." \n\n";
 	    if (defined($ncbi_lookup{$agp_lines{$agp_line_key}->get_component_id()})) {
 	      my $ncbi_id = $ncbi_lookup{$agp_lines{$agp_line_key}->get_component_id()};
 	      $ncbi_id =~ s/(.*?)\.\d+/$1/; #remove version number
 	      $tpf_sequence_line->set_accession($ncbi_id);
-	      print "ncbi: $ncbi_id\n";
-	      print "accesson from sequence line: ";
-	      print $tpf_sequence_line->get_accession();
-	      print "\n";
+	      print STDERR "ncbi: $ncbi_id\n";
+	      print STDERR "accesson from sequence line: ";
+	      print STDERR $tpf_sequence_line->get_accession();
+	      print STDERR "\n";
 	    } else {
 	      $tpf_sequence_line->set_accession("?"); 
-	      print "ncbi accession for local clone ID not found\n";
+	      print STDERR "ncbi accession for local clone ID not found\n";
 	    }
 			
 	  }
@@ -167,7 +165,7 @@ sub to_tpf {
 		if ($evidence_item eq 'paired-ends') {
 		  $tpf_gap_line->add_gap_method('PAIRED ENDS');
 		} elsif ($evidence_item eq 'align_genus') {
-		  $tpf_gap_line->add_gap_method('ALIGN GENUS');
+		  $tpf_gap_line->add_gap_method('ALIG GENUS');
 		} elsif ($evidence_item eq 'align_xgenus') {
 		  $tpf_gap_line->add_gap_method('ALIGN XGENUS');
 		} elsif ($evidence_item eq 'align_trnscpt') {
