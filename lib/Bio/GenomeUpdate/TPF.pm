@@ -358,15 +358,15 @@ sub get_formatted_tpf {
   my %lines;
   my $out_str;
   #Print header info
-  $out_str .= "##ORGANISM: ".$self->get_organism()."\n";
-  $out_str .= "##ASSEMBLY NAME: ".$self->get_assembly_name()."\n";
-  $out_str .= "##CHROMOSOME: ".$self->get_chromosome()."\n";
-  $out_str .= "##STRAIN/HAPLOTYPE/CULTIVAR: ".$self->get_strain_haplotype_cultivar()."\n";
-  $out_str .= "##TYPE: ".$self->get_type()."\n";
+  $out_str .= "##Organism: ".$self->get_organism()."\n";
+  $out_str .= "##Chromosome: ".$self->get_chromosome()."\n";
+  $out_str .= "##Assembly Name: ".$self->get_assembly_name()."\n";
+  $out_str .= "##Strain/Haplotype/Cultivar: ".$self->get_strain_haplotype_cultivar()."\n";
+  $out_str .= "##Type: ".$self->get_type()."\n";
   if ($self->has_comment()) {
-    $out_str .= "##COMMENT: ".$self->get_comment()."\n";
+    $out_str .= "##Comment: ".$self->get_comment()."\n\n";
   }
-  $out_str .= "##=== Beginning of TPF Data ===\n";
+  $out_str .= "\n##=== Beginning of TPF Data ===\n\n";
   if ($self->has_tpf_lines()) {
     %lines = %{$self->get_tpf_lines()};
     my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
@@ -376,7 +376,7 @@ sub get_formatted_tpf {
 	  $out_str .= $lines{$line_key}->get_accession()."\t";
 	} else {
 	  $out_str .= "??\t";
-	  print "accession not found\n";
+	  print STDERR "accession not found\n";
 	}
 	if ($lines{$line_key}->has_clone_name()) {
 	  $out_str .= $lines{$line_key}->get_clone_name()."\t";

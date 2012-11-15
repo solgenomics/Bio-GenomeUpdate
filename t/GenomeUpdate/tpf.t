@@ -62,12 +62,14 @@ ok($tpf->set_strain_haplotype_cultivar("cultivar"));
 #get formatted TPF string and compare to expected output
 ok(my $out_str = $tpf->get_formatted_tpf());
 #print STDERR $out_str;
-my $compare_str = q(##ORGANISM: An organism
-##ASSEMBLY NAME: Assembly name
-##CHROMOSOME: 1
-##STRAIN/HAPLOTYPE/CULTIVAR: cultivar
-##TYPE: Complete Chromosome
+my $compare_str = q(##Organism: An organism
+##Chromosome: 1
+##Assembly Name: Assembly name
+##Strain/Haplotype/Cultivar: cultivar
+##Type: Complete Chromosome
+
 ##=== Beginning of TPF Data ===
+
 GAP	TYPE-3	100	PAIRED ENDS;PCR
 ??	?	local_contig	PLUS
 GAP	TYPE-3	100	PAIRED ENDS;PCR
