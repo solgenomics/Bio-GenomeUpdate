@@ -449,70 +449,6 @@ sub get_formatted_tpf {
   return $out_str;
 }
 
-sub get_tpf_in_new_scaffold_order {
-  my $self = shift;
-  my $a_ref = shift;
-  my @ordered_and_oriented_scaffolds = @$a_ref;
-  my %lines;
-  my $last_line_key;
-  my $in_scaffold_range = 0;
-  my $out_tpf = Bio::GenomeUpdate::TPF->new();
-  my $last_gap_line_number = 0;
-  my $last_sequence_line_number = 0;
-  my $is_first_scaffold = 1;
-  if ($self->has_tpf_lines()) {
-    %lines = %{$self->get_tpf_lines()};
-  }
-  my @forward_sorted_line_numbers = sort { $a <=> $b } keys %lines;
-  my @reverse_sorted_line_numbers = sort { $b <=> $a } keys %lines;
-  my @sorted_line_numbers;
-  foreach my $scaffold_and_order_ref (@ordered_and_oriented_scaffolds) {
-    #insert a type 3 gap before the scaffold unless it is the first one.
-    if ($is_first_scaffold == 0) {
-      my $tpf_gap_line = Bio::GenomeUpdate::TPF::TPFGapLine->new();
-      $tpf_gap_line->set_gap_type("TYPE-3");
-      $out_tpf->add_line_to_end($tpf_gap_line);
-    }
-    else {
-      $is_first_scaffold = 0;
-    }
-    my @scaffold_and_order = @$scaffold_and_order_ref;
-    my $scaffold_to_move = $scaffold_and_order[0];
-    if ($scaffold_and_order[1] eq "+") {
-      @sorted_line_numbers = @forward_sorted_line_numbers;
-    }
-    elsif ($scaffold_and_order[1] eq "-") {
-      @sorted_line_numbers = @reverse_sorted_line_numbers;
-    }
-    else {
-      die "Orientation not specified\n";
-    }
-    foreach my $line_key (@sorted_line_numbers) {
-      if ($lines{$line_key}->get_line_type() eq "sequence") {
-	if ($lines{$line_key}->get_local_contig_identifier() eq $scaffold_to_move) {
-	  $in_scaffold_range=1;
-	  $out_tpf->add_line_to_end($lines{$line_key});
-	  $last_sequence_line_number = $line_key;
-	} else {
-	  $in_scaffold_range = 0;
-	}
-      } elsif ($lines{$line_key}->get_line_type() eq "gap") {
-	if ($in_scaffold_range==1) {
-	  $out_tpf->add_line_to_end($lines{$line_key});
-	  $last_gap_line_number = $line_key;
-	}
-      }
-    }
-    if ((($scaffold_and_order[1] eq "+") && ($last_gap_line_number > $last_sequence_line_number)) ||
-(($scaffold_and_order[1] eq "-") && ($last_gap_line_number < $last_sequence_line_number)))  {
-      $out_tpf->delete_line($last_gap_line_number);
-    }
-  }
-  return $out_tpf;
-}
-
-
-
 sub move_scaffold_before {
   my $self = shift;
   my $scaffold_to_insert_before = shift;
@@ -525,7 +461,6 @@ sub move_scaffold_before {
   my $in_scaffold_range = 0;
   my $line_number_to_insert_before = 0;
   my $last_line;
-
 
   if ($self->has_tpf_lines()) {
     %lines = %{$self->get_tpf_lines()};
