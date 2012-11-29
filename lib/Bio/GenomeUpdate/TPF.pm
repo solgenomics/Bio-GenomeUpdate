@@ -449,6 +449,42 @@ sub get_formatted_tpf {
   return $out_str;
 }
 
+sub change_gap_size_between_scaffolds {
+  my $self = shift;
+  my $first_scaffold = shift;
+  my $second_scaffold = shift;
+  my $gap_size = shift;
+  my $gap_method = shift;
+  my %lines;
+#  if ($self->has_tpf_lines()) {
+    %lines = %{$self->get_tpf_lines()};
+#  }
+  my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+  foreach my $line_key (@sorted_line_numbers) {
+    #skip if on first or last line of TPF
+    if (($line_key == 1) || ($line_key >= scalar(@sorted_line_numbers))) {
+      next;
+    }
+    if ($lines{$line_key}->get_line_type() eq "gap") {
+      if (($lines{$line_key-1}->get_local_contig_identifier() eq $first_scaffold) &&
+	  ($lines{$line_key+1}->get_local_contig_identifier() eq $second_scaffold)) {
+	print STDERR "FOUND  \n";
+	if ($gap_size) {
+	  $lines{$line_key}->set_gap_size($gap_size);
+	}
+	if ($gap_method) {
+	  $lines{$line_key}->clear_gap_methods();
+	  $lines{$line_key}->add_gap_method($gap_method);
+	}
+      }
+    }
+  }
+  #$self->clear_tpf_lines(%lines);
+  $self->set_tpf_lines({%lines});
+  return $self;
+}
+
+
 sub get_tpf_in_new_scaffold_order {
   my $self = shift;
   my $a_ref = shift;
@@ -460,6 +496,7 @@ sub get_tpf_in_new_scaffold_order {
   my $last_gap_line_number = 0;
   my $last_sequence_line_number = 0;
   my $is_first_scaffold = 1;
+  my $last_gap_line_number_in_range = "none";
   if ($self->has_tpf_lines()) {
     %lines = %{$self->get_tpf_lines()};
   }
@@ -477,11 +514,12 @@ sub get_tpf_in_new_scaffold_order {
       $is_first_scaffold = 0;
     }
     my @scaffold_and_order = @$scaffold_and_order_ref;
+    my $scaffold_orientation = $scaffold_and_order[1];
     my $scaffold_to_move = $scaffold_and_order[0];
-    if ($scaffold_and_order[1] eq "+") {
+    if ($scaffold_orientation eq "+") {
       @sorted_line_numbers = @forward_sorted_line_numbers;
     }
-    elsif ($scaffold_and_order[1] eq "-") {
+    elsif ($scaffold_orientation eq "-") {
       @sorted_line_numbers = @reverse_sorted_line_numbers;
     }
     else {
@@ -491,24 +529,45 @@ sub get_tpf_in_new_scaffold_order {
       if ($lines{$line_key}->get_line_type() eq "sequence") {
 	if ($lines{$line_key}->get_local_contig_identifier() eq $scaffold_to_move) {
 	  $in_scaffold_range=1;
+	  unless ($last_gap_line_number_in_range eq "none") {
+	    $out_tpf->add_line_to_end($lines{$last_gap_line_number_in_range});
+	  }
+	  $last_gap_line_number_in_range = "none";
+	  my $line_orientation = $lines{$line_key}->get_orientation();
+	  if ($scaffold_orientation eq "-") {
+	    if ($line_orientation eq "PLUS") {
+	      $lines{$line_key}->set_orientation("MINUS");
+	    }
+	    elsif ($line_orientation eq "MINUS") {
+	      $lines{$line_key}->set_orientation("PLUS");
+	    }
+	    else {
+	      die "TFP sequence line missing PLUS or MINUS information\n";
+	    }
+	  }
 	  $out_tpf->add_line_to_end($lines{$line_key});
+
 	  $last_sequence_line_number = $line_key;
 	} else {
 	  $in_scaffold_range = 0;
+	  $last_gap_line_number_in_range = "none";
 	}
       } elsif ($lines{$line_key}->get_line_type() eq "gap") {
 	if ($in_scaffold_range==1) {
-	  $out_tpf->add_line_to_end($lines{$line_key});
+	  #$out_tpf->add_line_to_end($lines{$line_key});
 	  $last_gap_line_number = $line_key;
+	  $last_gap_line_number_in_range = $line_key;
+
 	}
       }
     }
-    if ((($scaffold_and_order[1] eq "+") && ($last_gap_line_number > $last_sequence_line_number)) ||
-(($scaffold_and_order[1] eq "-") && ($last_gap_line_number < $last_sequence_line_number)))  {
-      $out_tpf->delete_line($last_gap_line_number);
-    }
+#    if ((($scaffold_and_order[1] eq "+") && ($last_gap_line_number > $last_sequence_line_number)) ||
+#(($scaffold_and_order[1] eq "-") && ($last_gap_line_number < $last_sequence_line_number)))  {
+#      $out_tpf->delete_line($last_gap_line_number);
+#    }
   }
-  return $out_tpf;
+  $self->set_tpf_lines($out_tpf->get_tpf_lines());
+  return $self;
 }
 
 

@@ -79,7 +79,7 @@ sub help {
 
     Description:
 
-     This script chages the order and orientation of scaffolds in a Tiling Path File (TPF).
+     This script changes the order and orientation of scaffolds in a Tiling Path File (TPF).
 
     Usage:
       reorder_scaffolds.pl -t [TPF file] -l [file with order and orientation]

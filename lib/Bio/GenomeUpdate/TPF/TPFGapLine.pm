@@ -89,7 +89,7 @@ subtype 'GapMethod',
   as 'Str',
   where {  $_ eq "FISH" ||  $_ eq "OPTICAL MAP" ||  $_ eq "RADIATION HYBRID" ||  $_ eq "PCR" ||  $_ eq "FINGERPRINT" ||  $_ eq "PAIRED ENDS" ||  $_ eq "ALIGN GENUS" ||  $_ eq "ALIGN XGENUS" ||  $_ eq "ALIGN TRNSCPT" },
   message { "The string, $_, was not a valid gap method" };
-has 'gap_methods' => (isa => 'ArrayRef[GapMethod]', is => 'rw', predicate => 'has_gap_methods');
+has 'gap_methods' => (isa => 'ArrayRef[GapMethod]', is => 'rw', predicate => 'has_gap_methods', clearer => 'clear_gap_methods');
 
 
 =item C<add_gap_method ( $method )>
