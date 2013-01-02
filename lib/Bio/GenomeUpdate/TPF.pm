@@ -557,7 +557,6 @@ sub get_tpf_in_new_scaffold_order {
 	  #$out_tpf->add_line_to_end($lines{$line_key});
 	  $last_gap_line_number = $line_key;
 	  $last_gap_line_number_in_range = $line_key;
-
 	}
       }
     }
@@ -570,6 +569,59 @@ sub get_tpf_in_new_scaffold_order {
   return $self;
 }
 
+
+sub get_tpf_with_bacs_inserted {
+  my $self = shift;
+  my $bacs_ref = shift;
+  my $agp_coords_ref = shift;
+  my @bacs = @$bacs_ref;
+  my %agp_coords = %$agp_coords_ref;
+  my %tpf_lines;
+  my $out_tpf = Bio::GenomeUpdate::TPF->new();
+  if ($self->has_tpf_lines()) {
+    %tpf_lines = %{$self->get_tpf_lines()};
+  }
+  my @sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;
+  #make sure BACs are sorted by position
+  foreach my $bac_ref (@bacs) {
+    my @bac = @$bac_ref;
+    my $bac_name = $bac[0];
+    my $bac_start = $bac[1];
+    my $bac_end = $bac[2];
+    my $bac_orientation;
+    if ($bac_start<$bac_end) {
+      $bac_orientation = 0;
+    } elsif ($bac_start>$bac_end) {
+      $bac_orientation = 1;
+    } else {
+      die "Error in BAC coordinates for BAC $bac_name Start: $bac_start End: $bac_end\n";
+    }
+    my $prev_agp_start=0;
+    foreach my $line_key (@sorted_tpf_line_numbers) {
+      if ($tpf_lines{$line_key}->get_line_type() eq 'sequence') {
+	my $accession = $tpf_lines{$line_key}->get_accession();
+	my $agp_coords_ref = $agp_coords{$accession};
+	my %line_coords = %$agp_coords_ref;
+	my $agp_start = $line_coords{'start'};
+	my $agp_end = $line_coords{'end'};
+	if ($bac_start <= $agp_start) {
+	  if ($bac_end >= $agp_end) {
+	    $tpf_lines{$line_key}->set_contains('CONTAINED');
+	    $tpf_lines{$line_key}->set_containing_accession($bac_name);
+	  }
+	  if ($bac_start> $prev_agp_start) {
+	    # insert BAC before in TPF
+	  }
+	}
+	$prev_agp_start = $agp_start;
+      }
+    }
+
+  }
+
+  $self->set_tpf_lines(\%tpf_lines);
+  return $self;
+}
 
 
 sub move_scaffold_before {
