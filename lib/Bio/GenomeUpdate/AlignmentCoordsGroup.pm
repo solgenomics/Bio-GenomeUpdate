@@ -20,7 +20,7 @@ use Bio::GenomeUpdate::AlignmentCoords;
 
 =cut
 
-has 'array_of_alignment_coords' => (isa => 'ArrayRef[AlignmentCoords]', 
+has 'array_of_alignment_coords' => (isa => 'ArrayRef[Bio::GenomeUpdate::AlignmentCoords]', 
 				    is => 'rw',
 				    predicate => 'has_array_of_alignment_coords');
 
@@ -87,12 +87,21 @@ sub order_alignment_clusters_on_each_reference_sequence {
   my %clusters;
   foreach my $align_coords (@{$self->get_array_of_alignment_coords()}) {
     if (!$clusters{$align_coords->get_reference_id()}) {
+      #if a key in clusters doesn't exist, create one as an empty array
       $clusters{$align_coords->get_reference_id()} = ();
     }
     push (@{$clusters{$align_coords->get_reference_id()}},$align_coords);
+
   }
   foreach my $ref_seq_key (keys %clusters) {
-    @{$clusters{$ref_seq_key}} = sort { $a->get_reference_start_coord() cmp $b->get_reference_start_coord() } @{$clusters{$ref_seq_key}};
+    my @sorted_clusters = sort { $a->get_reference_start_coord() <=> $b->get_reference_start_coord() } @{$clusters{$ref_seq_key}};
+    #print "$ref_seq_key:";
+    #@{$clusters{$ref_seq_key}} = @sorted_clusters;
+    $clusters{$ref_seq_key} = \@sorted_clusters;
+    foreach my $c (@sorted_clusters) {
+      #print $c->get_reference_start_coord().",";
+    }
+    #print "\n";
   }
   return %clusters;
 }
@@ -105,8 +114,8 @@ Calculates and returns a hash of reference IDs and corresponding arrays of array
 
 sub group_alignment_clusters {
   my $self = shift;
-  my $gap_percent = shift;
   my $gap_allowed = shift;
+  #hash of 
   my %clusters = $self->order_alignment_clusters_on_each_reference_sequence();
   my %cluster_groups;
   foreach my $ref_seq_key (keys %clusters) {
@@ -116,9 +125,10 @@ sub group_alignment_clusters {
     my $end_of_previous_query;
     foreach my $align_coords (@{$clusters{$ref_seq_key}}) {
       if ($end_of_previous_ref) {
-	my $start_of_curr_query;
-	$start_of_curr_query = $align_coords->get_query_start_coord();
-	if (($align_coords->get_reference_start_coord() - ($end_of_previous_ref+1)) < ($gap_allowed + ((1+($gap_percent/100)) * abs($start_of_curr_query - ($end_of_previous_query+1))))) {
+	#my $start_of_curr_query;
+	#$start_of_curr_query = $align_coords->get_query_start_coord();
+	if (($align_coords->get_reference_start_coord() - ($end_of_previous_ref+1)) < $gap_allowed ) {
+#	  print STDERR $ref_seq_key.",".$align_coords->get_reference_start_coord().",",$end_of_previous_ref,",",$gap_allowed,"\n";
 	  push(@group,$align_coords);
 	} else {
 	  push (@{$cluster_groups{$ref_seq_key}},[@group]);
@@ -129,7 +139,7 @@ sub group_alignment_clusters {
 	push(@group,$align_coords);
       }
       $end_of_previous_ref = $align_coords->get_reference_end_coord();
-      $end_of_previous_query = $align_coords->get_query_end_coord();
+      #$end_of_previous_query = $align_coords->get_query_end_coord();
     }
     push (@{$cluster_groups{$ref_seq_key}},[@group]); # store last cluster group
   }
@@ -144,9 +154,8 @@ Calculates and returns an array of arrays containing the proximity-grouped align
 
 sub get_cluster_groups_sorted_by_length {
   my $self = shift;
-  my $gap_percent = shift;
   my $gap_allowed = shift;
-  my %cluster_groups = $self->group_alignment_clusters($gap_percent, $gap_allowed);
+  my %cluster_groups = $self->group_alignment_clusters($gap_allowed);
   my @groups;
 
   foreach my $ref_seq_key (keys %cluster_groups) {
@@ -199,10 +208,10 @@ Returns IDs, start and end coordiantes, total aligned sequence length, and direc
 
 sub get_id_coords_and_direction_of_longest_alignment_cluster_group {
   my $self = shift;
-  my $gap_percent = shift;
   my $gap_allowed = shift;
-  my @returnclusters =  $self->get_cluster_groups_sorted_by_length($gap_percent,$gap_allowed);
+  my @returnclusters =  $self->get_cluster_groups_sorted_by_length($gap_allowed);
   my $first_group = shift(@returnclusters);
+
   #my @second_largest_cluster_group;
   #if (defined(@{$returnclusters[1]})){
   #@second_largest_cluster_group = @{$returnclusters[1]};
@@ -216,26 +225,42 @@ sub get_id_coords_and_direction_of_longest_alignment_cluster_group {
   my $query_end;
   my $sequence_aligned_in_clusters=0;
   my $prev_end_coord;
-  foreach my $align_coords (@largest_cluster_group) {
+  my $overlap_allowed = 100;
+  my $is_overlapping = 0;
+ foreach my $align_coords (@largest_cluster_group) {
     $sequence_aligned_in_clusters += (($align_coords->get_reference_end_coord()+1) - $align_coords->get_reference_start_coord());
     if ($prev_end_coord) {
       if ($align_coords->get_reference_start_coord() <= $prev_end_coord) {
 	$sequence_aligned_in_clusters -= (($prev_end_coord+1) - $align_coords->get_reference_start_coord()); #subtract overlap between alignment clusters from total alignment length
       }
+      if (($align_coords->get_reference_start_coord() + $overlap_allowed) <= $prev_end_coord) {
+	$is_overlapping = 1;
+      }
     }
     $prev_end_coord = $align_coords->get_reference_end_coord();
   }
-   
-  if ($largest_cluster_group[0]->get_direction() == 1) {
+
+
+  if ($largest_cluster_group[0]->get_query_start_coord() <  $largest_cluster_group[-1]->get_query_end_coord()) {
     $query_start = $largest_cluster_group[0]->get_query_start_coord();
-  } else {
-    $query_end = $largest_cluster_group[0]->get_query_start_coord();
-  }
-  if ($largest_cluster_group[-1]->get_direction() == 1) {
     $query_end = $largest_cluster_group[-1]->get_query_end_coord();
-  } else {
+  }
+  else {
+    $query_end = $largest_cluster_group[0]->get_query_start_coord();
     $query_start = $largest_cluster_group[-1]->get_query_end_coord();
   }
+
+
+  # if ($largest_cluster_group[0]->get_direction() == 1) {
+  #   $query_start = $largest_cluster_group[0]->get_query_start_coord();
+  # } else {
+  #   $query_end = $largest_cluster_group[0]->get_query_start_coord();
+  # }
+  # if ($largest_cluster_group[-1]->get_direction() == 1) {
+  #   $query_end = $largest_cluster_group[-1]->get_query_end_coord();
+  # } else {
+  #   $query_start = $largest_cluster_group[-1]->get_query_end_coord();
+  # }
 
 
   my $alternates;
@@ -266,10 +291,18 @@ sub get_id_coords_and_direction_of_longest_alignment_cluster_group {
   if (!defined($alternates)) {
     $alternates = "";
   }
+
+  my $size_of_next_largest_match = 0;
+
+  my $second_group = shift(@returnclusters);
+  if ($second_group) {
+    my @second_largest_cluster_group = @{$second_group};
+    $size_of_next_largest_match =  ($second_largest_cluster_group[-1]->get_reference_end_coord() - $second_largest_cluster_group[0]->get_reference_start_coord());
+  }
   
 
   my $direction_check = check_direction_of_cluster_group(@largest_cluster_group);
-  return ($ref_id, $query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters,$direction_check,$alternates);
+  return ($ref_id, $query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters,$direction_check,$is_overlapping,$size_of_next_largest_match,$alternates);
 
   sub check_direction_of_cluster_group {
     my @cluster_group = shift;
