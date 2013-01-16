@@ -6,7 +6,7 @@ place_bacs.pl
 
 =head1 SYNOPSIS
 
-    place_bacs.pl -t [TPF file] -a [AGP file] -l [file with BAC names and coordinates]
+    place_bacs.pl -t [TPF file] -s [scaffold AGP file] -c [chromosome AGP file] -l [file with BAC names and coordinates]
 
 =head1 COMMAND-LINE OPTIONS
 
@@ -97,8 +97,6 @@ foreach my $agp_line_key (keys %scaffold_agp_lines){
   }
 }
 
-
-
 @bac_lines = split (/\n/, $input_bacs);
 foreach my $line (@bac_lines) {
   chomp($line);
@@ -131,7 +129,8 @@ sub help {
     Flags:
 
       -t <TPF_file>                    Original TPF file (mandatory)
-      -a <AGP_file>                    AGP file (mandatory)
+      -s <scaffold AGP_file>                    scaffold AGP file (mandatory)
+      -c <chromosome AGP_file>                    chromosome AGP file (mandatory)
       -l <order_and_orientation_file>  Tab-delimited file containing tab-delimited lines of BAC names and start and end coordinates.
       -h <help>                        Help
 
