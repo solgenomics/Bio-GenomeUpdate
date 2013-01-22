@@ -91,6 +91,7 @@ foreach my $agp_line_key (keys %scaffold_agp_lines){
     my $offset = $chromosome_agp_offset{$scaffold_name};
     $coords{'start'} = $scaffold_agp_lines{$agp_line_key}->get_object_begin() + $offset;
     $coords{'end'} = $scaffold_agp_lines{$agp_line_key}->get_object_end() + $offset;
+    $coords{'orientation'} = $scaffold_agp_lines{$agp_line_key}->get_orientation();
     my $agp_accession = $scaffold_agp_lines{$agp_line_key}->get_component_id();
     $agp_accession =~ s/\.\d+//;
     $scaffold_agp_coords{$agp_accession} = \%coords;

@@ -358,11 +358,21 @@ sub get_formatted_tpf {
   my %lines;
   my $out_str;
   #Print header info
-  $out_str .= "##Organism: ".$self->get_organism()."\n";
-  $out_str .= "##Chromosome: ".$self->get_chromosome()."\n";
-  $out_str .= "##Assembly Name: ".$self->get_assembly_name()."\n";
-  $out_str .= "##Strain/Haplotype/Cultivar: ".$self->get_strain_haplotype_cultivar()."\n";
-  $out_str .= "##Type: ".$self->get_type()."\n";
+  if ($self->get_organism()) {
+    $out_str .= "##Organism: ".$self->get_organism()."\n";
+  }
+  if ($self->get_chromosome()) {
+    $out_str .= "##Chromosome: ".$self->get_chromosome()."\n";
+  }
+  if ($self->get_assembly_name()) {
+    $out_str .= "##Assembly Name: ".$self->get_assembly_name()."\n";
+  }
+  if ($self->get_strain_haplotype_cultivar()) {
+    $out_str .= "##Strain/Haplotype/Cultivar: ".$self->get_strain_haplotype_cultivar()."\n";
+  }
+  if ($self->get_type()) {
+    $out_str .= "##Type: ".$self->get_type()."\n";
+  }
   if ($self->has_comment()) {
     $out_str .= "##Comment: ".$self->get_comment()."\n\n";
   }
@@ -576,50 +586,147 @@ sub get_tpf_with_bacs_inserted {
   my $agp_coords_ref = shift;
   my @bacs = @$bacs_ref;
   my %agp_coords = %$agp_coords_ref;
-  my %tpf_lines;
-  my $out_tpf = Bio::GenomeUpdate::TPF->new();
-  if ($self->has_tpf_lines()) {
-    %tpf_lines = %{$self->get_tpf_lines()};
-  }
-  my @sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;
   #make sure BACs are sorted by position
   foreach my $bac_ref (@bacs) {
     my @bac = @$bac_ref;
     my $bac_name = $bac[0];
-    my $bac_start = $bac[1];
-    my $bac_end = $bac[2];
-    my $bac_orientation;
-    if ($bac_start<$bac_end) {
-      $bac_orientation = 0;
-    } elsif ($bac_start>$bac_end) {
-      $bac_orientation = 1;
+    my $bac_start;
+    my $bac_end;
+    my $bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
+    my %tpf_lines;
+    if ($self->has_tpf_lines()) {
+      %tpf_lines = %{$self->get_tpf_lines()};
+    }
+    my @sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;
+    $bac_to_insert->set_accession($bac_name);
+    if ($bac[1]<$bac[2]) {
+      $bac_to_insert->set_orientation('PLUS');
+      $bac_start = $bac[1];
+      $bac_end = $bac[2];
+    } elsif ($bac[1]>$bac[2]) {
+      $bac_to_insert->set_orientation('MINUS');
+      $bac_start=$bac[2];
+      $bac_end=$bac[1];
     } else {
-      die "Error in BAC coordinates for BAC $bac_name Start: $bac_start End: $bac_end\n";
+      die "Error in BAC coordinates for BAC $bac_start Start: $bac_start End: $bac_end\n";
     }
     my $prev_agp_start=0;
+    my $prev_agp_end=0;
+    my $prev_accession = 'none';
+    my $prev_line_key;
+    my $bac_is_contained=0;
+    my $agp_start;
+    my $agp_end;
+    my $bac_is_inserted = 0;
     foreach my $line_key (@sorted_tpf_line_numbers) {
+      if ($bac_is_inserted == 1) {
+	#can't use next because need to check for contained status
+      }
       if ($tpf_lines{$line_key}->get_line_type() eq 'sequence') {
 	my $accession = $tpf_lines{$line_key}->get_accession();
-	my $agp_coords_ref = $agp_coords{$accession};
-	my %line_coords = %$agp_coords_ref;
-	my $agp_start = $line_coords{'start'};
-	my $agp_end = $line_coords{'end'};
-	if ($bac_start <= $agp_start) {
-	  if ($bac_end >= $agp_end) {
-	    $tpf_lines{$line_key}->set_contains('CONTAINED');
-	    $tpf_lines{$line_key}->set_containing_accession($bac_name);
-	  }
-	  if ($bac_start> $prev_agp_start) {
-	    # insert BAC before in TPF
-	  }
+	my $agp_line_coords_ref = $agp_coords{$accession};
+	my %line_coords = %$agp_line_coords_ref; #hitting inserted bac here
+	if ($line_coords{'orientation'} eq '+') {
+	  #doesn't matter
 	}
+	#add BAC coordinates to AGP info (not saved)
+	$agp_start = $line_coords{'start'};
+	$agp_end = $line_coords{'end'};
+	my %add_agp_coords;
+	$add_agp_coords{'start'} = $agp_start;
+	$add_agp_coords{'end'} = $agp_end;
+	$agp_coords{$bac_name} = \%add_agp_coords;
+	
+
+	#check if current contig is contained in the BAC
+	if ($agp_start >= $bac_start && $agp_end <= $bac_end) {
+	  $tpf_lines{$line_key}->set_contains('CONTAINED');
+	  $tpf_lines{$line_key}->set_containing_accession($bac_name);
+	  $self->set_tpf_lines(\%tpf_lines);
+	}
+	#check if current BAC is contained in the contig
+	if ($bac_start >= $agp_start && $bac_end <= $agp_end) {
+	  $bac_to_insert->set_contains('CONTAINED');
+	  $bac_to_insert->set_containing_accession($accession);
+	}
+	# #skip if BAC starts past current contig
+	# if ($bac_start > $agp_start) {
+	#   next;
+	# }
+	# #skip if BAC starts before previous contig
+	# if ($bac_start <= $prev_agp_start) {
+	#   next;
+	# }
+
+	if (!($bac_start > $agp_start) && !($bac_start <= $prev_agp_start)) { #skip if BAC starts past current contig or before previous contig
+	  print STDERR "Inserting BAC $bac_name\n";
+	  print STDERR "bac_start $bac_start bac_end $bac_end agp_start $agp_start agp_end $agp_end prev_agp_start $prev_agp_start prev_agp_end $prev_agp_end\n";
+
+	  #insert BAC immediately after previous contig if BAC begins within it
+	  if ($bac_start <= $prev_agp_end) {
+	    print STDERR "Inserting BAC $bac_name after contig $prev_accession\n";
+	    #insert after previous contig;
+	    $bac_to_insert->set_local_contig_identifier($tpf_lines{$prev_line_key}->get_local_contig_identifier());
+	    $self->insert_line_after($prev_line_key,$bac_to_insert);
+	    $bac_is_inserted=1;
+	    %tpf_lines = %{$self->get_tpf_lines()};
+
+	    if ($bac_end >= $agp_start) {
+	      #remove gap if it exists if it is the only line between the current and previous contigs
+	      if ($tpf_lines{$prev_line_key+2}->get_line_type() eq 'gap' && $line_key-$prev_line_key <= 2) {
+		$self->delete_line($prev_line_key+2);
+		%tpf_lines = %{$self->get_tpf_lines()};
+	      }
+	    } elsif ($prev_agp_end < $agp_start && $line_key-$prev_line_key <= 2 && $tpf_lines{$line_key-1}->get_line_type() eq 'gap') { #if there is a single gap
+	      my $shrink_gap_by = $bac_end-$prev_agp_end;
+	      if ($shrink_gap_by > 0) {
+		my $new_gap_size = $tpf_lines{$line_key-1}->get_gap_size()-$shrink_gap_by;
+		$tpf_lines{$line_key-1}->set_gap_size($new_gap_size); #shrink gap
+		$self->set_tpf_lines(\%tpf_lines);
+	      }
+	    }
+	  }
+	  #insert BAC immediately before current contig if BAC ends within or beyond it
+	  elsif ($bac_end >= $agp_start) {
+	    print STDERR "Inserting BAC $bac_name before contig $accession\n";
+	    #insert before current
+	    $bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier());
+	    $self->insert_line_before($line_key,$bac_to_insert);
+	    $bac_is_inserted=1;
+	    if ($prev_agp_end < $agp_start) { #if there is a gap
+	      my $shrink_gap_by = $agp_start-$bac_start;
+	      my $new_gap_size = $tpf_lines{$line_key-1}->get_gap_size()-$shrink_gap_by;
+	      $tpf_lines{$line_key-1}->set_gap_size($new_gap_size); #shrink gap
+	      $self->set_tpf_lines(\%tpf_lines);
+	    }
+	  }
+	  #split gap if BAC begins and ends within it
+	  elsif ($bac_start > $prev_agp_end && $bac_end < $agp_start) {
+	    print STDERR "Inserting BAC $bac_name in gap between contigs $prev_accession and $accession\n";
+	    my $first_gap_size = $bac_start-$prev_agp_end;
+	    my $second_gap_size = $agp_start-$bac_end;
+	    #get gap type
+	    #change first gap size to $first_gap_size
+	    #insert BAC before current contig
+	    #insert gap before current contig of size $second_gap_size and type same as first gap
+	    $bac_is_inserted=1;
+	  } else {
+	    die "Could not place BAC $bac_name at accession $accession\n";
+	  }
+
+	  #deal with last one
+
+	}
+	$prev_line_key = $line_key;
+	$prev_accession = $accession;
 	$prev_agp_start = $agp_start;
+	$prev_agp_end = $agp_end;
       }
     }
 
   }
 
-  $self->set_tpf_lines(\%tpf_lines);
+  #$self->set_tpf_lines(\%tpf_lines);
   return $self;
 }
 
