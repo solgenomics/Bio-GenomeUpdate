@@ -466,9 +466,9 @@ sub change_gap_size_between_scaffolds {
   my $gap_size = shift;
   my $gap_method = shift;
   my %lines;
-#  if ($self->has_tpf_lines()) {
-    %lines = %{$self->get_tpf_lines()};
-#  }
+  #  if ($self->has_tpf_lines()) {
+  %lines = %{$self->get_tpf_lines()};
+  #  }
   my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
   foreach my $line_key (@sorted_line_numbers) {
     #skip if on first or last line of TPF
@@ -519,8 +519,7 @@ sub get_tpf_in_new_scaffold_order {
       my $tpf_gap_line = Bio::GenomeUpdate::TPF::TPFGapLine->new();
       $tpf_gap_line->set_gap_type("TYPE-3");
       $out_tpf->add_line_to_end($tpf_gap_line);
-    }
-    else {
+    } else {
       $is_first_scaffold = 0;
     }
     my @scaffold_and_order = @$scaffold_and_order_ref;
@@ -528,11 +527,9 @@ sub get_tpf_in_new_scaffold_order {
     my $scaffold_to_move = $scaffold_and_order[0];
     if ($scaffold_orientation eq "+") {
       @sorted_line_numbers = @forward_sorted_line_numbers;
-    }
-    elsif ($scaffold_orientation eq "-") {
+    } elsif ($scaffold_orientation eq "-") {
       @sorted_line_numbers = @reverse_sorted_line_numbers;
-    }
-    else {
+    } else {
       die "Orientation not specified\n";
     }
     foreach my $line_key (@sorted_line_numbers) {
@@ -547,11 +544,9 @@ sub get_tpf_in_new_scaffold_order {
 	  if ($scaffold_orientation eq "-") {
 	    if ($line_orientation eq "PLUS") {
 	      $lines{$line_key}->set_orientation("MINUS");
-	    }
-	    elsif ($line_orientation eq "MINUS") {
+	    } elsif ($line_orientation eq "MINUS") {
 	      $lines{$line_key}->set_orientation("PLUS");
-	    }
-	    else {
+	    } else {
 	      die "TFP sequence line missing PLUS or MINUS information\n";
 	    }
 	  }
@@ -570,10 +565,10 @@ sub get_tpf_in_new_scaffold_order {
 	}
       }
     }
-#    if ((($scaffold_and_order[1] eq "+") && ($last_gap_line_number > $last_sequence_line_number)) ||
-#(($scaffold_and_order[1] eq "-") && ($last_gap_line_number < $last_sequence_line_number)))  {
-#      $out_tpf->delete_line($last_gap_line_number);
-#    }
+    #    if ((($scaffold_and_order[1] eq "+") && ($last_gap_line_number > $last_sequence_line_number)) ||
+    #(($scaffold_and_order[1] eq "-") && ($last_gap_line_number < $last_sequence_line_number)))  {
+    #      $out_tpf->delete_line($last_gap_line_number);
+    #    }
   }
   $self->set_tpf_lines($out_tpf->get_tpf_lines());
   return $self;
@@ -629,14 +624,13 @@ sub get_tpf_with_bacs_inserted {
 	if ($line_coords{'orientation'} eq '+') {
 	  #doesn't matter
 	}
-	#add BAC coordinates to AGP info (not saved)
+
 	$agp_start = $line_coords{'start'};
 	$agp_end = $line_coords{'end'};
-	my %add_agp_coords;
-	$add_agp_coords{'start'} = $agp_start;
-	$add_agp_coords{'end'} = $agp_end;
-	$agp_coords{$bac_name} = \%add_agp_coords;
-	
+
+
+
+
 
 	#check if current contig is contained in the BAC
 	if ($agp_start >= $bac_start && $agp_end <= $bac_end) {
@@ -661,6 +655,20 @@ sub get_tpf_with_bacs_inserted {
 	if (!($bac_start > $agp_start) && !($bac_start <= $prev_agp_start)) { #skip if BAC starts past current contig or before previous contig
 	  print STDERR "Inserting BAC $bac_name\n";
 	  print STDERR "bac_start $bac_start bac_end $bac_end agp_start $agp_start agp_end $agp_end prev_agp_start $prev_agp_start prev_agp_end $prev_agp_end\n";
+
+	  #add BAC coordinates to AGP info (not saved)
+	  my %add_agp_coords;
+	  $add_agp_coords{'start'} = $bac_start;
+	  $add_agp_coords{'end'} = $bac_end;
+	  if ($bac_to_insert->get_orientation() eq 'PLUS') {
+	    $add_agp_coords{'orientation'} = '+';
+	  } elsif ($bac_to_insert->get_orientation() eq 'MINUS') {
+	    $add_agp_coords{'orientation'} = '-';
+	  } else {
+	    die "No orientation specified for BAC: $bac_name\n";
+	  }
+	  $agp_coords{$bac_name} = \%add_agp_coords;
+
 
 	  #insert BAC immediately after previous contig if BAC begins within it
 	  if ($bac_start <= $prev_agp_end) {
@@ -698,20 +706,31 @@ sub get_tpf_with_bacs_inserted {
 	      my $new_gap_size = $tpf_lines{$line_key-1}->get_gap_size()-$shrink_gap_by;
 	      $tpf_lines{$line_key-1}->set_gap_size($new_gap_size); #shrink gap
 	      $self->set_tpf_lines(\%tpf_lines);
+	    } else {
+	      die "1Gap expected between $accession and $prev_accession\n";
 	    }
 	  }
 	  #split gap if BAC begins and ends within it
 	  elsif ($bac_start > $prev_agp_end && $bac_end < $agp_start) {
-	    print STDERR "Inserting BAC $bac_name in gap between contigs $prev_accession and $accession\n";
-	    my $first_gap_size = $bac_start-$prev_agp_end;
-	    my $second_gap_size = $agp_start-$bac_end;
-	    #get gap type
-	    #change first gap size to $first_gap_size
-	    #insert BAC before current contig
-	    #insert gap before current contig of size $second_gap_size and type same as first gap
-	    $bac_is_inserted=1;
+	    if ($prev_agp_end < $agp_start && $line_key-$prev_line_key <= 2 && $tpf_lines{$line_key-1}->get_line_type() eq 'gap') { #if there is a single gap
+	      print STDERR "Inserting BAC $bac_name in gap between contigs $prev_accession and $accession\n";
+	      my $first_gap_size = $bac_start-$prev_agp_end;
+	      my $second_gap_size = $agp_start-$bac_end;
+	      #create new gap line with same type and methods as current gap and set size
+	      my $new_gap = Bio::GenomeUpdate::TPF::TPFGapLine->new();
+	      $new_gap->set_gap_type ($tpf_lines{$line_key-1}->get_gap_type());
+	      $new_gap->set_gap_methods ($tpf_lines{$line_key-1}->get_gap_methods());
+	      $new_gap->set_gap_size($second_gap_size);
+	      $tpf_lines{$line_key-1}->set_gap_size($first_gap_size);
+	      $self->set_tpf_lines(\%tpf_lines);
+	      $self->insert_line_before($line_key,$bac_to_insert);#insert BAC before current contig
+	      $self->insert_line_after($line_key, $new_gap);#insert second gap after BAC
+	      $bac_is_inserted=1;
+	    } else {
+	      die "2Gap expected between $accession and $prev_accession\n";
+	    }
 	  } else {
-	    die "Could not place BAC $bac_name at accession $accession\n";
+	    die "Could not place BAC $bac_name near accession $accession\n";
 	  }
 
 	  #deal with last one
@@ -859,7 +878,7 @@ sub flip_scaffold {
 
 
 ###
-  1;				#do not remove
+1;				#do not remove
 ###
 
 =pod
