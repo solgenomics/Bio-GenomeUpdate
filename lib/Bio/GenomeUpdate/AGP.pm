@@ -226,10 +226,11 @@ sub delete_line {
 
 sub get_number_of_lines {
   my $self = shift;
-  my %lines;
+#  my %lines;
   if ($self->has_agp_lines()) {
-    %lines = %{$self->get_agp_lines()};
-    return scalar(keys %lines);
+#    %lines = %{$self->get_agp_lines()};
+
+    return scalar(keys %{$self->get_agp_lines()});
   } else {
     return 0;
   }
@@ -400,7 +401,7 @@ sub get_formatted_agp {
 	if (!defined($tab_parsed_line[0])) {
 	  next;
 	}
-	print STDERR "Parsing line ".$line_counter." of ".$line_count."\t".$tab_parsed_line[0]."\t".$tab_parsed_line[1]."\n";
+	print STDERR "\rParsing AGP line ".$line_counter." of ".$line_count;
 	if (($tab_parsed_line[4] eq "N") | ($tab_parsed_line[4] eq "U")) {
 	  my $agp_gap_line = Bio::GenomeUpdate::AGP::AGPGapLine->new();
 	  $agp_gap_line->set_object_being_assembled($tab_parsed_line[0]);
@@ -460,6 +461,7 @@ sub get_formatted_agp {
 	}
       }
     }
+    print STDERR "\nParsed $line_count AGP lines\n";
     return $self;
   }
 

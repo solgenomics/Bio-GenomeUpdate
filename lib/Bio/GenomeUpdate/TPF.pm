@@ -220,7 +220,11 @@ sub parse_tpf {
   my @lines = split (/\n/, $input_string);
   my $tpf_data_has_begun = 0;
   my $tpf_data_has_ended = 0;
+  my $current_line_number = 1;
+  my $total_line_number = scalar(@lines);
   foreach my $line (@lines) {
+    print STDERR "\rParsing TPF line $current_line_number of $total_line_number";
+    $current_line_number++;
     chomp($line);
     if ($line =~ m/^\s*$/) {	#skip blank lines
       next;
@@ -289,7 +293,7 @@ sub parse_tpf {
       my @tab_parsed_line = split(/\t/, $line);
 
       if (!defined($tab_parsed_line[0])) {
-	#die with error line information
+	die "error in TPF line information\n";
       }
 
       $tab_parsed_line[0] =~ s/^\s+|\s+$//g;
@@ -298,8 +302,7 @@ sub parse_tpf {
 	my $tpf_gap_line = Bio::GenomeUpdate::TPF::TPFGapLine->new();
 	if (!defined($tab_parsed_line[1])) {
 	  #die with error missing gap line information
-	  print STDERR "error in tpf\n";
-	  print $line."\n";
+	  die "Error in TPF line $line\n";
 	}
 	$tab_parsed_line[1] =~ s/^\s+|\s+$//g;
 	$tpf_gap_line->set_gap_type($tab_parsed_line[1]);
@@ -350,6 +353,7 @@ sub parse_tpf {
       next;
     }
   }
+  print STDERR "\nParsed $total_line_number TPF lines\n";
   return $self;
 }
 

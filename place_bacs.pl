@@ -34,7 +34,7 @@ if ($opt_h){
   exit;
 }
 if (!$opt_t || !$opt_l || !$opt_s || !$opt_c) {
-    print "\nTPF, AGP and BAC name/coordinates filenames are required.\n\n\n";
+    print STDERR "\nTPF, AGP and BAC name/coordinates filenames are required.\n\n\n";
     help();
 }
 
