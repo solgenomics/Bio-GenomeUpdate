@@ -5,6 +5,7 @@ use warnings;
 use Moose;
 use MooseX::FollowPBP;
 use Moose::Util::TypeConstraints;
+
 #use MooseX::Types;
 
 =head1 NAME
@@ -33,7 +34,7 @@ Gets the string used to identify the line as a gap.
 
 =cut
 
-has 'gap_identifier' => (isa => 'Str', is => 'rw', default => 'GAP');
+has 'gap_identifier' => ( isa => 'Str', is => 'rw', default => 'GAP' );
 
 =item C<set_gap_type ( $type )>
 
@@ -54,11 +55,16 @@ Gets the gap type
 
 =cut
 
-subtype 'GapType',
-  as 'Str',
-  where { $_ eq "TYPE-1" || $_ eq "TYPE-2" || $_ eq "TYPE-3" || $_ eq "CENTROMERE"|| $_ eq "TELOMERE" || $_ eq "HETEROCHROMATIN" || $_ eq "SHORT-ARM" },
-  message { "The string, $_, was not a valid gap type" };
-has 'gap_type' => (isa => 'GapType', is => 'rw', predicate => 'has_gap_type');
+subtype 'GapType', as 'Str', where {
+	     $_ eq "TYPE-1"
+	  || $_ eq "TYPE-2"
+	  || $_ eq "TYPE-3"
+	  || $_ eq "CENTROMERE"
+	  || $_ eq "TELOMERE"
+	  || $_ eq "HETEROCHROMATIN"
+	  || $_ eq "SHORT-ARM";
+}, message { "The string, $_, was not a valid gap type" };
+has 'gap_type' => ( isa => 'GapType', is => 'rw', predicate => 'has_gap_type' );
 
 =item C<set_gap_size ( $type )>
 
@@ -71,13 +77,10 @@ Gets the estimated size of the gap.
 
 =cut
 
-subtype 'PositiveInt',
-  as 'Int',
-  where { $_ > 0 },
+subtype 'PositiveInt', as 'Int', where { $_ > 0 },
   message { "Int is not larger than 0" };
-has 'gap_size' => (isa => 'PositiveInt', is => 'rw', predicate => 'has_gap_size');
-
-
+has 'gap_size' =>
+  ( isa => 'PositiveInt', is => 'rw', predicate => 'has_gap_size' );
 
 =item C<get_gap_methods>
 
@@ -85,12 +88,23 @@ Gets the method(s) used to determine the gap size as an array of strings;
 
 =cut
 
-subtype 'GapMethod',
-  as 'Str',
-  where {  $_ eq "FISH" ||  $_ eq "OPTICAL MAP" ||  $_ eq "RADIATION HYBRID" ||  $_ eq "PCR" ||  $_ eq "FINGERPRINT" ||  $_ eq "PAIRED ENDS" ||  $_ eq "ALIGN GENUS" ||  $_ eq "ALIGN XGENUS" ||  $_ eq "ALIGN TRNSCPT" },
-  message { "The string, $_, was not a valid gap method" };
-has 'gap_methods' => (isa => 'ArrayRef[GapMethod]', is => 'rw', predicate => 'has_gap_methods', clearer => 'clear_gap_methods');
-
+subtype 'GapMethod', as 'Str', where {
+	     $_ eq "FISH"
+	  || $_ eq "OPTICAL MAP"
+	  || $_ eq "RADIATION HYBRID"
+	  || $_ eq "PCR"
+	  || $_ eq "FINGERPRINT"
+	  || $_ eq "PAIRED ENDS"
+	  || $_ eq "ALIGN GENUS"
+	  || $_ eq "ALIGN XGENUS"
+	  || $_ eq "ALIGN TRNSCPT";
+}, message { "The string, $_, was not a valid gap method" };
+has 'gap_methods' => (
+	isa       => 'ArrayRef[GapMethod]',
+	is        => 'rw',
+	predicate => 'has_gap_methods',
+	clearer   => 'clear_gap_methods'
+);
 
 =item C<add_gap_method ( $method )>
 
@@ -108,22 +122,26 @@ ALIGN TRNSCPT
 =cut
 
 sub add_gap_method {
-  my $self = shift;
-  my $method_to_add = shift;
-  if ($self->has_gap_methods()) {
-    my @methods = @{$self->get_gap_methods()};
-    push(@methods, $method_to_add);
-    $self->set_gap_methods([@methods]);
-  } else {
-    $self->set_gap_methods([$method_to_add]);
-  }
+	my $self          = shift;
+	my $method_to_add = shift;
+	#predicate subroutine, see ln 105
+	#checking if any methods already present
+	if ( $self->has_gap_methods() ) {
+		my @methods = @{ $self->get_gap_methods() };
+		push( @methods, $method_to_add );
+		$self->set_gap_methods( [@methods] );
+	}
+	else {#if this is first method
+		$self->set_gap_methods( [$method_to_add] );
+	}
 }
+
 sub get_line_type {
-  return 'gap';
+	return 'gap';
 }
 
 ###
-1;				#do not remove
+1;    #do not remove
 ###
 
 =back
@@ -137,3 +155,4 @@ sub get_line_type {
     Jeremy D. Edwards <jde22@cornell.edu>   
 
 =cut
+

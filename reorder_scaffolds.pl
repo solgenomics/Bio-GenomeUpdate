@@ -24,57 +24,71 @@ use File::Slurp;
 use Getopt::Std;
 
 use Getopt::Std;
-our ($opt_t, $opt_l,$opt_h);
+our ( $opt_t, $opt_l, $opt_h );
 getopts('t:l:h');
-if ($opt_h){
-  help();
-  exit;
+if ($opt_h) {
+	help();
+	exit;
 }
-if (!$opt_t || !$opt_l) {
-    print "\nTPF and order/orientation filenames are required.\n\n\n";
-    help();
+if ( !$opt_t || !$opt_l ) {
+	print "\nTPF and order/orientation filenames are required.\n\n\n";
+	help();
 }
 
+#get input files
 my $tpf_input_file = $opt_t;
-my $input_tpf = read_file($tpf_input_file) or die "Could not open TPF input file: $tpf_input_file\n";
+my $input_tpf      = read_file($tpf_input_file)
+  or die "Could not open TPF input file: $tpf_input_file\n";
 my $order_input_file = $opt_l;
-my $input_order = read_file($order_input_file) or die "Could not open scaffold order and orientation file: $order_input_file\n";
+my $input_order      = read_file($order_input_file)
+  or die
+  "Could not open scaffold order and orientation file: $order_input_file\n";
+
+#new TPF object
 my $tpf = Bio::GenomeUpdate::TPF->new();
 my $out_tpf;
 my @order_lines;
 my @ordered_and_oriented_scaffolds;
 my $ordered_tpf;
 
+#get info from input TPF file and populate $tpf
 $tpf->parse_tpf($input_tpf);
 
 #create a TPF for output by copying the original and clearing the lines.  This preserves the other TPF info.
 #$out_tpf = $tpf;
 #$out_tpf->clear_tpf_lines();
 
-@order_lines = split (/\n/, $input_order);
+#read in order lines into array
+#SL2.40sc04133	+
+#SL2.40sc04191	+
+#SL2.40sc03666	-
+@order_lines = split( /\n/, $input_order );
 foreach my $line (@order_lines) {
-  chomp($line);
-  my @scaffold_and_orientation = split(/\t/,$line);
-  my $scaffold_name = $scaffold_and_orientation[0];
-  my $orientation = $scaffold_and_orientation[1];
-  if (($orientation eq "+") || ($orientation eq "-")) {
-    my @scaffold_and_orientation_array = ($scaffold_name, $orientation);
-    push(@ordered_and_oriented_scaffolds,\@scaffold_and_orientation_array);
-   }
-  else {
-    die "Orientation must be specified as + or -\n";
-  }
+	chomp($line);
+	my @scaffold_and_orientation = split( /\t/, $line );
+	my $scaffold_name            = $scaffold_and_orientation[0];
+	my $orientation              = $scaffold_and_orientation[1];
+	if ( ( $orientation eq "+" ) || ( $orientation eq "-" ) ) {
+		my @scaffold_and_orientation_array = ( $scaffold_name, $orientation );
+		# making 2D array
+		push( @ordered_and_oriented_scaffolds,
+			\@scaffold_and_orientation_array );
+	}
+	else {
+		die "Orientation must be specified as + or -\n";
+	}
 }
 
-$ordered_tpf = $tpf->get_tpf_in_new_scaffold_order(\@ordered_and_oriented_scaffolds);
+#reorient the scaffolds
+$ordered_tpf =
+  $tpf->get_tpf_in_new_scaffold_order( \@ordered_and_oriented_scaffolds );
 my $out_str_from_tpf_ordered = $ordered_tpf->get_formatted_tpf();
-print $out_str_from_tpf_ordered."\n";
+print $out_str_from_tpf_ordered. "\n";
 
 ###write_file('processed_tpf.txt',$out_str_from_tpf_parsed);
 
-
 sub help {
-  print STDERR <<EOF;
+	print STDERR <<EOF;
   $0:
 
     Description:
@@ -91,9 +105,8 @@ sub help {
       -h <help>                        Help
 
 EOF
-exit (1);
+	exit(1);
 }
-
 
 =head1 LICENSE
 
@@ -104,3 +117,4 @@ exit (1);
   Jeremy D. Edwards <jde22@cornell.edu>
 
 =cut
+

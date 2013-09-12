@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 use strict;
+use warnings;
 
 use Bio::GenomeUpdate::TPF::TPFSequenceLine;
 use Bio::GenomeUpdate::TPF::TPFGapLine;
