@@ -3,8 +3,6 @@ Bio-GenomeUpdate
 
 Tools for updating a genome assembly
 
-Forked from https://github.com/solgenomics/Bio-GenomeUpdate authored by https://github.com/jeremyde
-
 Perl CPAN module dependencies
 	File::Slurp
 	Getopt::Std
