@@ -9,8 +9,6 @@ use Bio::GenomeUpdate::AGP::AGPSequenceLine;
 use Bio::GenomeUpdate::AGP::AGPGapLine;
 use Bio::GenomeUpdate::AGP::AGPConvert;
 
-#use File::Slurp;
-
 =head1 NAME
 
     AGP - Accessioned Golden Path (AGP) describes the assembly of a larger sequence object from smaller objects.

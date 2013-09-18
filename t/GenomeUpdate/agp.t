@@ -53,6 +53,7 @@ ok( $agp->add_comment_line("last comment") );
 ok( $agp_sequence_line->set_object_being_assembled("Chromosome1") );
 ok( $agp_sequence_line->set_object_begin("1001") );
 ok( $agp_sequence_line->set_object_end("1400") );
+#ok( $agp_sequence_line->set_part_number("1") );
 ok( $agp_sequence_line->set_component_type("A") );
 ok( $agp_sequence_line->set_component_id("component id") );
 ok( $agp_sequence_line->set_component_begin("1") );

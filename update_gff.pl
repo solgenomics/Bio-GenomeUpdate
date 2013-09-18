@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-=head1
+=head1 NAME
 
 update_gff.pl
 

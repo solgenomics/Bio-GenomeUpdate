@@ -3,7 +3,7 @@
 =head1 NAME
 
 gff.t
-A test for Bio::GenomeUpdate::GFF class
+A test for Bio::GenomeUpdate::GFF and Bio::GenomeUpdate::GFF::GFFRearrange classes
 
 =cut
 
