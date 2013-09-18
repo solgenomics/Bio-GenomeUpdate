@@ -110,12 +110,13 @@ Chromosome1	1001	1400	2	A	component id	1	400	+
 Chromosome1	1001	1400	3	N	400	scaffold	yes	paired-ends;map
 Chromosome1	1001	1400	4	N	400	scaffold	yes	paired-ends;map
 Chromosome1	1001	1400	5	A	component id	1	400	+
-Chromosome2	1001	1400	1	N	400	scaffold	yes	paired-ends;map
-Chromosome2	1001	1400	2	A	component id	1	400	+
-Chromosome2	1001	1400	3	N	400	scaffold	yes	paired-ends;map
-Chromosome2	1001	1400	4	N	400	scaffold	yes	paired-ends;map
-Chromosome2	1001	1400	5	A	component id	1	400	+
 );
+#removed
+#Chromosome2	1001	1400	1	N	400	scaffold	yes	paired-ends;map
+#Chromosome2	1001	1400	2	A	component id	1	400	+
+#Chromosome2	1001	1400	3	N	400	scaffold	yes	paired-ends;map
+#Chromosome2	1001	1400	4	N	400	scaffold	yes	paired-ends;map
+#Chromosome2	1001	1400	5	A	component id	1	400	+
 is( $out_str, $compare_str, 'AGP output string is as expected' );
 
 #parse formatted AGP string into an AGP object and compare to expected output
