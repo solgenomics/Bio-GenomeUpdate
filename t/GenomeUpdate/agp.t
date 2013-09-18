@@ -133,6 +133,6 @@ is($agp->get_current_agp_line_number(), 1, 'Got 1 for line number');
 ok(my $formatted_agp_line=$agp->get_next_formatted_agp_line());
 print $formatted_agp_line;
 is($agp->get_current_agp_line_number(), 2, 'Got 2 for line number');
-ok(my $formatted_agp_line=$agp->get_next_formatted_agp_line());
+ok($formatted_agp_line=$agp->get_next_formatted_agp_line());
 print $formatted_agp_line;
 
