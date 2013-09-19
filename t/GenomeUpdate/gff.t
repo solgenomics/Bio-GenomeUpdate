@@ -26,11 +26,11 @@ use strict;
 use warnings;
 use autodie;
 
-use Test::More tests => 14;
+use Test::More tests => 11;
 BEGIN { use_ok('Bio::GenomeUpdate::GFF'); }
 BEGIN { use_ok('Bio::GenomeUpdate::AGP'); }
 require_ok('Bio::GenomeUpdate::GFF::GFFRearrange');#uses AGP module
-require_ok('Bio::GFF3::LowLevel::Parser');
+require_ok('Bio::GFF3::LowLevel');
 
 #load orig AGP
 my $agp_orig_file = q(##agp-version	2.0
@@ -50,7 +50,7 @@ CHR01_FISH2_GAPS	301	600	3	F	SL2.40SC04191	1	300	+
 CHR01_FISH2_GAPS	601	800	4	N	200	contig	no	
 CHR01_FISH2_GAPS	801	1000	5	F	SL2.40SC03666	1	200	+
 );
-ok(my $agp_orig = Bio::GenomeUpdate::AGP->new());
+ok( my $agp_orig = Bio::GenomeUpdate::AGP->new());
 ok( $agp_orig->parse_agp($agp_orig_file));
 
 #load updated AGP, gap size change, scaffold flip 
@@ -89,10 +89,11 @@ ok( my $gff = Bio::GenomeUpdate::GFF->new());
 ok( $gff->parse_gff($gff_file));
 
 #update coordinates, calls GFFRearrange object
-ok( my %coords = $gff->reorder_coordinates_AGP($agp_orig,$agp_fish));
+ok( my %coords = $gff->reorder_coordinates($agp_orig,$agp_fish));
+ok( my %flips = $gff->flipped_coordinates($agp_orig,$agp_fish));
 
 #remap GFF
-ok( $gff->remap_coordinates_AGP(%coords));
+ok( $gff->remap_coordinates(%coords,%flips));
 
 #validate remapping
 my $compare_str = q(##gff3
@@ -103,5 +104,6 @@ CHR01_FISH2_GAPS	src	CDS	600	650	0	-	0	attributes
 CHR01_FISH2_GAPS	src	CDS	901	1000	0	-	0	attributes
 CHR01_FISH2_GAPS	src	CDS	831	850	0	+	0	attributes
 );
-ok( my $gff_fish = $gff->get_updated_gff());
+ok( my $gff_fish = $gff->get_formatted_gff());
 is( $gff_fish, $compare_str, 'GFF remapping is as expected');
+
