@@ -26,7 +26,7 @@ use strict;
 use warnings;
 use autodie;
 
-use Test::More tests => 11;
+use Test::More tests => 15;
 BEGIN { use_ok('Bio::GenomeUpdate::GFF'); }
 BEGIN { use_ok('Bio::GenomeUpdate::AGP'); }
 require_ok('Bio::GenomeUpdate::GFF::GFFRearrange');#uses AGP module
@@ -50,8 +50,8 @@ CHR01_FISH2_GAPS	301	600	3	F	SL2.40SC04191	1	300	+
 CHR01_FISH2_GAPS	601	800	4	N	200	contig	no	
 CHR01_FISH2_GAPS	801	1000	5	F	SL2.40SC03666	1	200	+
 );
-ok( my $agp_orig = Bio::GenomeUpdate::AGP->new());
-ok( $agp_orig->parse_agp($agp_orig_file));
+ok( my $agp_orig = Bio::GenomeUpdate::AGP->new(),'create orig AGP obj');
+ok( $agp_orig->parse_agp($agp_orig_file),'parse orig AGP obj');
 
 #load updated AGP, gap size change, scaffold flip 
 my $agp_fish_file = q(##agp-version	2.0
@@ -71,39 +71,41 @@ CHR01_FISH2_GAPS	351	650	3	F	SL2.40SC04191	1	300	+
 CHR01_FISH2_GAPS	651	800	4	N	150	contig	no	
 CHR01_FISH2_GAPS	801	1000	5	F	SL2.40SC03666	1	200	-
 );
-ok(my $agp_fish = Bio::GenomeUpdate::AGP->new() );
-ok( $agp_fish->parse_agp($agp_fish_file));
+ok(my $agp_fish = Bio::GenomeUpdate::AGP->new(),'create fish AGP obj');
+ok( $agp_fish->parse_agp($agp_fish_file),'parse fish AGP obj');
   
 # gff 
 my $gff_file = q(##gff3
-CHR01_FISH2_GAPS	src	CDS	50	150	0	+	0	attributes
-CHR01_FISH2_GAPS	src	CDS	320	400	0	+	0	attributes
-CHR01_FISH2_GAPS	src	CDS	450	500	0	+	0	attributes
-CHR01_FISH2_GAPS	src	CDS	550	600	0	-	0	attributes
-CHR01_FISH2_GAPS	src	CDS	801	900	0	+	0	attributes
-CHR01_FISH2_GAPS	src	CDS	950	969	0	-	0	attributes
+CHR01_FISH2_GAPS	src	CDS	50	150	0	+	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	320	400	0	+	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	450	500	0	+	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	550	600	0	-	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	801	900	0	+	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	950	969	0	-	0	ID=attributes
 );
 
 
-ok( my $gff = Bio::GenomeUpdate::GFF->new());
-ok( $gff->parse_gff($gff_file));
+ok( my $gff = Bio::GenomeUpdate::GFF->new(),'create GFF obj');
+ok( $gff->parse_gff($gff_file),'parse GFF obj');
 
 #update coordinates, calls GFFRearrange object
-ok( my %coords = $gff->reorder_coordinates($agp_orig,$agp_fish));
-ok( my %flips = $gff->flipped_coordinates($agp_orig,$agp_fish));
+ok( my %coords = $gff->get_reordered_coordinates($agp_orig,$agp_fish),'get_reordered_coordinates');
+ok( my %flips = $gff->get_flipped_coordinates($agp_orig,$agp_fish),'get_flipped_coordinates');
+
+print STDERR "flips: ",scalar keys %flips,"\n";
 
 #remap GFF
-ok( $gff->remap_coordinates(%coords,%flips));
+ok( $gff->remap_coordinates(\%coords,\%flips),'remap_coordinates');
 
 #validate remapping
 my $compare_str = q(##gff3
-CHR01_FISH2_GAPS	src	CDS	50	150	0	+	0	attributes
-CHR01_FISH2_GAPS	src	CDS	370	450	0	+	0	attributes
-CHR01_FISH2_GAPS	src	CDS	500	550	0	+	0	attributes
-CHR01_FISH2_GAPS	src	CDS	600	650	0	-	0	attributes
-CHR01_FISH2_GAPS	src	CDS	901	1000	0	-	0	attributes
-CHR01_FISH2_GAPS	src	CDS	831	850	0	+	0	attributes
+CHR01_FISH2_GAPS	src	CDS	50	150	0	+	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	370	450	0	+	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	500	550	0	+	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	600	650	0	-	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	901	1000	0	-	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	831	850	0	+	0	ID=attributes
 );
-ok( my $gff_fish = $gff->get_formatted_gff());
+ok( my $gff_fish = $gff->get_formatted_gff(),'get_formatted_gff');
 is( $gff_fish, $compare_str, 'GFF remapping is as expected');
 

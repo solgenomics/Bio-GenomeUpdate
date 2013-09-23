@@ -5,7 +5,7 @@ use warnings;
 use Moose;
 use MooseX::FollowPBP;
 use Moose::Util::TypeConstraints;
-use Bio::GFF3::LowLevel;
+use Bio::GFF3::LowLevel qw (gff3_parse_feature  gff3_format_feature);
 use Bio::GenomeUpdate::GFF::GFFRearrange;
 
 =head1 NAME
@@ -99,8 +99,7 @@ sub parse_gff{
 			next;
 		}
 		else{
-			my $gff_parser_obj = Bio::GFF3::LowLevel->new();
-			my $gff_line_hash = $gff_parser_obj->gff3_parse_feature($line);
+			my $gff_line_hash = gff3_parse_feature($line);
 			$self->add_gff_line($gff_line_hash);
 			
 		}
@@ -129,8 +128,7 @@ sub get_formatted_gff{
 	
 	if ( $self-> has_gff_lines()){
 		foreach my $gff_line_hash ( @{ $self->get_gff_lines()} ){
-			my $gff_parser_obj = Bio::GFF3::LowLevel->new();
-			$out_str .= $gff_parser_obj->gff3_format_feature(%{$gff_line_hash});
+			$out_str .= gff3_format_feature($gff_line_hash);
 		}
 	}
 	return $out_str;
@@ -146,6 +144,10 @@ sub get_reordered_coordinates{
 	my $self = shift;
 	my $agp_old = shift;
 	my $agp_new = shift;
+	
+	#reset current line number if already processed once
+	$agp_old->set_current_agp_line_number(1);
+	$agp_new->set_current_agp_line_number(1);
 	
 	my $gff_rearrange_obj = Bio::GenomeUpdate::GFF::GFFRearrange->new();
 	my %coordinates = $gff_rearrange_obj->reorder_coordinates_AGP( $agp_old, $agp_new); 
@@ -163,10 +165,14 @@ sub get_flipped_coordinates{
 	my $agp_old = shift;
 	my $agp_new = shift;
 	
+	#reset current line number if already processed once
+	$agp_old->set_current_agp_line_number(1);
+	$agp_new->set_current_agp_line_number(1);
+
 	my $gff_rearrange_obj = Bio::GenomeUpdate::GFF::GFFRearrange->new();
-	my %coordinates = $gff_rearrange_obj->flipped_coordinates_AGP( $agp_old, $agp_new); 
+	my %flipped = $gff_rearrange_obj->flipped_coordinates_AGP( $agp_old, $agp_new); 
 	
-	return %coordinates;
+	return %flipped;
 }
 
 =item C<remap_coordinates ( %coordinates, %flipped )>
@@ -176,33 +182,33 @@ Updates coordinates according to mapping in %coordinates hash.
 =cut
 sub remap_coordinates{
 	my $self = shift;
-	my %coordinates = shift;
-	my %flipped = shift;
+	my $coordinates = shift;
+	my $flipped = shift;
 	
 	if ( $self-> has_gff_lines()){
 		my @lines = @{ $self->get_gff_lines()};
 		$self->clear_gff_lines();
 		
 		foreach my $gff_line_hash ( @lines ){
-			my $start = ${%{$gff_line_hash}}{'start'};
-			my $end = ${%{$gff_line_hash}}{'end'};
-			my $strand = ${%{$gff_line_hash}}{'strand'};
+			my $start = $gff_line_hash->{'start'};
+			my $end = $gff_line_hash->{'end'};
+			my $strand = $gff_line_hash->{'strand'};
 			
 			#modify strand
-			if ( $flipped{${%{$gff_line_hash}}{'start'}} == 1){
+			if ( $flipped->{$start} ){
 				if ( $strand eq '+'){
-					${%{$gff_line_hash}}{'strand'} = '-';
+					$gff_line_hash->{'strand'} = '-';
 				}
 				elsif( $strand eq '-'){
-					${%{$gff_line_hash}}{'strand'} = '+';
+					$gff_line_hash->{'strand'} = '+';
 				}
 			}
 			#modify coords
-			${%{$gff_line_hash}}{'start'} = $coordinates{$start};
-			${%{$gff_line_hash}}{'end'} = $coordinates{$end};
+			$gff_line_hash->{'start'} = $coordinates->{$start};
+			$gff_line_hash->{'end'} = $coordinates->{$end};
 			
 			#add back to $self
-			$self->add_gff_lines($gff_line_hash);
+			$self->add_gff_line($gff_line_hash);
 		}
 	}	
 	return $self;

@@ -38,6 +38,9 @@ sub reorder_coordinates_AGP{
 	
 	#get coords from old AGP
 	while ( my $agp_line = $agp_old->get_next_agp_line()){
+		
+		next if ( ref($agp_line) eq 'Bio::GenomeUpdate::AGP::AGPGapLine');
+		
 		my $agp_line_comp = $agp_line->get_component_id();
 		my $agp_line_obj_old_start = $agp_line->get_object_begin();
 		my $agp_line_obj_old_end = $agp_line->get_object_end();
@@ -55,6 +58,9 @@ sub reorder_coordinates_AGP{
 	
 	#get coords from new AGP
 	while ( my $agp_line = $agp_new->get_next_agp_line()){
+		
+		next if ( ref($agp_line) eq 'Bio::GenomeUpdate::AGP::AGPGapLine');
+		
 		my $agp_line_comp = $agp_line->get_component_id();
 		my $agp_line_obj_new_start = $agp_line->get_object_begin();
 		my $agp_line_obj_new_end = $agp_line->get_object_end();
@@ -66,7 +72,7 @@ sub reorder_coordinates_AGP{
 		#same position and strand
 		if ( ($obj_old_start{$agp_line_comp} == $agp_line_obj_new_start) &&
 			 ($obj_old_end{$agp_line_comp} == $agp_line_obj_new_end) &&
-			 ($comp_old_or{$agp_line_comp} == $agp_line_comp_new_or)){
+			 ($comp_old_or{$agp_line_comp} eq $agp_line_comp_new_or)){
 			
 			for my $base ($obj_old_start{$agp_line_comp}..$obj_old_end{$agp_line_comp}){
 				$coordinates{$base} = $base;
@@ -75,7 +81,7 @@ sub reorder_coordinates_AGP{
 		#same strand, moved downstream
 		elsif ( ($obj_old_start{$agp_line_comp} < $agp_line_obj_new_start) &&
 			 ($obj_old_end{$agp_line_comp} < $agp_line_obj_new_end) &&
-			 ($comp_old_or{$agp_line_comp} == $agp_line_comp_new_or)){
+			 ($comp_old_or{$agp_line_comp} eq $agp_line_comp_new_or)){
 
 			for my $base ($obj_old_start{$agp_line_comp}..$obj_old_end{$agp_line_comp}){
 				$coordinates{$base} = $base + ($agp_line_obj_new_start - $obj_old_start{$agp_line_comp});
@@ -84,7 +90,7 @@ sub reorder_coordinates_AGP{
 		#same strand, moved upstream
 		elsif ( ($obj_old_start{$agp_line_comp} > $agp_line_obj_new_start) &&
 			 ($obj_old_end{$agp_line_comp} > $agp_line_obj_new_end) &&
-			 ($comp_old_or{$agp_line_comp} == $agp_line_comp_new_or)){
+			 ($comp_old_or{$agp_line_comp} eq $agp_line_comp_new_or)){
 
 			for my $base ($obj_old_start{$agp_line_comp}..$obj_old_end{$agp_line_comp}){
 				$coordinates{$base} = $base - ($obj_old_start{$agp_line_comp} - $agp_line_obj_new_start);
@@ -93,20 +99,20 @@ sub reorder_coordinates_AGP{
 		#diff strand, flipped, old start = new end
 		elsif ( ($obj_old_start{$agp_line_comp} == $agp_line_obj_new_start) &&
 			 ($obj_old_end{$agp_line_comp} == $agp_line_obj_new_end) &&
-			 ($comp_old_or{$agp_line_comp} != $agp_line_comp_new_or)){
+			 ($comp_old_or{$agp_line_comp} ne $agp_line_comp_new_or)){
 			 
 			my $counter = 0;
 			for my $base ($obj_old_start{$agp_line_comp}..$obj_old_end{$agp_line_comp}){
 				$coordinates{$base} = $agp_line_obj_new_end - $counter;
-				$counter++;
+					$counter++;
 			}
 			#err check
-			die "Problem in assigning coords for flipped $agp_line_comp" if ( $counter != $agp_line_obj_new_end - $agp_line_obj_new_start);
+			die "Problem in assigning coords for flipped $agp_line_comp" if ( ($counter - 1) != $agp_line_obj_new_end - $agp_line_obj_new_start);
 		}
 		#diff strand, start, end
 		elsif ( ($obj_old_start{$agp_line_comp} != $agp_line_obj_new_start) &&
 			 ($obj_old_end{$agp_line_comp} != $agp_line_obj_new_end) &&
-			 ($comp_old_or{$agp_line_comp} != $agp_line_comp_new_or)){
+			 ($comp_old_or{$agp_line_comp} ne $agp_line_comp_new_or)){
 			 
 			my $counter = 0;
 			for my $base ($obj_old_start{$agp_line_comp}..$obj_old_end{$agp_line_comp}){
@@ -114,12 +120,13 @@ sub reorder_coordinates_AGP{
 				$counter++;
 			}
 			#err check
-			die "Problem in assigning coords for flipped/moved $agp_line_comp" if ( $counter != $agp_line_obj_new_end - $agp_line_obj_new_start);
+			die "Problem in assigning coords for flipped/moved $agp_line_comp" if ( ($counter - 1) != $agp_line_obj_new_end - $agp_line_obj_new_start);
 		}
 		else{
 			die "This should not happen!";
 		}
 	}
+	return %coordinates;
 }
 
 =item C<flipped_coordinates_AGP ( $agp_old, $agp_new)>
@@ -135,6 +142,9 @@ sub flipped_coordinates_AGP{
 	
 	#get coords from old AGP
 	while ( my $agp_line = $agp_old->get_next_agp_line()){
+		
+		next if ( ref($agp_line) eq 'Bio::GenomeUpdate::AGP::AGPGapLine');
+		
 		my $agp_line_comp = $agp_line->get_component_id();
 		my $agp_line_obj_old_start = $agp_line->get_object_begin();
 		my $agp_line_obj_old_end = $agp_line->get_object_end();
@@ -152,6 +162,9 @@ sub flipped_coordinates_AGP{
 	
 	#get coords from new AGP
 	while ( my $agp_line = $agp_new->get_next_agp_line()){
+		
+		next if ( ref($agp_line) eq 'Bio::GenomeUpdate::AGP::AGPGapLine');
+		
 		my $agp_line_comp = $agp_line->get_component_id();
 		my $agp_line_obj_new_start = $agp_line->get_object_begin();
 		my $agp_line_obj_new_end = $agp_line->get_object_end();
@@ -163,7 +176,7 @@ sub flipped_coordinates_AGP{
 		#diff strand, flipped, old start = new end
 		if ( ($obj_old_start{$agp_line_comp} == $agp_line_obj_new_start) &&
 			 ($obj_old_end{$agp_line_comp} == $agp_line_obj_new_end) &&
-			 ($comp_old_or{$agp_line_comp} != $agp_line_comp_new_or)){
+			 ($comp_old_or{$agp_line_comp} ne $agp_line_comp_new_or)){
 			 
 			for my $base ($obj_old_start{$agp_line_comp}..$obj_old_end{$agp_line_comp}){
 				$flipped{$base} = 1;
@@ -172,16 +185,17 @@ sub flipped_coordinates_AGP{
 		#diff strand, start, end
 		elsif ( ($obj_old_start{$agp_line_comp} != $agp_line_obj_new_start) &&
 			 ($obj_old_end{$agp_line_comp} != $agp_line_obj_new_end) &&
-			 ($comp_old_or{$agp_line_comp} != $agp_line_comp_new_or)){
+			 ($comp_old_or{$agp_line_comp} ne $agp_line_comp_new_or)){
 			 
 			for my $base ($obj_old_start{$agp_line_comp}..$obj_old_end{$agp_line_comp}){
 				$flipped{$base} = 1;
 			}
 		}
 		else{
-			die "This should not happen!";
+			#all cases where component did not flip
 		}
 	}
+	return %flipped;	
 }
 
 
