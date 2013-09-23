@@ -81,6 +81,8 @@ CHR01_FISH2_GAPS	src	CDS	320	400	0	+	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	450	500	0	+	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	550	600	0	-	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	801	900	0	+	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	850	900	0	+	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	925	940	0	-	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	950	969	0	-	0	ID=attributes
 );
 
@@ -104,7 +106,9 @@ CHR01_FISH2_GAPS	src	CDS	370	450	0	+	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	500	550	0	+	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	600	650	0	-	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	901	1000	0	-	0	ID=attributes
-CHR01_FISH2_GAPS	src	CDS	831	850	0	+	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	901	951	0	-	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	861	876	0	+	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	832	851	0	+	0	ID=attributes
 );
 ok( my $gff_fish = $gff->get_formatted_gff(),'get_formatted_gff');
 is( $gff_fish, $compare_str, 'GFF remapping is as expected');

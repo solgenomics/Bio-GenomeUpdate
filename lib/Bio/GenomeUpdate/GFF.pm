@@ -204,8 +204,14 @@ sub remap_coordinates{
 				}
 			}
 			#modify coords
-			$gff_line_hash->{'start'} = $coordinates->{$start};
-			$gff_line_hash->{'end'} = $coordinates->{$end};
+			if ( $flipped->{$start} ){
+				$gff_line_hash->{'start'} = $coordinates->{$end};
+				$gff_line_hash->{'end'} = $coordinates->{$start};
+			}
+			else{
+				$gff_line_hash->{'start'} = $coordinates->{$start};
+				$gff_line_hash->{'end'} = $coordinates->{$end};
+			}
 			
 			#add back to $self
 			$self->add_gff_line($gff_line_hash);
