@@ -94,7 +94,7 @@ ok( $gff->parse_gff($gff_file),'parse GFF obj');
 ok( my %coords = $gff->get_reordered_coordinates($agp_orig,$agp_fish),'get_reordered_coordinates');
 ok( my %flips = $gff->get_flipped_coordinates($agp_orig,$agp_fish),'get_flipped_coordinates');
 
-print STDERR "flips: ",scalar keys %flips,"\n";
+#print STDERR "flips: ",scalar keys %flips,"\n";
 
 #remap GFF
 ok( $gff->remap_coordinates(\%coords,\%flips),'remap_coordinates');
