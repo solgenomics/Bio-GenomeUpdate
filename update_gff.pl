@@ -14,6 +14,7 @@ update_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF f
  -n  new scaffold AGP file with updated coordinates (required)
  -g  GFF3 file based on old AGP to update to new AGP file (required)
  -m  output mapped GFF file (optional)
+ -d  debugging messages (1 or 0)
  -h  Help
 
 =cut
@@ -21,19 +22,20 @@ update_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF f
 use strict;
 use warnings;
 use Bio::GenomeUpdate::AGP;
-use Bio::GFF3::LowLevel::Parser;
+use Bio::GenomeUpdate::GFF;
 use File::Slurp;
 use Getopt::Std;
+use Proc::ProcessTable;
 
-our ( $opt_o, $opt_n, $opt_g, $opt_m, $opt_h );
-getopts('o:n:g:m:h');
+our ( $opt_o, $opt_n, $opt_g, $opt_m, $opt_d, $opt_h );
+getopts('o:n:g:m:d:h');
 if ($opt_h) {
 	help();
 	exit;
 }
 if ( !$opt_o || !$opt_n || !$opt_g ) {
 	print
-"\nOld AGP, New AGP, New Orientation and GFF3 based on old AGP are required. 
+"\nOld AGP, New AGP and GFF3 based on old AGP are required. 
 See help below\n\n\n";
 	help();
 }
@@ -54,6 +56,10 @@ my $gff_output_file;
 if ($opt_m) {
 	$gff_output_file = $opt_m;
 }
+if ($opt_d){ 
+	print STDERR "Params parsed..\n";
+	mem_used();
+}
 
 #object for old AGP
 my $old_agp = Bio::GenomeUpdate::AGP->new();
@@ -63,58 +69,40 @@ $old_agp->parse_agp($input_old_agp);
 my $new_agp = Bio::GenomeUpdate::AGP->new();
 $new_agp->parse_agp($input_new_agp);
 
-#Tested parser, write out formatted AGP, works!!
-#my $test_agp_str = $old_agp->get_formatted_agp();
-#print $test_agp_str;
+#object for gff
+my $gff = Bio::GenomeUpdate::GFF->new();
+$gff->parse_gff($input_gff); 
+if ($opt_d){ 
+	print STDERR "Files read..\n";
+	mem_used();
+}
 
 #get coordinates mapped from old AGP to new AGP space
-my %updated_coordinates = reorder_coordinates( $old_agp, $new_agp);
+my %coords = $gff->get_reordered_coordinates($old_agp,$new_agp);
+my %flips = $gff->get_flipped_coordinates($old_agp,$new_agp);
+if ($opt_d){ 
+	print STDERR "Hashes populated..\n";
+	mem_used();
+}
 
 #remapping the GFF
-#my $out_GFF = remapGFF($input_gff, %updated_coordinates);
+$gff->remap_coordinates(\%coords,\%flips);
+if ($opt_d){ 
+	print STDERR "Coords remapped..\n";
+	mem_used();
+}
 
 #print the GFF ($gff_output_file)
+my $new_gff = $gff->get_formatted_gff();
+unless(open(OGFF,">$gff_output_file")){print STDERR "Cannot open $gff_output_file\n"; exit 1;}
+print OGFF $new_gff;
+close(OGFF);
+if ($opt_d){ 
+	print STDERR "GFF written..\n";
+	mem_used();
+}
 
 #----------------------------------------------------------------------------
-
-sub reorder_coordinates {
-	my ( $old_agp, $new_agp ) = @_;
-	my (%chrs, %coords);
-	
-	#get coords from old AGP
-	while ( my $agp_line = $old_agp->get_next_agp_line()){
-		my $agp_line_obj = $agp_line->get_object_being_assembled();
-		my $agp_line_obj_start = $agp_line->get_object_begin();
-		my $agp_line_obj_end = $agp_line->get_object_end();
-		
-		#print $agp_line_obj,' ',$agp_line_obj_start,' ',$agp_line_obj_end,"\n"; debug 
-		if( exists $chrs{$agp_line_obj}){
-			%coords = $chrs{$agp_line_obj};
-		}
-		
-		for my $base ($agp_line_obj_start..$agp_line_obj_end){
-			die "$agp_line_obj already has $base recorded, aborting.. " if exists $coords{$base};
-			$coords{$base}='';
-		}
-		
-		$chrs{$agp_line_obj} = %coords;
-	}
-	
-	#get coords from new AGP
-	while ( my $agp_line = $new_agp->get_next_agp_line()){
-		
-	}
-
-}
-
-sub remapGFF {
-	my ( $input_gff, $updated_coordinates ) = @_;
-
-	#Using Rob's new module instead of Bio::DB:GFF
-	my $gff = Bio::GFF3::LowLevel::Parser->open($input_gff);
-
-	return;
-}
 
 sub help {
 	print STDERR <<EOF;
@@ -138,6 +126,15 @@ sub help {
 
 EOF
 	exit(1);
+}
+
+sub mem_used{
+	my ($i,$t); 
+	$t = new Proc::ProcessTable;
+	foreach my $got ( @{$t->table} ) {
+		next if not $got->pid eq $$; $i=$got->size;
+	}
+	print STDERR "Process id=",$$,"\n"; print "Memory used(MB)=", $i/1024/1024, "\n";
 }
 
 =head1 LICENSE
@@ -170,13 +167,6 @@ SL2.40ch01	35267598	36990194	3	F	SL2.40SC04191	1	1722597	+
 SL2.40ch01	36990195	39120194	4	N	2130000	contig	no	
 SL2.40ch01	39120195	41754221	5	F	SL2.40SC03666	1	2634027	+
 SL2.40ch01	41754222	42324221	6	N	570000	contig	no	
-
-# Orientation new
-SL2.40sc04191	+
-SL2.40sc03666	-
-SL2.40sc03594	+
-SL2.40sc05010	+
-SL2.40sc05941	+
 
 # GFF
 SL2.40ch00	SL2.40_assembly	supercontig	21801721	21803721	.	+	.	ID=SL2.40sc03931;Parent=SL2.40ch00;Name=SL2.40sc03931;Target=SL2.40sc03931 1 2001 +;reliably_oriented=0
