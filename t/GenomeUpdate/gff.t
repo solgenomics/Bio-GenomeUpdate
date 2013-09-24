@@ -49,6 +49,8 @@ CHR01_FISH2_GAPS	201	300	2	N	99	contig	no
 CHR01_FISH2_GAPS	301	600	3	F	SL2.40SC04191	1	300	+
 CHR01_FISH2_GAPS	601	800	4	N	200	contig	no	
 CHR01_FISH2_GAPS	801	1000	5	F	SL2.40SC03666	1	200	+
+CHR01_FISH2_GAPS	1001	1100	4	N	200	contig	no	
+CHR01_FISH2_GAPS	1101	1500	5	F	SL2.40SC03661	1	200	-
 );
 ok( my $agp_orig = Bio::GenomeUpdate::AGP->new(),'create orig AGP obj');
 ok( $agp_orig->parse_agp($agp_orig_file),'parse orig AGP obj');
@@ -70,6 +72,8 @@ CHR01_FISH2_GAPS	201	350	2	N	150	contig	no
 CHR01_FISH2_GAPS	351	650	3	F	SL2.40SC04191	1	300	+
 CHR01_FISH2_GAPS	651	800	4	N	150	contig	no	
 CHR01_FISH2_GAPS	801	1000	5	F	SL2.40SC03666	1	200	-
+CHR01_FISH2_GAPS	1001	1100	4	N	200	contig	no	
+CHR01_FISH2_GAPS	1101	1500	5	F	SL2.40SC03661	1	200	+
 );
 ok(my $agp_fish = Bio::GenomeUpdate::AGP->new(),'create fish AGP obj');
 ok( $agp_fish->parse_agp($agp_fish_file),'parse fish AGP obj');
@@ -84,6 +88,8 @@ CHR01_FISH2_GAPS	src	CDS	801	900	0	+	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	850	900	0	+	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	925	940	0	-	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	950	969	0	-	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	1200	1300	0	+	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	1400	1475	0	-	0	ID=attributes
 );
 
 
@@ -109,6 +115,8 @@ CHR01_FISH2_GAPS	src	CDS	901	1000	0	-	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	901	951	0	-	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	861	876	0	+	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	832	851	0	+	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	1301	1401	0	-	0	ID=attributes
+CHR01_FISH2_GAPS	src	CDS	1126	1201	0	+	0	ID=attributes
 );
 ok( my $gff_fish = $gff->get_formatted_gff(),'get_formatted_gff');
 is( $gff_fish, $compare_str, 'GFF remapping is as expected');
