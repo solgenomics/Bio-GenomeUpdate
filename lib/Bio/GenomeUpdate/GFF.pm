@@ -150,7 +150,7 @@ sub get_reordered_coordinates{
 	$agp_new->set_current_agp_line_number(1);
 	
 	my $gff_rearrange_obj = Bio::GenomeUpdate::GFF::GFFRearrange->new();
-	my %coordinates = $gff_rearrange_obj->reorder_coordinates_AGP( $agp_old, $agp_new); 
+	my %coordinates = $gff_rearrange_obj->reordered_coordinates_AGP( $agp_old, $agp_new); 
 	
 	return %coordinates;
 }
