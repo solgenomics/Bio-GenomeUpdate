@@ -44,7 +44,7 @@ my $agp_orig_file = q(##agp-version	2.0
 # first comment
 # next comment
 # last comment
-CHR01_FISH2_GAPS	1	200	1	F	SL2.40SC04133	1	200	+
+CHR01_FISH2_GAPS	1	200	1	F	SL2.40SC04133	1	200	0
 CHR01_FISH2_GAPS	201	300	2	N	99	contig	no	
 CHR01_FISH2_GAPS	301	600	3	F	SL2.40SC04191	1	300	+
 CHR01_FISH2_GAPS	601	800	4	N	200	contig	no	
@@ -67,7 +67,7 @@ my $agp_fish_file = q(##agp-version	2.0
 # first comment
 # next comment
 # last comment
-CHR01_FISH2_GAPS	1	200	1	F	SL2.40SC04133	1	200	+
+CHR01_FISH2_GAPS	1	200	1	F	SL2.40SC04133	1	200	0
 CHR01_FISH2_GAPS	201	350	2	N	150	contig	no	
 CHR01_FISH2_GAPS	351	650	3	F	SL2.40SC04191	1	300	+
 CHR01_FISH2_GAPS	651	800	4	N	150	contig	no	
@@ -96,14 +96,14 @@ CHR01_FISH2_GAPS	src	CDS	1400	1475	0	-	0	ID=attributes
 ok( my $gff = Bio::GenomeUpdate::GFF->new(),'create GFF obj');
 ok( $gff->parse_gff($gff_file),'parse GFF obj');
 
-#update coordinates, calls GFFRearrange object
-ok( my %coords = $gff->get_reordered_coordinates($agp_orig,$agp_fish),'get_reordered_coordinates');
-ok( my %flips = $gff->get_flipped_coordinates($agp_orig,$agp_fish),'get_flipped_coordinates');
-
-#print STDERR "flips: ",scalar keys %flips,"\n";
-
-#remap GFF
-ok( $gff->remap_coordinates(\%coords,\%flips),'remap_coordinates');
+##update coordinates, calls GFFRearrange object
+#ok( my %coords = $gff->get_reordered_coordinates($agp_orig,$agp_fish),'get_reordered_coordinates');
+#ok( my %flips = $gff->get_flipped_coordinates($agp_orig,$agp_fish),'get_flipped_coordinates');
+#
+##print STDERR "flips: ",scalar keys %flips,"\n";
+#
+##remap GFF
+#ok( $gff->remap_coordinates_hash(\%coords,\%flips),'remap_coordinates');
 
 #validate remapping
 my $compare_str = q(##gff3
@@ -118,6 +118,10 @@ CHR01_FISH2_GAPS	src	CDS	832	851	0	+	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	1301	1401	0	-	0	ID=attributes
 CHR01_FISH2_GAPS	src	CDS	1126	1201	0	+	0	ID=attributes
 );
-ok( my $gff_fish = $gff->get_formatted_gff(),'get_formatted_gff');
-is( $gff_fish, $compare_str, 'GFF remapping is as expected');
+#ok( my $gff_fish = $gff->get_formatted_gff(),'get_formatted_gff');
+#is( $gff_fish, $compare_str, 'GFF remapping using hash based method is as expected');
 
+#remap GFF using optimized method
+ok( $gff->remap_coordinates($agp_orig,$agp_fish),'remap_coordinates using optimized method');
+ok( my $gff_fish = $gff->get_formatted_gff(),'get_formatted_gff');
+is( $gff_fish, $compare_str, 'GFF remapping using optimized method is as expected');

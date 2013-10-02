@@ -78,15 +78,17 @@ if ($opt_d){
 }
 
 #get coordinates mapped from old AGP to new AGP space
-my %coords = $gff->get_reordered_coordinates($old_agp,$new_agp);
-my %flips = $gff->get_flipped_coordinates($old_agp,$new_agp);
-if ($opt_d){ 
-	print STDERR "Hashes populated..\n";
-	mem_used();
-}
+#my %coords = $gff->get_reordered_coordinates($old_agp,$new_agp);
+#my %flips = $gff->get_flipped_coordinates($old_agp,$new_agp);
+#if ($opt_d){ 
+#	print STDERR "Hashes populated..\n";
+#	mem_used();
+#}
+#
+##remapping the GFF
+#$gff->remap_coordinates(\%coords,\%flips);
 
-#remapping the GFF
-$gff->remap_coordinates(\%coords,\%flips);
+$gff->remap_coordinates($old_agp,$new_agp);
 if ($opt_d){ 
 	print STDERR "Coords remapped..\n";
 	mem_used();
@@ -111,7 +113,10 @@ sub help {
     Description:
 
      This script updates the coordinates of features in a Generic Feature Format version 3 (GFF)
-     using a new Accessioned Golden Path (AGP) file.
+     using a new Accessioned Golden Path (AGP) file. 
+     
+    NOTE:
+     The component ids in both AGP files need to be identical.
 
     Usage:
       update_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF file]

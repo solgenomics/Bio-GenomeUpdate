@@ -175,12 +175,45 @@ sub get_flipped_coordinates{
 	return %flipped;
 }
 
-=item C<remap_coordinates ( %coordinates, %flipped )>
+=item C<remap_coordinates ( $agp_old, $agp_new )>
 
-Updates coordinates according to mapping in %coordinates hash.  
+Updates GFF coordinates according to mapping function in GFFRearrange::updated_coordinates_strand_AGP routine.  
 
 =cut
 sub remap_coordinates{
+	my $self = shift;
+	my $agp_old = shift;
+	my $agp_new = shift;
+	
+	if ( $self-> has_gff_lines()){
+		my @lines = @{ $self->get_gff_lines()};
+		$self->clear_gff_lines();
+		
+		foreach my $gff_line_hash ( @lines ){
+			my $start = $gff_line_hash->{'start'};
+			my $end = $gff_line_hash->{'end'};
+			my $strand = $gff_line_hash->{'strand'};
+			
+			my $gff_rearrange_obj = Bio::GenomeUpdate::GFF::GFFRearrange->new();
+			my ($nstart, $nend, $nstrand) = $gff_rearrange_obj->updated_coordinates_strand_AGP( $start, $end, $strand, $agp_old, $agp_new);
+			
+			$gff_line_hash->{'start'} = $nstart;
+			$gff_line_hash->{'end'} = $nend;
+			$gff_line_hash->{'strand'} = $nstrand;
+			
+			#add back to $self
+			$self->add_gff_line($gff_line_hash);
+		}
+	}	
+	return $self;
+}
+=item C<remap_coordinates_hash ( %coordinates, %flipped )>
+
+Updates GFF coordinates according to mapping in %coordinates hash.  
+
+=cut
+sub remap_coordinates_hash{
+
 	my $self = shift;
 	my $coordinates = shift;
 	my $flipped = shift;
@@ -219,7 +252,6 @@ sub remap_coordinates{
 	}	
 	return $self;
 }
-
 
 ###
 1;				#do not remove
