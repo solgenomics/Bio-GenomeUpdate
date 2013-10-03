@@ -40,6 +40,7 @@ sub run_time{
 Prints runtime details.
 
 =cut
+
 sub mem_used{
 	my ($i,$t); 
 	$t = new Proc::ProcessTable;
