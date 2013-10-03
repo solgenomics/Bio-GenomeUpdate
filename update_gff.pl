@@ -23,9 +23,9 @@ use strict;
 use warnings;
 use Bio::GenomeUpdate::AGP;
 use Bio::GenomeUpdate::GFF;
+use Utilities;
 use File::Slurp;
 use Getopt::Std;
-use Proc::ProcessTable;
 
 our ( $opt_o, $opt_n, $opt_g, $opt_m, $opt_d, $opt_h );
 getopts('o:n:g:m:d:h');
@@ -56,9 +56,11 @@ my $gff_output_file;
 if ($opt_m) {
 	$gff_output_file = $opt_m;
 }
+my $util = Utilities->new();
 if ($opt_d){ 
 	print STDERR "Params parsed..\n";
-	mem_used();
+	$util->mem_used();
+	$util->run_time();
 }
 
 #object for old AGP
@@ -74,7 +76,8 @@ my $gff = Bio::GenomeUpdate::GFF->new();
 $gff->parse_gff($input_gff); 
 if ($opt_d){ 
 	print STDERR "Files read..\n";
-	mem_used();
+	$util->mem_used();
+	$util->run_time();
 }
 
 #get coordinates mapped from old AGP to new AGP space
@@ -91,7 +94,8 @@ if ($opt_d){
 $gff->remap_coordinates($old_agp,$new_agp);
 if ($opt_d){ 
 	print STDERR "Coords remapped..\n";
-	mem_used();
+	$util->mem_used();
+	$util->run_time();
 }
 
 #print the GFF ($gff_output_file)
@@ -101,7 +105,8 @@ print OGFF $new_gff;
 close(OGFF);
 if ($opt_d){ 
 	print STDERR "GFF written..\n";
-	mem_used();
+	$util->mem_used();
+	$util->run_time();
 }
 
 #----------------------------------------------------------------------------
@@ -131,15 +136,6 @@ sub help {
 
 EOF
 	exit(1);
-}
-
-sub mem_used{
-	my ($i,$t); 
-	$t = new Proc::ProcessTable;
-	foreach my $got ( @{$t->table} ) {
-		next if not $got->pid eq $$; $i=$got->size;
-	}
-	print STDERR "Process id=",$$,"\n"; print "Memory used(MB)=", $i/1024/1024, "\n";
 }
 
 =head1 LICENSE
