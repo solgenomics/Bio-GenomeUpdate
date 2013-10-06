@@ -299,7 +299,10 @@ sub updated_coordinates_strand_AGP{
 
 	#get component from old AGP
 	my ($component) = $self->get_component_AGP($start, $agp_old);
-	die "Diff component for start and stop. Exiting.." 
+	
+	#presuming start component == end components. Diff if gff record for full chromosome (assembly.gff)
+	die "Diff component for start and stop.\nStart: ",$start,' Component: ',$self->get_component_AGP($start, $agp_old),
+		"\nEnd: ",$end,' Component: ',$self->get_component_AGP($end, $agp_old),"\n" 
 		if( ($self->get_component_AGP($start, $agp_old)) ne ($self->get_component_AGP($end, $agp_old)));
 	
 	#same position and strand
