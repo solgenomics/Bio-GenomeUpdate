@@ -19,7 +19,7 @@ use Scalar::Util 'looks_like_number';
 
 =head1 DESCRIPTION
 
-    This class modifies Generic Feature Format (GFF) coordinates using old and new Accessioned Golden Path (AGP) files. It does not currently handle Tiling Path Files (TPF). It does NOT handle cases where component sizes have changed in new AGP. It only handles changes in gap sizes and component flips. 
+    This class modifies Generic Feature Format (GFF) coordinates using old and new Accessioned Golden Path (AGP) files. It does not currently handle Tiling Path Files (TPF). It does NOT handle cases where component sizes have changed in new AGP. It only handles changes in gap sizes and component flips. GFF features than span scaffolds are not handled and written out to errors.gff3 file. 
 
 =head2 Methods
 
@@ -301,12 +301,17 @@ sub updated_coordinates_strand_AGP{
 	my ($component) = $self->get_component_AGP($start, $agp_old);
 	
 	#presuming start component == end components. Diff if gff record for full chromosome (assembly.gff)
-	die "Diff component for start and stop.\nStart: ",$start,' Component: ',$self->get_component_AGP($start, $agp_old),
-		"\nEnd: ",$end,' Component: ',$self->get_component_AGP($end, $agp_old),"\n" 
-		if( ($self->get_component_AGP($start, $agp_old)) ne ($self->get_component_AGP($end, $agp_old)));
-	
+#	die "Diff component for start and stop.\nStart: ",$start,' Component: ',$self->get_component_AGP($start, $agp_old),
+#		"\nEnd: ",$end,' Component: ',$self->get_component_AGP($end, $agp_old),"\n" 
+#		if( ($self->get_component_AGP($start, $agp_old)) ne ($self->get_component_AGP($end, $agp_old)));
+	if( ($self->get_component_AGP($start, $agp_old)) ne ($self->get_component_AGP($end, $agp_old))){
+		print STDERR "Diff component for start and stop.\nStart: ",$start,' Component: ',
+			$self->get_component_AGP($start, $agp_old),"\nEnd: ",$end,' Component: ',
+			$self->get_component_AGP($end, $agp_old),"\n";
+		return (0,0,0);
+	}
 	#same position and strand
-	if(($obj_old_start{$component} == $obj_new_start{$component}) &&
+	elsif(($obj_old_start{$component} == $obj_new_start{$component}) &&
 		($obj_old_end{$component} == $obj_new_end{$component}) &&
 		($comp_old_or{$component} eq $comp_new_or{$component})){
 			$nstart = $start;

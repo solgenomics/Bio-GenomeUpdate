@@ -18,7 +18,7 @@ use Bio::GenomeUpdate::GFF::GFFRearrange;
 
 =head1 DESCRIPTION
 
-    This class stores Generic Feature Format (GFF) information including coordinates, strand and source. It reads in old and new Accessioned Golden Path (AGP) files and prints a GFF with updated coordinates. 
+    This class stores Generic Feature Format (GFF) information including coordinates, strand and source. It reads in old and new Accessioned Golden Path (AGP) files and prints a GFF with updated coordinates. GFF features than span scaffolds are not handled and written out to errors.gff3 file. 
 
 
 =head2 Methods
@@ -177,7 +177,7 @@ sub get_flipped_coordinates{
 
 =item C<remap_coordinates ( $agp_old, $agp_new )>
 
-Updates GFF coordinates according to mapping function in GFFRearrange::updated_coordinates_strand_AGP routine.  
+Updates GFF coordinates according to mapping function in GFFRearrange::updated_coordinates_strand_AGP routine. GFF features than span scaffolds are not handled and written out to errors.gff3 file.  
 
 =cut
 sub remap_coordinates{
@@ -188,6 +188,7 @@ sub remap_coordinates{
 	if ( $self-> has_gff_lines()){
 		my @lines = @{ $self->get_gff_lines()};
 		$self->clear_gff_lines();
+		my $errors = '';
 		
 		foreach my $gff_line_hash ( @lines ){
 			my $start = $gff_line_hash->{'start'};
@@ -197,19 +198,28 @@ sub remap_coordinates{
 			my $gff_rearrange_obj = Bio::GenomeUpdate::GFF::GFFRearrange->new();
 			my ($nstart, $nend, $nstrand) = $gff_rearrange_obj->updated_coordinates_strand_AGP( $start, $end, $strand, $agp_old, $agp_new);
 			
-			$gff_line_hash->{'start'} = $nstart;
-			$gff_line_hash->{'end'} = $nend;
-			$gff_line_hash->{'strand'} = $nstrand;
-			
-			#add back to $self
-			$self->add_gff_line($gff_line_hash);
+			if (($nstart == 0) && ($nend == 0) && ($nstrand == 0)){
+				$errors .= gff3_format_feature($gff_line_hash);
+			}
+			else{
+				$gff_line_hash->{'start'} = $nstart;
+				$gff_line_hash->{'end'} = $nend;
+				$gff_line_hash->{'strand'} = $nstrand;
+				
+				#add back to $self
+				$self->add_gff_line($gff_line_hash);
+			}
 		}
+		
+		open(EGFF,">errors.gff3") if ($errors ne '');
+		print EGFF $errors;
+		close(EGFF);
 	}	
 	return $self;
 }
 =item C<remap_coordinates_hash ( %coordinates, %flipped )>
 
-Updates GFF coordinates according to mapping in %coordinates hash.  
+Updates GFF coordinates according to mapping in %coordinates hash. Deprecated as GFF features than span scaffolds are not handled separately and may be erroneous. Please double check. Use remap_coordinates()
 
 =cut
 sub remap_coordinates_hash{
