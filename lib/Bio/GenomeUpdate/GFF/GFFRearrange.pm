@@ -298,57 +298,58 @@ sub updated_coordinates_strand_AGP{
 	}
 
 	#get component from old AGP
-	my ($component) = $self->get_component_AGP($start, $agp_old);
-	#in case start base was in gap or outside chr
-	if ( $component eq 'NA' ){
+	my $start_component = $self->get_component_AGP($start, $agp_old);
+	my $end_component = $self->get_component_AGP($end, $agp_old);
+	
+	#in case start/end base was in gap or outside chr
+	if ( ($start_component eq 'NA') || ($end_component eq 'NA') ){
 		$nstart = 1;
 		$nend = 1;
 		$nstrand = 1;		
 	}
-	#presuming start component == end components. Diff if gff record for full chromosome (assembly.gff)
-	elsif( ($self->get_component_AGP($start, $agp_old)) ne ($self->get_component_AGP($end, $agp_old))){
+	#presuming start component == end components.
+	elsif( $start_component ne $end_component ){
 		print STDERR "Diff component for start and stop.\nStart: ",$start,' Component: ',
-			$self->get_component_AGP($start, $agp_old),"\nEnd: ",$end,' Component: ',
-			$self->get_component_AGP($end, $agp_old),"\n";
-		#return (0,0,0);
+			$start_component,"\nEnd: ",$end,' Component: ',
+			$end_component,"\n";
 		$nstart = 0;
 		$nend = 0;
 		$nstrand = 0;
 	}
 	#same position and strand
-	elsif(($obj_old_start{$component} == $obj_new_start{$component}) &&
-		($obj_old_end{$component} == $obj_new_end{$component}) &&
-		($comp_old_or{$component} eq $comp_new_or{$component})){
+	elsif(($obj_old_start{$start_component} == $obj_new_start{$start_component}) &&
+		($obj_old_end{$start_component} == $obj_new_end{$start_component}) &&
+		($comp_old_or{$start_component} eq $comp_new_or{$start_component})){
 			$nstart = $start;
 			$nend = $end;
 			$nstrand = $strand;
 	}
 	#same strand, moved downstream
-	elsif (($obj_old_start{$component} < $obj_new_start{$component}) &&
-			($obj_old_end{$component} < $obj_new_end{$component}) &&
-			($comp_old_or{$component} eq $comp_new_or{$component})){
-				$nstart = $start + ($obj_new_start{$component} - $obj_old_start{$component});
-				$nend = $end + ($obj_new_start{$component} - $obj_old_start{$component});
+	elsif (($obj_old_start{$start_component} < $obj_new_start{$start_component}) &&
+			($obj_old_end{$start_component} < $obj_new_end{$start_component}) &&
+			($comp_old_or{$start_component} eq $comp_new_or{$start_component})){
+				$nstart = $start + ($obj_new_start{$start_component} - $obj_old_start{$start_component});
+				$nend = $end + ($obj_new_start{$start_component} - $obj_old_start{$start_component});
 				$nstrand = $strand;
 	}
 	#same strand, moved upstream
-	elsif ( ($obj_old_start{$component} > $obj_new_start{$component}) &&
-			($obj_old_end{$component} > $obj_new_end{$component}) &&
-			($comp_old_or{$component} eq $comp_new_or{$component})){
-				$nstart = $start - ($obj_old_start{$component} - $obj_new_start{$component});
-				$nend = $end - ($obj_old_start{$component} - $obj_new_start{$component});
+	elsif ( ($obj_old_start{$start_component} > $obj_new_start{$start_component}) &&
+			($obj_old_end{$start_component} > $obj_new_end{$start_component}) &&
+			($comp_old_or{$start_component} eq $comp_new_or{$start_component})){
+				$nstart = $start - ($obj_old_start{$start_component} - $obj_new_start{$start_component});
+				$nend = $end - ($obj_old_start{$start_component} - $obj_new_start{$start_component});
 				$nstrand = $strand;
 	}
 	#diff strand i.e. flipped
-	elsif ( ($comp_old_or{$component} ne $comp_new_or{$component})){
+	elsif ( ($comp_old_or{$start_component} ne $comp_new_or{$start_component})){
 			if ( $strand eq '+' ){
-				$nstart = $obj_new_end{$component} - (($end - $start) + ($start - $obj_old_start{$component}));
-				$nend = $obj_new_end{$component} - ($start - $obj_old_start{$component});
+				$nstart = $obj_new_end{$start_component} - (($end - $start) + ($start - $obj_old_start{$start_component}));
+				$nend = $obj_new_end{$start_component} - ($start - $obj_old_start{$start_component});
 				$nstrand = '-';
 			}
 			elsif ( $strand eq '-' ){
-				$nstart = $obj_new_start{$component} + (($obj_old_end{$component} - $end));
-				$nend = $obj_new_start{$component} + (($obj_old_end{$component} - $end) + ($end - $start));
+				$nstart = $obj_new_start{$start_component} + (($obj_old_end{$start_component} - $end));
+				$nend = $obj_new_start{$start_component} + (($obj_old_end{$start_component} - $end) + ($end - $start));
 				$nstrand = '+';
 			}
 	}
@@ -356,7 +357,7 @@ sub updated_coordinates_strand_AGP{
 		die "This should not happen!";
 	}
 
-	die "Failed for $start $end $strand\n" if ( (!defined($nstart)) || (!defined($nend)) || (!defined($nstrand)))
+	die "Failed for $start $end $strand\n" if ( (!defined($nstart)) || (!defined($nend)) || (!defined($nstrand)));
 	return ($nstart, $nend, $nstrand);
 }
 
