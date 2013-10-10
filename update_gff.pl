@@ -56,6 +56,9 @@ my $gff_output_file;
 if ($opt_m) {
 	$gff_output_file = $opt_m;
 }
+else{
+	$gff_output_file = "updated.${gff_input_file}";
+}
 my $util = Utilities->new();
 if ($opt_d){ 
 	print STDERR "Params parsed..\n";
