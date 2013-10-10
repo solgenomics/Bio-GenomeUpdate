@@ -13,7 +13,7 @@ update_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF f
  -o  old AGP file (required)
  -n  new scaffold AGP file with updated coordinates (required)
  -g  GFF3 file based on old AGP to update to new AGP file (required)
- -m  output mapped GFF file (optional)
+ -m  output mapped GFF file (required)
  -d  debugging messages (1 or 0)
  -h  Help
 
@@ -33,9 +33,9 @@ if ($opt_h) {
 	help();
 	exit;
 }
-if ( !$opt_o || !$opt_n || !$opt_g ) {
+if ( !$opt_o || !$opt_n || !$opt_g || !$opt_m ) {
 	print
-"\nOld AGP, New AGP and GFF3 based on old AGP are required. 
+"\nOld AGP, New AGP, GFF3 based on old AGP and new mapped GFF filename are required. 
 See help below\n\n\n";
 	help();
 }
@@ -50,15 +50,8 @@ my $input_new_agp      = read_file($new_agp_input_file)
 my $gff_input_file = $opt_g;
 my $input_gff      = read_file($gff_input_file)
   or die "Could not open GFF input file: $gff_input_file\n";
-  
 my $gff_output_file;
-#set output file
-if ($opt_m) {
-	$gff_output_file = $opt_m;
-}
-else{
-	$gff_output_file = "updated.${gff_input_file}";
-}
+$gff_output_file = $opt_m;
 my $util = Utilities->new();
 if ($opt_d){ 
 	print STDERR "Params parsed..\n";
@@ -83,7 +76,7 @@ if ($opt_d){
 	$util->run_time();
 }
 
-#get coordinates mapped from old AGP to new AGP space
+#get coordinates mapped from old AGP to new AGP space using hash
 #my %coords = $gff->get_reordered_coordinates($old_agp,$new_agp);
 #my %flips = $gff->get_flipped_coordinates($old_agp,$new_agp);
 #if ($opt_d){ 
@@ -92,8 +85,9 @@ if ($opt_d){
 #}
 #
 ##remapping the GFF
-#$gff->remap_coordinates(\%coords,\%flips);
+#$gff->remap_coordinates_hash(\%coords,\%flips);
 
+#get coordinates mapped from old AGP to new AGP space using optimized routine
 $gff->remap_coordinates($old_agp,$new_agp);
 if ($opt_d){ 
 	print STDERR "Coords remapped..\n";
@@ -134,7 +128,7 @@ sub help {
  -o  old AGP file (required)
  -n  new scaffold  AGP file with updated coordinates (required)
  -g  GFF3 file based on old AGP to update to new AGP file (required)
- -m  output mapped GFF file (optional)
+ -m  output mapped GFF file (required)
  -h  help
 
 EOF
