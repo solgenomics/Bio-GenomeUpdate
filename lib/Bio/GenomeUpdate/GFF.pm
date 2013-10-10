@@ -201,6 +201,9 @@ sub remap_coordinates{
 			if (($nstart == 0) && ($nend == 0) && ($nstrand == 0)){
 				$errors .= gff3_format_feature($gff_line_hash);
 			}
+			elsif(($nstart == 1) && ($nend == 1) && ($nstrand == 1)){
+				$errors .= gff3_format_feature($gff_line_hash);
+			}
 			else{
 				$gff_line_hash->{'start'} = $nstart;
 				$gff_line_hash->{'end'} = $nend;

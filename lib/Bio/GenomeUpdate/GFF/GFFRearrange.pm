@@ -299,12 +299,14 @@ sub updated_coordinates_strand_AGP{
 
 	#get component from old AGP
 	my ($component) = $self->get_component_AGP($start, $agp_old);
-	
+	#in case start base was in gap or outside chr
+	if ( $component eq 'NA' ){
+		$nstart = 1;
+		$nend = 1;
+		$nstrand = 1;		
+	}
 	#presuming start component == end components. Diff if gff record for full chromosome (assembly.gff)
-#	die "Diff component for start and stop.\nStart: ",$start,' Component: ',$self->get_component_AGP($start, $agp_old),
-#		"\nEnd: ",$end,' Component: ',$self->get_component_AGP($end, $agp_old),"\n" 
-#		if( ($self->get_component_AGP($start, $agp_old)) ne ($self->get_component_AGP($end, $agp_old)));
-	if( ($self->get_component_AGP($start, $agp_old)) ne ($self->get_component_AGP($end, $agp_old))){
+	elsif( ($self->get_component_AGP($start, $agp_old)) ne ($self->get_component_AGP($end, $agp_old))){
 		print STDERR "Diff component for start and stop.\nStart: ",$start,' Component: ',
 			$self->get_component_AGP($start, $agp_old),"\nEnd: ",$end,' Component: ',
 			$self->get_component_AGP($end, $agp_old),"\n";
@@ -389,12 +391,15 @@ sub get_component_AGP{
 			$found = 1;
 			last;
 		}
-	}	
-	die "No component found containing $base. Exiting..." if($found == 0);
-
+	}
 	$agp->set_current_agp_line_number($current_agp_line_number);
 	
+	#return NA for base in gap or outside chr
+	if($found == 0){
+		$component = 'NA';
+	}
 	return ($component);
+	#die "No component found containing $base. Exiting..." if($found == 0);
 }
 
 
