@@ -303,6 +303,9 @@ sub updated_coordinates_strand_AGP{
 	
 	#in case start/end base was in gap or outside chr
 	if ( ($start_component eq 'NA') || ($end_component eq 'NA') ){
+		print STDERR "Component not found.\nStart: ",$start,' Component: ',
+			$start_component,"\nEnd: ",$end,' Component: ',
+			$end_component,"\n";		
 		$nstart = 1;
 		$nend = 1;
 		$nstrand = 1;		
@@ -359,6 +362,8 @@ sub updated_coordinates_strand_AGP{
 	
 	#For all other errors like GFF feature strand = 0, can have 9 error codes
 	if ( (!defined($nstart)) || (!defined($nend)) || (!defined($nstrand))){
+		print STDERR "Other error for GFF feature.\nStart: ",$start,
+			'  End: ',$end,'  Strand: ',$strand,"\n";
 		$nstart = 1;
 		$nend = 0;
 		$nstrand = 0;		
