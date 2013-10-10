@@ -308,7 +308,10 @@ sub updated_coordinates_strand_AGP{
 		print STDERR "Diff component for start and stop.\nStart: ",$start,' Component: ',
 			$self->get_component_AGP($start, $agp_old),"\nEnd: ",$end,' Component: ',
 			$self->get_component_AGP($end, $agp_old),"\n";
-		return (0,0,0);
+		#return (0,0,0);
+		$nstart = 0;
+		$nend = 0;
+		$nstrand = 0;
 	}
 	#same position and strand
 	elsif(($obj_old_start{$component} == $obj_new_start{$component}) &&
