@@ -356,6 +356,7 @@ sub updated_coordinates_strand_AGP{
 		die "This should not happen!";
 	}
 
+	die "Failed for $start $end $strand\n" if ( (!defined($nstart)) || (!defined($nend)) || (!defined($nstrand)))
 	return ($nstart, $nend, $nstrand);
 }
 
