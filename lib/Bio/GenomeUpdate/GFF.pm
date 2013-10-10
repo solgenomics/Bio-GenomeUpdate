@@ -18,7 +18,7 @@ use Bio::GenomeUpdate::GFF::GFFRearrange;
 
 =head1 DESCRIPTION
 
-    This class stores Generic Feature Format (GFF) information including coordinates, strand and source. It reads in old and new Accessioned Golden Path (AGP) files and prints a GFF with updated coordinates. GFF features than span scaffolds or map to gaps or map outside the chr are not handled and written out to errors.gff3 file. 
+    This class stores Generic Feature Format (GFF) information including coordinates, strand and source. It reads in old and new Accessioned Golden Path (AGP) files and prints a GFF with updated coordinates. GFF features than span scaffolds or map to gaps or map outside the chr or GFF strand = 0 are not handled and written out to errors.gff3 file. 
 
 
 =head2 Methods
@@ -177,7 +177,7 @@ sub get_flipped_coordinates{
 
 =item C<remap_coordinates ( $agp_old, $agp_new )>
 
-Updates GFF coordinates according to mapping function in GFFRearrange::updated_coordinates_strand_AGP routine. GFF features than span scaffolds are not handled and written out to errors.gff3 file.  
+Updates GFF coordinates according to mapping function in GFFRearrange::updated_coordinates_strand_AGP routine. GFF features than span scaffolds or map to gaps or map outside the chr or GFF strand = 0 are not handled and written out to errors.gff3 file.  
 
 =cut
 sub remap_coordinates{
@@ -198,10 +198,16 @@ sub remap_coordinates{
 			my $gff_rearrange_obj = Bio::GenomeUpdate::GFF::GFFRearrange->new();
 			my ($nstart, $nend, $nstrand) = $gff_rearrange_obj->updated_coordinates_strand_AGP( $start, $end, $strand, $agp_old, $agp_new);
 			
+			#start/end map to diff scaffolds
 			if (($nstart == 0) && ($nend == 0) && ($nstrand == 0)){
 				$errors .= gff3_format_feature($gff_line_hash);
 			}
+			#feature maps outside scaffolds
 			elsif(($nstart == 1) && ($nend == 1) && ($nstrand == 1)){
+				$errors .= gff3_format_feature($gff_line_hash);
+			}
+			#other errors
+			elsif(($nstart == 1) && ($nend == 0) && ($nstrand == 0)){
 				$errors .= gff3_format_feature($gff_line_hash);
 			}
 			else{

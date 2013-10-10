@@ -19,7 +19,7 @@ use Scalar::Util 'looks_like_number';
 
 =head1 DESCRIPTION
 
-    This class modifies Generic Feature Format (GFF) coordinates using old and new Accessioned Golden Path (AGP) files. It does not currently handle Tiling Path Files (TPF). It does NOT handle cases where component sizes have changed in new AGP. It only handles changes in gap sizes and component flips. GFF features than span scaffolds or map to gaps or map outside the chr are not handled and written out to errors.gff3 file. 
+    This class modifies Generic Feature Format (GFF) coordinates using old and new Accessioned Golden Path (AGP) files. It does not currently handle Tiling Path Files (TPF). It does NOT handle cases where component sizes have changed in new AGP. It only handles changes in gap sizes and component flips. GFF features than span scaffolds or map to gaps or map outside the chr or GFF strand = 0 are not handled and written out to errors.gff3 file. 
 
 =head2 Methods
 
@@ -225,7 +225,7 @@ sub flipped_coordinates_AGP{
 
 =item C<updated_coordinates_strand_AGP ( $start, $end, $strand, $agp_old, $agp_new)>
 
-Returns new coordinates(int) and strand(char) wrt new AGP. Sets 0 to + as strand in old AGP for comparison purposes. Uses the component names to match positions. Will need mapping function if component names are different. Names should be same in case of accessions for contigs. It will return all 0's if GFF feature spans scaffolds and all 1's if feature maps to a gap or outside the chr. 
+Returns new coordinates(int) and strand(char) wrt new AGP. Sets 0 to + as strand in old AGP for comparison purposes. Uses the component names to match positions. Will need mapping function if component names are different. Names should be same in case of accessions for contigs. It will return all 0's if GFF feature spans scaffolds and all 1's if feature maps to a gap or outside the chr and 100 for all other errors. 
 
 =cut
 
@@ -307,7 +307,7 @@ sub updated_coordinates_strand_AGP{
 		$nend = 1;
 		$nstrand = 1;		
 	}
-	#presuming start component == end components.
+	#Require start component == end component 
 	elsif( $start_component ne $end_component ){
 		print STDERR "Diff component for start and stop.\nStart: ",$start,' Component: ',
 			$start_component,"\nEnd: ",$end,' Component: ',
@@ -356,8 +356,13 @@ sub updated_coordinates_strand_AGP{
 	else{
 		die "This should not happen!";
 	}
-
-	die "Failed for $start $end $strand\n" if ( (!defined($nstart)) || (!defined($nend)) || (!defined($nstrand)));
+	
+	#For all other errors like GFF feature strand = 0, can have 9 error codes
+	if ( (!defined($nstart)) || (!defined($nend)) || (!defined($nstrand))){
+		$nstart = 1;
+		$nend = 0;
+		$nstrand = 0;		
+	}
 	return ($nstart, $nend, $nstrand);
 }
 
