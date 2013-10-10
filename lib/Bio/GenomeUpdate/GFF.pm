@@ -211,9 +211,12 @@ sub remap_coordinates{
 			}
 		}
 		
-		open(EGFF,">errors.gff3") if ($errors ne '');
-		print EGFF $errors;
-		close(EGFF);
+		#print GFF lines where feature spanned scaffolds	
+		if ($errors ne ''){
+			open(EGFF,">errors.gff3");
+			print EGFF $errors;
+			close(EGFF);
+		}
 	}	
 	return $self;
 }
