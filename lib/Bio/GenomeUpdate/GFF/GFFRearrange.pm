@@ -238,6 +238,7 @@ sub updated_coordinates_strand_AGP{
 	my $agp_new = shift;
 	my (%obj_old_start, %obj_old_end, %comp_old_or, %obj_new_start, %obj_new_end, %comp_new_or);
 	my ($nstart, $nend, $nstrand);
+	my $errors = '';
 	
 	#reset current line number if already processed once
 	$agp_old->set_current_agp_line_number(1);
@@ -305,7 +306,10 @@ sub updated_coordinates_strand_AGP{
 	if ( ($start_component eq 'NA') || ($end_component eq 'NA') ){
 		print STDERR "Component not found.\nStart: ",$start,' Component: ',
 			$start_component,"\nEnd: ",$end,' Component: ',
-			$end_component,"\n";		
+			$end_component,"\n";
+		$errors .= "Component not found.\nStart: ".$start.' Component: '.
+			$start_component."\nEnd: ".$end.' Component: '.
+			$end_component."\n";
 		$nstart = 1;
 		$nend = 1;
 		$nstrand = 1;		
@@ -315,6 +319,9 @@ sub updated_coordinates_strand_AGP{
 		print STDERR "Diff component for start and stop.\nStart: ",$start,' Component: ',
 			$start_component,"\nEnd: ",$end,' Component: ',
 			$end_component,"\n";
+		$errors .= "Diff component for start and stop.\nStart: ".$start.' Component: '.
+			$start_component."\nEnd: ".$end.' Component: '.
+			$end_component."\n";
 		$nstart = 0;
 		$nend = 0;
 		$nstrand = 0;
@@ -364,10 +371,19 @@ sub updated_coordinates_strand_AGP{
 	if ( (!defined($nstart)) || (!defined($nend)) || (!defined($nstrand))){
 		print STDERR "Other error for GFF feature.\nStart: ",$start,
 			'  End: ',$end,'  Strand: ',$strand,"\n";
+		$errors .= "Other error for GFF feature.\nStart: ".$start.
+			'  End: '.$end.'  Strand: '.$strand."\n";
 		$nstart = 1;
 		$nend = 0;
 		$nstrand = 0;		
 	}
+
+	#print ERR messages	
+		if ($errors ne ''){
+			open(EGFF,">>error.messages");
+			print EGFF $errors;
+			close(EGFF);
+		}	
 	return ($nstart, $nend, $nstrand);
 }
 
