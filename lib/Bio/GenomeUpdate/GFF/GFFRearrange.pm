@@ -223,7 +223,7 @@ sub flipped_coordinates_AGP{
 	return %flipped;	
 }
 
-=item C<updated_coordinates_strand_AGP ( $start, $end, $strand, $agp_old, $agp_new)>
+=item C<updated_coordinates_strand_AGP ( $start, $end, $strand, $agp_old, $agp_new, $gff_file_name)>
 
 Returns new coordinates(int) and strand(char) wrt new AGP. Sets 0 to + as strand in old AGP for comparison purposes. Uses the component names to match positions. Will need mapping function if component names are different. Names should be same in case of accessions for contigs. It will return all 0's if GFF feature spans scaffolds and all 1's if feature maps to a gap or outside the chr and 100 for all other errors. 
 
@@ -236,6 +236,7 @@ sub updated_coordinates_strand_AGP{
 	my $strand = shift;
 	my $agp_old = shift;
 	my $agp_new = shift;
+	my $gff_file_name = shift;
 	my (%obj_old_start, %obj_old_end, %comp_old_or, %obj_new_start, %obj_new_end, %comp_new_or);
 	my ($nstart, $nend, $nstrand);
 	my $errors = '';
@@ -380,7 +381,7 @@ sub updated_coordinates_strand_AGP{
 
 	#print ERR messages	
 		if ($errors ne ''){
-			open(EGFF,">>error.messages");
+			open(EGFF,">>error.messages.${gff_file_name}");
 			print EGFF $errors;
 			close(EGFF);
 		}	
@@ -429,7 +430,6 @@ sub get_component_AGP{
 	return ($component);
 	#die "No component found containing $base. Exiting..." if($found == 0);
 }
-
 
 
 ###

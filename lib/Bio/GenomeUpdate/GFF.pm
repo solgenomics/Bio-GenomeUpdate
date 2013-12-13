@@ -5,7 +5,7 @@ use warnings;
 use Moose;
 use MooseX::FollowPBP;
 use Moose::Util::TypeConstraints;
-use Bio::GFF3::LowLevel qw (gff3_parse_feature  gff3_format_feature);
+use Bio::GFF3::LowLevel qw (gff3_parse_feature  gff3_format_feature gff3_parse_attributes);
 use Bio::GenomeUpdate::GFF::GFFRearrange;
 
 =head1 NAME
@@ -22,6 +22,23 @@ use Bio::GenomeUpdate::GFF::GFFRearrange;
 
 
 =head2 Methods
+
+=over
+
+=cut
+
+=item C<set_file_name ( $name_string )>
+
+Sets the file name (required).
+
+=cut
+
+has 'file_name' => (
+	isa       => 'Str',
+	is        => 'rw',
+	predicate => 'has_file_name',
+	clearer   => 'clear_file_name'
+);
 
 =over
 
@@ -74,17 +91,22 @@ sub add_gff_line {
 	$self->set_gff_lines( [@lines] );
 }
 
-=item C<parse_gff ( $gff_file_content )>
+=item C<parse_gff ( $gff_file_content, $gff_file_name )>
 
 Reads in the input GFF3 using Bio::GFF3::LowLevel::Parser.
-
+ 
 =cut
 
 sub parse_gff{
 	my $self = shift;
 	my $gff_file_content = shift;
+	my $gff_file_name = shift;
+	
 	$self->clear_comment_lines();
 	$self->clear_gff_lines();
+	$self->clear_file_name();
+	
+	$self->set_file_name($gff_file_name);
 	
 	my @lines = split ( /\n/, $gff_file_content);
 	my $line_count         = scalar(@lines);
@@ -185,6 +207,9 @@ sub remap_coordinates{
 	my $agp_old = shift;
 	my $agp_new = shift;
 	
+	my $gff_file_name = $self->get_file_name();
+	
+	
 	if ( $self-> has_gff_lines()){
 		my @lines = @{ $self->get_gff_lines()};
 		$self->clear_gff_lines();
@@ -196,7 +221,7 @@ sub remap_coordinates{
 			my $strand = $gff_line_hash->{'strand'};
 			
 			my $gff_rearrange_obj = Bio::GenomeUpdate::GFF::GFFRearrange->new();
-			my ($nstart, $nend, $nstrand) = $gff_rearrange_obj->updated_coordinates_strand_AGP( $start, $end, $strand, $agp_old, $agp_new);
+			my ($nstart, $nend, $nstrand) = $gff_rearrange_obj->updated_coordinates_strand_AGP( $start, $end, $strand, $agp_old, $agp_new, $gff_file_name);
 			
 			#start/end map to diff scaffolds
 			if (($nstart == 0) && ($nend == 0) && ($nstrand == 0)){
@@ -222,13 +247,90 @@ sub remap_coordinates{
 		
 		#print GFF lines where feature spanned scaffolds	
 		if ($errors ne ''){
-			open(EGFF,">errors.gff3");
+			open(EGFF,">errors.${gff_file_name}");
 			print EGFF $errors;
 			close(EGFF);
 		}
 	}	
 	return $self;
 }
+
+=item C<remap_coordinates_clean ( $agp_old, $agp_new )>
+
+Removes children of dropped features. Updates GFF coordinates according to mapping function in GFFRearrange::updated_coordinates_strand_AGP routine. GFF features and their children that span scaffolds or map to gaps or map outside the chr or GFF strand = 0 are not handled and written out to errors.gff3 file.  
+
+=cut
+sub remap_coordinates_clean{
+	my $self = shift;
+	my $agp_old = shift;
+	my $agp_new = shift;
+	
+	my $gff_file_name = $self->get_file_name();
+	
+	if ( $self-> has_gff_lines()){
+		my @lines = @{ $self->get_gff_lines()};
+		$self->clear_gff_lines();
+		my $errors = '';
+		my @error_IDs;
+		
+		foreach my $gff_line_hash ( @lines ){
+			
+			#check for child of error feature
+			if (((scalar @error_IDs) > 0) && (exists $gff_line_hash->{'attributes'}->{'Parent'})){
+				foreach my $error_ID (@error_IDs){
+					foreach my $parent ($gff_line_hash->{'attributes'}->{'Parent'}){
+						if ($parent eq $error_ID){
+							last SKIP;
+						}						
+					}
+				}
+				 SKIP: $errors .= gff3_format_feature($gff_line_hash);
+				 next;#skip GFF record
+			}
+			
+			
+			my $start = $gff_line_hash->{'start'};
+			my $end = $gff_line_hash->{'end'};
+			my $strand = $gff_line_hash->{'strand'};
+			
+			my $gff_rearrange_obj = Bio::GenomeUpdate::GFF::GFFRearrange->new();
+			my ($nstart, $nend, $nstrand) = $gff_rearrange_obj->updated_coordinates_strand_AGP( $start, $end, $strand, $agp_old, $agp_new, $gff_file_name);
+			
+			#start/end map to diff scaffolds if (($nstart == 0) && ($nend == 0) && ($nstrand == 0))
+			#feature maps outside scaffolds if(($nstart == 1) && ($nend == 1) && ($nstrand == 1))
+			#other errors if(($nstart == 1) && ($nend == 0) && ($nstrand == 0)){
+			#Other 6 err code combinations unused
+			if((($nstart == 0) && ($nend == 0) && ($nstrand == 0)) ||
+				(($nstart == 1) && ($nend == 1) && ($nstrand == 1)) ||
+				(($nstart == 1) && ($nend == 0) && ($nstrand == 0))){
+				#add to error string
+				$errors .= gff3_format_feature($gff_line_hash);
+				
+				foreach my $ID ($gff_line_hash->{'attributes'}->{'ID'}){
+					push @error_IDs,$ID;
+				}
+			}
+			else{
+				$gff_line_hash->{'start'} = $nstart;
+				$gff_line_hash->{'end'} = $nend;
+				$gff_line_hash->{'strand'} = $nstrand;
+				
+				#add back to $self
+				$self->add_gff_line($gff_line_hash);
+			}
+		}
+		
+		#print GFF lines where feature spanned scaffolds	
+		if ($errors ne ''){
+			open(EGFF,">errors.${gff_file_name}");
+			print EGFF $errors;
+			close(EGFF);
+		}
+	}	
+	return $self;
+}
+
+
 =item C<remap_coordinates_hash ( %coordinates, %flipped )>
 
 Updates GFF coordinates according to mapping in %coordinates hash. Deprecated as GFF features than span scaffolds are not handled separately and may be erroneous. Please double check. Use remap_coordinates()

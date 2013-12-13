@@ -89,13 +89,16 @@ CHR01_FISH2_GAPS	src	CDS	850	900	0	+	0	ID=6
 CHR01_FISH2_GAPS	src	CDS	925	940	0	-	0	ID=7
 CHR01_FISH2_GAPS	src	CDS	950	969	0	-	0	ID=8
 CHR01_FISH2_GAPS	src	CDS	950	1150	0	+	0	ID=err
+CHR01_FISH2_GAPS	src	CDS	950	1050	0	+	0	ID=err.1;Parent=err;
 CHR01_FISH2_GAPS	src	CDS	1200	1300	0	+	0	ID=9
 CHR01_FISH2_GAPS	src	CDS	1400	1475	0	-	0	ID=10
+CHR01_FISH2_GAPS	src	CDS	950	1050	0	+	0	ID=err.1.1;Parent=err.1;
 );
 
 
 ok( my $gff = Bio::GenomeUpdate::GFF->new(),'create GFF obj');
-ok( $gff->parse_gff($gff_file),'parse GFF obj');
+my $gff_file_name = 'filename';
+ok( $gff->parse_gff($gff_file,$gff_file_name),'parse GFF obj');
 
 ##update coordinates, calls GFFRearrange object
 #ok( my %coords = $gff->get_reordered_coordinates($agp_orig,$agp_fish),'get_reordered_coordinates');
@@ -123,6 +126,6 @@ CHR01_FISH2_GAPS	src	CDS	1126	1201	0	+	0	ID=10
 #is( $gff_fish, $compare_str, 'GFF remapping using hash based method is as expected');
 
 #remap GFF using optimized method
-ok( $gff->remap_coordinates($agp_orig,$agp_fish),'remap_coordinates using optimized method');
+ok( $gff->remap_coordinates_clean($agp_orig,$agp_fish),'remap_coordinates using optimized method');
 ok( my $gff_fish = $gff->get_formatted_gff(),'get_formatted_gff');
 is( $gff_fish, $compare_str, 'GFF remapping using optimized method is as expected');
