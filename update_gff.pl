@@ -69,7 +69,7 @@ $new_agp->parse_agp($input_new_agp);
 
 #object for gff
 my $gff = Bio::GenomeUpdate::GFF->new();
-$gff->parse_gff($input_gff); 
+$gff->parse_gff($input_gff, $gff_input_file); 
 if ($opt_d){ 
 	print STDERR "Files read..\n";
 	$util->mem_used();
@@ -88,7 +88,7 @@ if ($opt_d){
 #$gff->remap_coordinates_hash(\%coords,\%flips);
 
 #get coordinates mapped from old AGP to new AGP space using optimized routine
-$gff->remap_coordinates($old_agp,$new_agp);
+$gff->remap_coordinates_clean($old_agp,$new_agp);
 if ($opt_d){ 
 	print STDERR "Coords remapped..\n";
 	$util->mem_used();
