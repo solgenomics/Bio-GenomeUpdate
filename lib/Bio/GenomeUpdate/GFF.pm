@@ -6,6 +6,7 @@ use Moose;
 use MooseX::FollowPBP;
 use Moose::Util::TypeConstraints;
 use Bio::GFF3::LowLevel qw (gff3_parse_feature  gff3_format_feature gff3_parse_attributes);
+use File::Basename;
 use Bio::GenomeUpdate::GFF::GFFRearrange;
 
 =head1 NAME
@@ -106,7 +107,8 @@ sub parse_gff{
 	$self->clear_gff_lines();
 	$self->clear_file_name();
 	
-	$self->set_file_name($gff_file_name);
+	my $base_gff_file_name = fileparse($gff_file_name);
+	$self->set_file_name($base_gff_file_name);
 	
 	my @lines = split ( /\n/, $gff_file_content);
 	my $line_count         = scalar(@lines);
@@ -306,7 +308,7 @@ sub remap_coordinates_clean{
 				#add to error string
 				$errors .= gff3_format_feature($gff_line_hash);
 				
-				foreach my $ID ($gff_line_hash->{'attributes'}->{'ID'}){
+				foreach my $ID (@{$gff_line_hash->{'attributes'}->{'ID'}}){
 					push @error_IDs,$ID;
 				}
 			}
