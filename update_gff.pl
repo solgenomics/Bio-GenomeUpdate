@@ -6,7 +6,7 @@ update_gff.pl
 
 =head1 SYNOPSIS
 
-update_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF file]
+update_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF file] -c 0
 
 =head1 COMMAND-LINE OPTIONS
 
@@ -14,6 +14,7 @@ update_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF f
  -n  new scaffold AGP file with updated coordinates (required)
  -g  GFF3 file based on old AGP to update to new AGP file (required)
  -m  output mapped GFF file (required)
+ -c  remove children of dropped features (1 or 0)
  -d  debugging messages (1 or 0)
  -h  Help
 
@@ -27,15 +28,15 @@ use Utilities;
 use File::Slurp;
 use Getopt::Std;
 
-our ( $opt_o, $opt_n, $opt_g, $opt_m, $opt_d, $opt_h );
-getopts('o:n:g:m:d:h');
+our ( $opt_o, $opt_n, $opt_g, $opt_m, $opt_c, $opt_d, $opt_h );
+getopts('o:n:g:m:c:d:h');
 if ($opt_h) {
 	help();
 	exit;
 }
-if ( !$opt_o || !$opt_n || !$opt_g || !$opt_m ) {
+if ( !$opt_o || !$opt_n || !$opt_g || !$opt_m || !defined($opt_c) ) {
 	print
-"\nOld AGP, New AGP, GFF3 based on old AGP and new mapped GFF filename are required. 
+"\nOld AGP, New AGP, GFF3 based on old AGP, new mapped GFF filename and children flag are required. 
 See help below\n\n\n";
 	help();
 }
@@ -50,8 +51,9 @@ my $input_new_agp      = read_file($new_agp_input_file)
 my $gff_input_file = $opt_g;
 my $input_gff      = read_file($gff_input_file)
   or die "Could not open GFF input file: $gff_input_file\n";
-my $gff_output_file;
-$gff_output_file = $opt_m;
+my $gff_output_file = $opt_m;
+my $drop_children = $opt_c;
+
 my $util = Utilities->new();
 if ($opt_d){ 
 	print STDERR "Params parsed..\n";
@@ -76,7 +78,7 @@ if ($opt_d){
 	$util->run_time();
 }
 
-#get coordinates mapped from old AGP to new AGP space using hash
+# Deprecated: get coordinates mapped from old AGP to new AGP space using hash
 #my %coords = $gff->get_reordered_coordinates($old_agp,$new_agp);
 #my %flips = $gff->get_flipped_coordinates($old_agp,$new_agp);
 #if ($opt_d){ 
@@ -88,7 +90,13 @@ if ($opt_d){
 #$gff->remap_coordinates_hash(\%coords,\%flips);
 
 #get coordinates mapped from old AGP to new AGP space using optimized routine
-$gff->remap_coordinates_clean($old_agp,$new_agp);
+if($drop_children){
+	$gff->remap_coordinates_clean($old_agp,$new_agp);
+}
+else{
+	$gff->remap_coordinates($old_agp,$new_agp);
+}
+
 if ($opt_d){ 
 	print STDERR "Coords remapped..\n";
 	$util->mem_used();
@@ -97,13 +105,18 @@ if ($opt_d){
 
 #print the GFF ($gff_output_file)
 my $new_gff = $gff->get_formatted_gff();
-unless(open(OGFF,">$gff_output_file")){print STDERR "Cannot open $gff_output_file\n"; exit 1;}
-print OGFF $new_gff;
-close(OGFF);
-if ($opt_d){ 
-	print STDERR "GFF written..\n";
-	$util->mem_used();
-	$util->run_time();
+if (!defined($new_gff)){
+	print STDERR "No valid GFF records found..\n"; exit 1;
+}
+else{
+	unless(open(OGFF,">$gff_output_file")){print STDERR "Cannot open $gff_output_file\n"; exit 1;}
+	print OGFF $new_gff;
+	close(OGFF);
+	if ($opt_d){ 
+		print STDERR "GFF written..\n";
+		$util->mem_used();
+		$util->run_time();
+	}
 }
 
 #----------------------------------------------------------------------------
@@ -121,15 +134,18 @@ sub help {
      The component ids in both AGP files need to be identical.
 
     Usage:
-      update_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF file]
+      update_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF file] -c 0
       
     Flags:
 
  -o  old AGP file (required)
- -n  new scaffold  AGP file with updated coordinates (required)
+ -n  new scaffold AGP file with updated coordinates (required)
  -g  GFF3 file based on old AGP to update to new AGP file (required)
  -m  output mapped GFF file (required)
- -h  help
+ -c  remove children of dropped features (1 or 0)
+ -d  debugging messages (1 or 0)
+ -h  Help
+
 
 EOF
 	exit(1);
