@@ -380,11 +380,11 @@ sub updated_coordinates_strand_AGP{
 	}
 
 	#print ERR messages	
-		if ($errors ne ''){
-			open(EGFF,">>error.messages.${gff_file_name}");
-			print EGFF $errors;
-			close(EGFF);
-		}	
+	if ($errors ne ''){
+		open(EGFF,">>error.messages.${gff_file_name}");
+		print EGFF $errors;
+		close(EGFF);
+	}	
 	return ($nstart, $nend, $nstrand);
 }
 
