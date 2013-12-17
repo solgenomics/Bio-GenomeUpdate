@@ -252,6 +252,7 @@ sub remap_coordinates{
 			open(EGFF,">errors.${gff_file_name}");
 			print EGFF $errors;
 			close(EGFF);
+			print STDERR "Errors written out to errors.${gff_file_name} and ${gff_file_name}.error.messages\n";
 		}
 	}	
 	return $self;
