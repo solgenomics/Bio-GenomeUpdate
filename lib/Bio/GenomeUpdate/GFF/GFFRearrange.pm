@@ -376,12 +376,12 @@ sub updated_coordinates_strand_AGP{
 			'  End: '.$end.'  Strand: '.$strand."\n";
 		$nstart = 1;
 		$nend = 0;
-		$nstrand = 0;		
+		$nstrand = 0;
 	}
 
 	#print ERR messages	
 	if ($errors ne ''){
-		open(EGFF,">>error.messages.${gff_file_name}");
+		open(EGFF,">>${gff_file_name}.error.messages");
 		print EGFF $errors;
 		close(EGFF);
 	}	
