@@ -26,7 +26,7 @@ use strict;
 use warnings;
 use autodie;
 
-use Test::More tests => 15;
+use Test::More tests => 13;
 BEGIN { use_ok('Bio::GenomeUpdate::GFF'); }
 BEGIN { use_ok('Bio::GenomeUpdate::AGP'); }
 require_ok('Bio::GenomeUpdate::GFF::GFFRearrange');#uses AGP module
@@ -89,10 +89,14 @@ CHR01_FISH2_GAPS	src	CDS	850	900	0	+	0	ID=6
 CHR01_FISH2_GAPS	src	CDS	925	940	0	-	0	ID=7
 CHR01_FISH2_GAPS	src	CDS	950	969	0	-	0	ID=8
 CHR01_FISH2_GAPS	src	CDS	950	1150	0	+	0	ID=err
-CHR01_FISH2_GAPS	src	CDS	950	1050	0	+	0	ID=err.1;Parent=err;
+CHR01_FISH2_GAPS	src	CDS	950	1050	0	+	0	ID=err.1;Parent=err
+CHR01_FISH2_GAPS	src	CDS	960	1000	0	+	0	ID=err.1.1;Parent=err.1
+CHR01_FISH2_GAPS	src	CDS	960	970	0	+	0	ID=err.1.1.1;Parent=err.1.1
+CHR01_FISH2_GAPS	src	CDS	970	1000	0	+	0	ID=err.1.2;Parent=err.1
 CHR01_FISH2_GAPS	src	CDS	1200	1300	0	+	0	ID=9
+CHR01_FISH2_GAPS	src	CDS	1200	1250	0	+	0	ID=9.1;Parent=9
 CHR01_FISH2_GAPS	src	CDS	1400	1475	0	-	0	ID=10
-CHR01_FISH2_GAPS	src	CDS	950	1050	0	+	0	ID=err.1.1;Parent=err.1;
+CHR01_FISH2_GAPS	src	CDS	1400	1450	0	-	0	ID=10.1;Parent=10
 );
 
 
@@ -120,12 +124,14 @@ CHR01_FISH2_GAPS	src	CDS	901	951	0	-	0	ID=6
 CHR01_FISH2_GAPS	src	CDS	861	876	0	+	0	ID=7
 CHR01_FISH2_GAPS	src	CDS	832	851	0	+	0	ID=8
 CHR01_FISH2_GAPS	src	CDS	1301	1401	0	-	0	ID=9
+CHR01_FISH2_GAPS	src	CDS	1351	1401	0	-	0	ID=9.1;Parent=9
 CHR01_FISH2_GAPS	src	CDS	1126	1201	0	+	0	ID=10
+CHR01_FISH2_GAPS	src	CDS	1151	1201	0	+	0	ID=10.1;Parent=10
 );
 #ok( my $gff_fish = $gff->get_formatted_gff(),'get_formatted_gff');
 #is( $gff_fish, $compare_str, 'GFF remapping using hash based method is as expected');
 
 #remap GFF using optimized method
-ok( $gff->remap_coordinates_clean($agp_orig,$agp_fish),'remap_coordinates using optimized method');
+ok( $gff->remap_coordinates_remove_children($agp_orig,$agp_fish),'remap_coordinates using optimized method');
 ok( my $gff_fish = $gff->get_formatted_gff(),'get_formatted_gff');
 is( $gff_fish, $compare_str, 'GFF remapping using optimized method is as expected');
