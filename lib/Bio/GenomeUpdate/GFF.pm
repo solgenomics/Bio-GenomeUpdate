@@ -257,12 +257,12 @@ sub remap_coordinates{
 	return $self;
 }
 
-=item C<remap_coordinates_clean ( $agp_old, $agp_new )>
+=item C<remap_coordinates_remove_children ( $agp_old, $agp_new )>
 
 Removes children of dropped features. Updates GFF coordinates according to mapping function in GFFRearrange::updated_coordinates_strand_AGP routine. GFF features and their children that span scaffolds or map to gaps or map outside the chr or GFF strand = 0 are not handled and written out to errors.gff3 file.  
 
 =cut
-sub remap_coordinates_clean{
+sub remap_coordinates_remove_children{
 	my $self = shift;
 	my $agp_old = shift;
 	my $agp_new = shift;
@@ -273,23 +273,37 @@ sub remap_coordinates_clean{
 		my @lines = @{ $self->get_gff_lines()};
 		$self->clear_gff_lines();
 		my $errors = '';
-		my @error_IDs;
+		my @error_IDs=();
 		
 		foreach my $gff_line_hash ( @lines ){
 			
-			#check for child of error feature
+			#check if child of error feature
+			my $skip=0;
 			if (((scalar @error_IDs) > 0) && (exists $gff_line_hash->{'attributes'}->{'Parent'})){
-				foreach my $error_ID (@error_IDs){
-					foreach my $parent ($gff_line_hash->{'attributes'}->{'Parent'}){
+				foreach my $parent (@{$gff_line_hash->{'attributes'}->{'Parent'}}){
+					foreach my $error_ID (@error_IDs){
 						if ($parent eq $error_ID){
-							last SKIP;
-						}						
+							
+							$errors .= gff3_format_feature($gff_line_hash);
+							open(EMSG,">>${gff_file_name}.error.messages");
+							foreach my $ID (@{$gff_line_hash->{'attributes'}->{'ID'}}){
+								print EMSG "$ID added to error parent list\n";
+								print STDERR "$ID added to error parent list\n";
+								push @error_IDs,$ID;
+							}
+							print EMSG "Skipping child of parent $parent\n";
+							print STDERR "Skipping child of parent $parent\n";
+							close(EMSG);
+							
+							$skip=1;
+							last;
+						}
 					}
 				}
-				 SKIP: $errors .= gff3_format_feature($gff_line_hash);
-				 next;#skip GFF record
 			}
-			
+			if($skip){
+				next;#skip GFF record
+			}			
 			
 			my $start = $gff_line_hash->{'start'};
 			my $end = $gff_line_hash->{'end'};
@@ -308,9 +322,13 @@ sub remap_coordinates_clean{
 				#add to error string
 				$errors .= gff3_format_feature($gff_line_hash);
 				
+				open(EMSG,">>${gff_file_name}.error.messages");
 				foreach my $ID (@{$gff_line_hash->{'attributes'}->{'ID'}}){
+					print EMSG "$ID added to error parent list\n";
+					print STDERR "$ID added to error parent list\n";
 					push @error_IDs,$ID;
 				}
+				close(EMSG);				
 			}
 			else{
 				$gff_line_hash->{'start'} = $nstart;
@@ -327,6 +345,7 @@ sub remap_coordinates_clean{
 			open(EGFF,">errors.${gff_file_name}");
 			print EGFF $errors;
 			close(EGFF);
+			print STDERR "Errors written out to errors.${gff_file_name} and ${gff_file_name}.error.messages\n";
 		}
 	}	
 	return $self;
