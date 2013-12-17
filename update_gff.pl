@@ -91,7 +91,7 @@ if ($opt_d){
 
 #get coordinates mapped from old AGP to new AGP space using optimized routine
 if($drop_children){
-	$gff->remap_coordinates_clean($old_agp,$new_agp);
+	$gff->remap_coordinates_remove_children($old_agp,$new_agp);
 }
 else{
 	$gff->remap_coordinates($old_agp,$new_agp);
