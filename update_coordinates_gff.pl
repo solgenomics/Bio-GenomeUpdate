@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-update_gff.pl
+update_coordinates_gff.pl
 
 =head1 SYNOPSIS
 
-update_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF file] -c 0
+update_coordinates_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF file] -c 0
 
 =head1 COMMAND-LINE OPTIONS
 
@@ -134,7 +134,7 @@ sub help {
      The component ids in both AGP files need to be identical.
 
     Usage:
-      update_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF file] -c 0
+      update_coordinates_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF file] -c 0
       
     Flags:
 

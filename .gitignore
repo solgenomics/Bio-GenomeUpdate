@@ -2,3 +2,6 @@
 .includepath
 .project
 errors.gff3
+error.messages.filename
+errors.filename
+filename.error.messages
