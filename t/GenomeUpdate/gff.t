@@ -29,7 +29,7 @@ use autodie;
 use Test::More tests => 13;
 BEGIN { use_ok('Bio::GenomeUpdate::GFF'); }
 BEGIN { use_ok('Bio::GenomeUpdate::AGP'); }
-require_ok('Bio::GenomeUpdate::GFF::GFFRearrange');#uses AGP module
+require_ok('Bio::GenomeUpdate::GFF::GFFRearrange');    #uses AGP module
 require_ok('Bio::GFF3::LowLevel');
 
 #load orig AGP
@@ -52,10 +52,10 @@ CHR01_FISH2_GAPS	801	1000	5	F	SL2.40SC03666	1	200	+
 CHR01_FISH2_GAPS	1001	1100	4	N	100	contig	no	
 CHR01_FISH2_GAPS	1101	1500	5	F	SL2.40SC03661	1	400	-
 );
-ok( my $agp_orig = Bio::GenomeUpdate::AGP->new(),'create orig AGP obj');
-ok( $agp_orig->parse_agp($agp_orig_file),'parse orig AGP obj');
+ok( my $agp_orig = Bio::GenomeUpdate::AGP->new(), 'create orig AGP obj' );
+ok( $agp_orig->parse_agp($agp_orig_file), 'parse orig AGP obj' );
 
-#load updated AGP, gap size change, scaffold flip 
+#load updated AGP, gap size change, scaffold flip
 my $agp_fish_file = q(##agp-version	2.0
 # ORGANISM: Organism
 # TAX_ID: 1234
@@ -75,10 +75,10 @@ CHR01_FISH2_GAPS	801	1000	5	F	SL2.40SC03666	1	200	-
 CHR01_FISH2_GAPS	1001	1100	4	N	100	contig	no	
 CHR01_FISH2_GAPS	1101	1500	5	F	SL2.40SC03661	1	400	+
 );
-ok(my $agp_fish = Bio::GenomeUpdate::AGP->new(),'create fish AGP obj');
-ok( $agp_fish->parse_agp($agp_fish_file),'parse fish AGP obj');
-  
-# gff 
+ok( my $agp_fish = Bio::GenomeUpdate::AGP->new(), 'create fish AGP obj' );
+ok( $agp_fish->parse_agp($agp_fish_file), 'parse fish AGP obj' );
+
+# gff
 my $gff_file = q(##gff3
 CHR01_FISH2_GAPS	src	CDS	50	150	0	+	0	ID=1
 CHR01_FISH2_GAPS	src	CDS	320	400	0	+	0	ID=2
@@ -99,10 +99,9 @@ CHR01_FISH2_GAPS	src	CDS	1400	1475	0	-	0	ID=10
 CHR01_FISH2_GAPS	src	CDS	1400	1450	0	-	0	ID=10.1;Parent=10
 );
 
-
-ok( my $gff = Bio::GenomeUpdate::GFF->new(),'create GFF obj');
+ok( my $gff = Bio::GenomeUpdate::GFF->new(), 'create GFF obj' );
 my $gff_file_name = 'filename';
-ok( $gff->parse_gff($gff_file,$gff_file_name),'parse GFF obj');
+ok( $gff->parse_gff( $gff_file, $gff_file_name ), 'parse GFF obj' );
 
 ##update coordinates, calls GFFRearrange object
 #ok( my %coords = $gff->get_reordered_coordinates($agp_orig,$agp_fish),'get_reordered_coordinates');
@@ -128,10 +127,13 @@ CHR01_FISH2_GAPS	src	CDS	1351	1401	0	-	0	ID=9.1;Parent=9
 CHR01_FISH2_GAPS	src	CDS	1126	1201	0	+	0	ID=10
 CHR01_FISH2_GAPS	src	CDS	1151	1201	0	+	0	ID=10.1;Parent=10
 );
+
 #ok( my $gff_fish = $gff->get_formatted_gff(),'get_formatted_gff');
 #is( $gff_fish, $compare_str, 'GFF remapping using hash based method is as expected');
 
 #remap GFF using optimized method
-ok( $gff->remap_coordinates_remove_children($agp_orig,$agp_fish),'remap_coordinates using optimized method');
-ok( my $gff_fish = $gff->get_formatted_gff(),'get_formatted_gff');
-is( $gff_fish, $compare_str, 'GFF remapping using optimized method is as expected');
+ok( $gff->remap_coordinates_remove_children( $agp_orig, $agp_fish ),
+	'remap_coordinates using optimized method' );
+ok( my $gff_fish = $gff->get_formatted_gff(), 'get_formatted_gff' );
+is( $gff_fish, $compare_str,
+	'GFF remapping using optimized method is as expected' );
