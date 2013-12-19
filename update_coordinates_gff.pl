@@ -52,10 +52,10 @@ my $gff_input_file = $opt_g;
 my $input_gff      = read_file($gff_input_file)
   or die "Could not open GFF input file: $gff_input_file\n";
 my $gff_output_file = $opt_m;
-my $drop_children = $opt_c;
+my $drop_children   = $opt_c;
 
 my $util = Utilities->new();
-if ($opt_d){ 
+if ($opt_d) {
 	print STDERR "Params parsed..\n";
 	$util->mem_used();
 	$util->run_time();
@@ -71,8 +71,8 @@ $new_agp->parse_agp($input_new_agp);
 
 #object for gff
 my $gff = Bio::GenomeUpdate::GFF->new();
-$gff->parse_gff($input_gff, $gff_input_file); 
-if ($opt_d){ 
+$gff->parse_gff( $input_gff, $gff_input_file );
+if ($opt_d) {
 	print STDERR "Files read..\n";
 	$util->mem_used();
 	$util->run_time();
@@ -81,7 +81,7 @@ if ($opt_d){
 # Deprecated: get coordinates mapped from old AGP to new AGP space using hash
 #my %coords = $gff->get_reordered_coordinates($old_agp,$new_agp);
 #my %flips = $gff->get_flipped_coordinates($old_agp,$new_agp);
-#if ($opt_d){ 
+#if ($opt_d){
 #	print STDERR "Hashes populated..\n";
 #	mem_used();
 #}
@@ -90,14 +90,13 @@ if ($opt_d){
 #$gff->remap_coordinates_hash(\%coords,\%flips);
 
 #get coordinates mapped from old AGP to new AGP space using optimized routine
-if($drop_children){
-	$gff->remap_coordinates_remove_children($old_agp,$new_agp);
-}
-else{
-	$gff->remap_coordinates($old_agp,$new_agp);
+if ($drop_children) {
+	$gff->remap_coordinates_remove_children( $old_agp, $new_agp );
+} else {
+	$gff->remap_coordinates( $old_agp, $new_agp );
 }
 
-if ($opt_d){ 
+if ($opt_d) {
 	print STDERR "Coords remapped..\n";
 	$util->mem_used();
 	$util->run_time();
@@ -105,14 +104,17 @@ if ($opt_d){
 
 #print the GFF ($gff_output_file)
 my $new_gff = $gff->get_formatted_gff();
-if (!defined($new_gff)){
-	print STDERR "No valid GFF records found..\n"; exit 1;
-}
-else{
-	unless(open(OGFF,">$gff_output_file")){print STDERR "Cannot open $gff_output_file\n"; exit 1;}
+if ( !defined($new_gff) ) {
+	print STDERR "No valid GFF records found..\n";
+	exit 1;
+} else {
+	unless ( open( OGFF, ">$gff_output_file" ) ) {
+		print STDERR "Cannot open $gff_output_file\n";
+		exit 1;
+	}
 	print OGFF $new_gff;
 	close(OGFF);
-	if ($opt_d){ 
+	if ($opt_d) {
 		print STDERR "GFF written..\n";
 		$util->mem_used();
 		$util->run_time();
