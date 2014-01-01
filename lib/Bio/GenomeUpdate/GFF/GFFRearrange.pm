@@ -19,7 +19,7 @@ use Scalar::Util 'looks_like_number';
 
 =head1 DESCRIPTION
 
-    This class modifies Generic Feature Format (GFF) coordinates using old and new Accessioned Golden Path (AGP) files. It does not currently handle Tiling Path Files (TPF). It does NOT handle cases where component sizes have changed in new AGP. It only handles changes in gap sizes and component flips. GFF features than span scaffolds or map to gaps or map outside the chr or GFF strand = 0 are not handled and written out to errors.gff3 file. 
+    This class modifies Generic Feature Format (GFF) coordinates using old and new Accessioned Golden Path (AGP) files. It does not currently handle Tiling Path Files (TPF). It does NOT handle cases where component sizes have changed in new AGP. It only handles changes in gap sizes and component flips. GFF features than span scaffolds or map to gaps or map outside the chr or GFF strand = 0 are not handled and written out to errors.gff3 and log to error.messages files. 
 
 =head2 Methods
 
