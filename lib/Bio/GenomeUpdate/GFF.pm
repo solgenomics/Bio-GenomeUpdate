@@ -7,6 +7,7 @@ use MooseX::FollowPBP;
 use Moose::Util::TypeConstraints;
 use Bio::GFF3::LowLevel
   qw (gff3_parse_feature  gff3_format_feature gff3_parse_attributes);
+use Bio::SeqIO;
 use File::Basename;
 use Bio::GenomeUpdate::GFF::GFFRearrange;
 
@@ -92,6 +93,53 @@ sub add_gff_line {
 	}
 	push( @lines, $line_to_add );
 	$self->set_gff_lines( [@lines] );
+}
+
+
+=item C<write_fasta ( $gff_fasta_file_name, $fasta_file_name )>
+
+Write out a Fasta file for GFF3 using Bio::SeqIO.
+ 
+=cut
+
+sub write_fasta {
+	my $self             = shift;
+	my $gff_fasta_file_name = shift;
+	my $fasta_file_name    = shift;
+	
+	my $fasta_obj = Bio::SeqIO-new(-file => $fasta_file_name, -format => 'Fasta');
+	my %fasta_hash;
+	while (my $seq = $fasta_obj->next_seq()){
+	    $fasta_hash{$seq->primary_id()} = $seq->seq();
+	}
+	
+        if ( $self->has_gff_lines() ) {
+                foreach my $gff_line_hash ( @{ $self->get_gff_lines() } ) {
+		    #$out_str .= gff3_format_feature($gff_line_hash);
+		    my $fasta_out_obj = Bio::SeqIO->new( -file => ">$gff_fasta_file_name", -format => 'Fasta');
+		    if ( exists $fasta_hash{$gff_line_hash{'seq_id'}}){
+			my $seq_id = $gff_line_hash{'attributes'}{'ID'};#CHECK
+			my $seq_string;
+			if ($gff_line_hash{'strand'} eq '+'){
+			    $seq_string = substr($fasta_hash{$gff_line_hash{'seq_id'}}, 
+						 $gff_line_hash{'start'} - 1, 
+						 $gff_line_hash{'end'} - $gff_line_hash{'start'});
+			}
+			elsif($gff_line_hash{'strand'} eq '-'){
+
+			}
+
+			my $temp_seq = Bio::Seq->new( -display_id => $seq_id, -seq => $seq_string);
+			$fasta_out_obj->write_seq($temp_seq);
+		    }
+		    else{#sequence not found
+			exit 1;
+		    }
+                }
+        }
+	
+	
+
 }
 
 =item C<parse_gff ( $gff_file_content, $gff_file_name )>
