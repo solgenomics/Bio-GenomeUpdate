@@ -28,8 +28,6 @@ use Bio::GenomeUpdate::GFF::GFFRearrange;
 
 =over
 
-=cut
-
 =item C<set_file_name ( $name_string )>
 
 Sets the file name (required).
@@ -43,9 +41,6 @@ has 'file_name' => (
 					 clearer   => 'clear_file_name'
 );
 
-=over
-
-=cut
 
 has 'comment_lines' => (
 						 isa       => 'ArrayRef[Str]',
@@ -134,13 +129,10 @@ sub get_fasta {
 				}
 				
 				$gff_fasta_feature_obj->write_seq($temp_seq);
-				#$fasta_out_str .= '>' . $temp_seq->display_id() . "\n";
-				#$fasta_out_str .= $temp_seq->seq() . "\n"; 
-	
 		    }
 		    else{#sequence not found
 				die "Could not find source sequence ",$gff_line_hash->{'seq_id'}," for ",
-					$gff_line_hash->{'attributes'}->{'ID'},"\n";
+					$gff_line_hash->{'attributes'}->{'ID'}->[0],"\n";
 		    }
 		}
 	}
@@ -477,6 +469,7 @@ sub remap_coordinates_hash {
 
 =pod
 
+=back
 
 =head1 LICENSE
 
