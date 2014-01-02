@@ -56,6 +56,8 @@ sub mem_used{
 1;				#do not remove
 ###
 
+=pod
+
 =back
 
 =head1 LICENSE
