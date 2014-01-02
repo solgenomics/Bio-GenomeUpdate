@@ -26,7 +26,7 @@ use strict;
 use warnings;
 use autodie;
 
-use Test::More tests => 13;
+use Test::More tests => 17;
 BEGIN { use_ok('Bio::GenomeUpdate::GFF'); }
 BEGIN { use_ok('Bio::GenomeUpdate::AGP'); }
 require_ok('Bio::GenomeUpdate::GFF::GFFRearrange');    #uses AGP module
@@ -137,3 +137,28 @@ ok( $gff->remap_coordinates_remove_children( $agp_orig, $agp_fish ),
 ok( my $gff_fish = $gff->get_formatted_gff(), 'get_formatted_gff' );
 is( $gff_fish, $compare_str,
 	'GFF remapping using optimized method is as expected' );
+
+# gff to fasta test
+my $gff_fasta_file = q(##gff3
+CHR01_FISH2_GAPS	src	CDS	50	150	0	+	0	ID=1
+CHR01_FISH2_GAPS	src	CDS	150	200	0	-	0	ID=2rev
+CHR01_FISH2_GAPS	src	CDS	320	400	0	+	0	ID=3
+);
+
+ok( my $gff_fasta = Bio::GenomeUpdate::GFF->new(), 'create GFF obj for fasta test' );
+$gff_file_name = 'filename_fasta';
+ok( $gff_fasta->parse_gff( $gff_fasta_file, $gff_file_name ), 'parse GFF obj' );
+my $gff_fasta_str = ">CHR01_FISH2_GAPS
+gacggccatgataaggtccttgagcatcagagtcttgatttcacctacaaatttataccgacgctctccgtctaactgcgacgtgtcagtaacgcattgctgttataattatagaactacggcttcggtggaactgaagtgtaagtcgaccgactactgtgctcacgatccgactgcgcgtttgcggtgggacgggttgcagaagtatggtaaagcttatcgccgacaaatagactttctgagcgaaacctggaggtcctaggcagaagcgctgacctgtcagatctacggcgttgagccagacactgcggaacataattggtaactgcgagctcctaaacaaactttcctgcgcctgggcactacctgttttaccccagtaaagtttcgccatgagctc";
+ok (my $gff_fasta_feature_str = $gff_fasta->get_fasta($gff_fasta_str), 'get fasta of features');
+my $fasta_feature_str = ">1
+aatttataccgacgctctccgtctaactgcgacgtgtcagtaacgcattgctgttataat
+tatagaactacggcttcggtggaactgaagtgtaagtcgac
+>2rev
+gcaacccgtcccaccgcaaacgcgcagtcggatcgtgagcacagtagtcgg
+>3
+tggtaactgcgagctcctaaacaaactttcctgcgcctgggcactacctgttttacccca
+gtaaagtttcgccatgagctc
+";
+is ($gff_fasta_feature_str,$fasta_feature_str, 'Fasta from GFF is as expected');
+
