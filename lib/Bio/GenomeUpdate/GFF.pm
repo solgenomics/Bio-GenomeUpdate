@@ -96,50 +96,55 @@ sub add_gff_line {
 }
 
 
-=item C<write_fasta ( $gff_fasta_file_name, $fasta_file_name )>
+=item C<get_fasta ( $gff_fasta_str )>
 
-Write out a Fasta file for GFF3 using Bio::SeqIO.
+Return Fasta file content for GFF object using Bio::SeqIO. Parameter is content of Fasta file of seq_id's for all features in GFF.
  
 =cut
 
-sub write_fasta {
+sub get_fasta {
 	my $self             = shift;
-	my $gff_fasta_file_name = shift;
-	my $fasta_file_name    = shift;
+	my $gff_fasta_str    = shift;
 	
-	my $fasta_obj = Bio::SeqIO-new(-file => $fasta_file_name, -format => 'Fasta');
-	my %fasta_hash;
-	while (my $seq = $fasta_obj->next_seq()){
-	    $fasta_hash{$seq->primary_id()} = $seq->seq();
+	my $gff_fasta_str_fh;
+	open($gff_fasta_str_fh, "<", \$gff_fasta_str)
+		or die "Could not create file handle for reading: $!";
+	my $gff_fasta_obj = Bio::SeqIO->new(-fh => $gff_fasta_str_fh, -format => 'Fasta');
+	my %gff_fasta_hash;
+	while (my $seq = $gff_fasta_obj->next_seq()){
+	    $gff_fasta_hash{$seq->primary_id()} = $seq->seq();
 	}
 	
-        if ( $self->has_gff_lines() ) {
-                foreach my $gff_line_hash ( @{ $self->get_gff_lines() } ) {
-		    #$out_str .= gff3_format_feature($gff_line_hash);
-		    my $fasta_out_obj = Bio::SeqIO->new( -file => ">$gff_fasta_file_name", -format => 'Fasta');
-		    if ( exists $fasta_hash{$gff_line_hash{'seq_id'}}){
-			my $seq_id = $gff_line_hash{'attributes'}{'ID'};#CHECK
-			my $seq_string;
-			if ($gff_line_hash{'strand'} eq '+'){
-			    $seq_string = substr($fasta_hash{$gff_line_hash{'seq_id'}}, 
-						 $gff_line_hash{'start'} - 1, 
-						 $gff_line_hash{'end'} - $gff_line_hash{'start'});
-			}
-			elsif($gff_line_hash{'strand'} eq '-'){
-
-			}
-
-			my $temp_seq = Bio::Seq->new( -display_id => $seq_id, -seq => $seq_string);
-			$fasta_out_obj->write_seq($temp_seq);
+	my ($gff_fasta_feature_str, $gff_fasta_feature_str_fh);
+	open($gff_fasta_feature_str_fh, ">", \$gff_fasta_feature_str)
+		or die "Could not create file handle for writing: $!";
+	my $gff_fasta_feature_obj = Bio::SeqIO->new(-fh => $gff_fasta_feature_str_fh, -format => 'Fasta');
+	
+	if ( $self->has_gff_lines() ) {
+		foreach my $gff_line_hash ( @{ $self->get_gff_lines() } ) {
+		    if ( exists $gff_fasta_hash{$gff_line_hash->{'seq_id'}}){
+				my $seq_id = $gff_line_hash->{'attributes'}->{'ID'}->[0];
+				my $seq_string = substr($gff_fasta_hash{$gff_line_hash->{'seq_id'}}, 
+							 $gff_line_hash->{'start'} - 1, 
+							 $gff_line_hash->{'end'} - $gff_line_hash->{'start'} + 1);
+	
+				my $temp_seq = Bio::Seq->new( -display_id => $seq_id, -seq => $seq_string);
+				if($gff_line_hash->{'strand'} eq '-'){
+					$temp_seq = $temp_seq->revcom();
+				}
+				
+				$gff_fasta_feature_obj->write_seq($temp_seq);
+				#$fasta_out_str .= '>' . $temp_seq->display_id() . "\n";
+				#$fasta_out_str .= $temp_seq->seq() . "\n"; 
+	
 		    }
 		    else{#sequence not found
-			exit 1;
+				die "Could not find source sequence ",$gff_line_hash->{'seq_id'}," for ",
+					$gff_line_hash->{'attributes'}->{'ID'},"\n";
 		    }
-                }
-        }
-	
-	
-
+		}
+	}
+	return $gff_fasta_feature_str;
 }
 
 =item C<parse_gff ( $gff_file_content, $gff_file_name )>
@@ -470,7 +475,8 @@ sub remap_coordinates_hash {
 1;    #do not remove
 ###
 
-=back
+=pod
+
 
 =head1 LICENSE
 
