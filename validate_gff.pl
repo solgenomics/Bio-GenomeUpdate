@@ -11,16 +11,13 @@ validate_gff.pl -g [old GFF file] -f [old Fasta file] -u [updated GFF file] -n [
 =head1 COMMAND-LINE OPTIONS
 
  -g  old GFF file (required)
- -f  old Fasta file (required)
+ -f  old Fasta file based on old scaffold AGP (required)
  -u  Updated GFF file output by update_coordinates_gff.pl (required)
  -n  New Fasta file based on new scaffold AGP (required)
  -d  debugging messages (1 or 0)
  -h  Help
 
 =cut
-
-
-#TODO: Write GFF to fasta, read them in and then compare the files using Bio::Seq 
 
 use strict;
 use warnings;
@@ -46,7 +43,7 @@ See help below\n\n\n";
 
 #prep input data
 my $gff_old_file = $opt_g;
-my $old_gff      = read_file($gff_old_file)
+my $gff_old      = read_file($gff_old_file)
   or die "Could not open old GFF file: $gff_old_file\n";
 my $fasta_old_file;
 if ( -e $opt_f ){
@@ -55,8 +52,10 @@ if ( -e $opt_f ){
 else{
 	die "Could not open old Fasta file: $opt_f\n";
 }
+my $fasta_old      = read_file($fasta_old_file);
+
 my $gff_updated_file = $opt_u;
-my $updated_gff      = read_file($gff_updated_file)
+my $gff_updated      = read_file($gff_updated_file)
   or die "Could not open updated GFF file: $gff_updated_file\n";
 my $fasta_updated_file;
 if ( -e $opt_n ){
@@ -65,7 +64,7 @@ if ( -e $opt_n ){
 else{
 	die "Could not open old Fasta file: $opt_n\n";
 }
-
+my $fasta_updated      = read_file($fasta_updated_file);
 
 my $util = Utilities->new();
 if ($opt_d){ 
@@ -75,13 +74,13 @@ if ($opt_d){
 }
 
 #Read in gff and fasta files
-my $old_gff_obj = Bio::GenomeUpdate::GFF->new();
-$old_gff_obj->parse_gff($old_gff, $gff_old_file);
-$old_gff_obj->write_fasta('old_gff.fas', $fasta_old_file);
+my $gff_old_obj = Bio::GenomeUpdate::GFF->new();
+$gff_old_obj->parse_gff($gff_old, $gff_old_file);
+my $fasta_old_str = $gff_old_obj->get_fasta($fasta_old);
 
-my $updated_gff_obj = Bio::GenomeUpdate::GFF->new();
-$updated_gff_obj->parse_gff($updated_gff, $gff_updated_file);
-$update_gff_obj->write_fasta('updated_gff.fas', $fasta_updated_file);
+my $gff_updated_obj = Bio::GenomeUpdate::GFF->new();
+$gff_updated_obj->parse_gff($gff_updated, $gff_updated_file);
+my $fasta_updated_str = $gff_updated_obj->get_fasta($fasta_updated);
  
 if ($opt_d){ 
 	print STDERR "Files read..\n";
@@ -89,24 +88,23 @@ if ($opt_d){
 	$util->run_time();
 }
 
-#Read in both Fasta files and compare
-#TODO
-
-
-
-if ($opt_d){ 
-	print STDERR "Version updated..\n";
-	$util->mem_used();
-	$util->run_time();
+#Compare both Fasta files
+if ($fasta_old_str ne $fasta_updated_str ){
+	open (OF,">${gff_old_file}.features.fasta");
+	print OF $fasta_old_str;
+	close (OF);
+	open (UF,">${gff_updated_file}.features.fasta");
+	print UF $fasta_updated_str;
+	close (UF);
+	die "Fasta of features from old and updated GFFs do not match. 
+	Were any features rejected during update??
+	See ${gff_old_file}.features.fasta and ${gff_updated_file}.features.fasta";
+}
+elsif($fasta_old_str eq $fasta_updated_str ){
+	print STDERR "\n\nUpdated GFF validated..\n\n";
 }
 
-#print the GFF ($gff_output_file)
-my $new_gff = $gff->get_formatted_gff();
-unless(open(OGFF,">$gff_output_file")){print STDERR "Cannot open $gff_output_file\n"; exit 1;}
-print OGFF $new_gff;
-close(OGFF);
 if ($opt_d){ 
-	print STDERR "GFF written..\n";
 	$util->mem_used();
 	$util->run_time();
 }
@@ -130,7 +128,7 @@ sub help {
     Flags:
 
  -g  old GFF file (required)
- -f  old Fasta file (required)
+ -f  old Fasta file based on old scaffold AGP (required)
  -u  Updated GFF file output by update_coordinates_gff.pl (required)
  -n  New Fasta file based on new scaffold AGP (required)
  -d  debugging messages (1 or 0)
