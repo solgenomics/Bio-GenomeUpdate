@@ -14,7 +14,7 @@ update_coordinates_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [
  -n  new scaffold AGP file with updated coordinates (required)
  -g  GFF3 file based on old AGP to update to new AGP file (required)
  -m  output mapped GFF file (required)
- -c  remove children of dropped features (1 or 0)
+ -c  remove children of dropped features (1 or 0) (required)
  -d  debugging messages (1 or 0)
  -h  Help
 
