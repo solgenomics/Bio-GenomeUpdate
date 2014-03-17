@@ -35,8 +35,7 @@ if ($opt_h) {
 	exit;
 }
 if ( !$opt_g || !$opt_f || !$opt_u || !$opt_n ) {
-	print
-"\nOld GFF3/Fasta and updated GFF3/Fasta are required. 
+	print "\nOld GFF3/Fasta and updated GFF3/Fasta are required. 
 See help below\n\n\n";
 	help();
 }
@@ -46,28 +45,28 @@ my $gff_old_file = $opt_g;
 my $gff_old      = read_file($gff_old_file)
   or die "Could not open old GFF file: $gff_old_file\n";
 my $fasta_old_file;
-if ( -e $opt_f ){
+if ( -e $opt_f ) {
 	$fasta_old_file = $opt_f;
 }
-else{
+else {
 	die "Could not open old Fasta file: $opt_f\n";
 }
-my $fasta_old      = read_file($fasta_old_file);
+my $fasta_old = read_file($fasta_old_file);
 
 my $gff_updated_file = $opt_u;
 my $gff_updated      = read_file($gff_updated_file)
   or die "Could not open updated GFF file: $gff_updated_file\n";
 my $fasta_updated_file;
-if ( -e $opt_n ){
+if ( -e $opt_n ) {
 	$fasta_updated_file = $opt_n;
 }
-else{
+else {
 	die "Could not open old Fasta file: $opt_n\n";
 }
-my $fasta_updated      = read_file($fasta_updated_file);
+my $fasta_updated = read_file($fasta_updated_file);
 
 my $util = Utilities->new();
-if ($opt_d){ 
+if ($opt_d) {
 	print STDERR "Params parsed..\n";
 	$util->mem_used();
 	$util->run_time();
@@ -75,36 +74,36 @@ if ($opt_d){
 
 #Read in gff and fasta files
 my $gff_old_obj = Bio::GenomeUpdate::GFF->new();
-$gff_old_obj->parse_gff($gff_old, $gff_old_file);
+$gff_old_obj->parse_gff( $gff_old, $gff_old_file );
 my $fasta_old_str = $gff_old_obj->get_fasta($fasta_old);
 
 my $gff_updated_obj = Bio::GenomeUpdate::GFF->new();
-$gff_updated_obj->parse_gff($gff_updated, $gff_updated_file);
+$gff_updated_obj->parse_gff( $gff_updated, $gff_updated_file );
 my $fasta_updated_str = $gff_updated_obj->get_fasta($fasta_updated);
- 
-if ($opt_d){ 
+
+if ($opt_d) {
 	print STDERR "Files read..\n";
 	$util->mem_used();
 	$util->run_time();
 }
 
 #Compare both Fasta files
-if ($fasta_old_str ne $fasta_updated_str ){
-	open (OF,">${gff_old_file}.features.fasta");
+if ( $fasta_old_str ne $fasta_updated_str ) {
+	open( OF, ">${gff_old_file}.features.fasta" );
 	print OF $fasta_old_str;
-	close (OF);
-	open (UF,">${gff_updated_file}.features.fasta");
+	close(OF);
+	open( UF, ">${gff_updated_file}.features.fasta" );
 	print UF $fasta_updated_str;
-	close (UF);
+	close(UF);
 	die "Fasta of features from old and updated GFFs do not match. 
 	Were any features rejected during update??
 	See ${gff_old_file}.features.fasta and ${gff_updated_file}.features.fasta";
 }
-elsif($fasta_old_str eq $fasta_updated_str ){
+elsif ( $fasta_old_str eq $fasta_updated_str ) {
 	print STDERR "\n\nUpdated GFF validated..\n\n";
 }
 
-if ($opt_d){ 
+if ($opt_d) {
 	$util->mem_used();
 	$util->run_time();
 }
@@ -118,7 +117,6 @@ sub help {
     Description:
 
      This script checks if the sequences produced using the updated GFF file match the sequences produced by the old GFF file. GFF files should be in Generic Feature Format version 3.
-     
     NOTE:
 
 
