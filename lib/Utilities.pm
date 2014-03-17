@@ -30,9 +30,11 @@ Prints run time details.
 
 =cut
 
-sub run_time{
-	my($user_t,$system_t,$cuser_t,$csystem_t);	($user_t,$system_t,$cuser_t,$csystem_t) = times;
-	print STDERR "System time for process: $system_t\n"; print STDERR "User time for process: $user_t\n\n";
+sub run_time {
+	my ( $user_t, $system_t, $cuser_t, $csystem_t );
+	( $user_t, $system_t, $cuser_t, $csystem_t ) = times;
+	print STDERR "System time for process: $system_t\n";
+	print STDERR "User time for process: $user_t\n\n";
 }
 
 =item C<mem_used ()>
@@ -41,19 +43,19 @@ Prints runtime details.
 
 =cut
 
-sub mem_used{
-	my ($i,$t); 
+sub mem_used {
+	my ( $i, $t );
 	$t = new Proc::ProcessTable;
-	foreach my $got ( @{$t->table} ) {
-		next if not $got->pid eq $$; $i=$got->size;
+	foreach my $got ( @{ $t->table } ) {
+		next if not $got->pid eq $$;
+		$i = $got->size;
 	}
-	print STDERR "Process id=",$$,"\n"; print "Memory used(MB)=", $i/1024/1024, "\n";
+	print STDERR "Process id=", $$, "\n";
+	print "Memory used(MB)=", $i / 1024 / 1024, "\n";
 }
 
-
-
 ###
-1;				#do not remove
+1;   #do not remove
 ###
 
 =pod
@@ -69,3 +71,4 @@ sub mem_used{
     Surya Saha <suryasaha@cornell.edu , @SahaSurya>   
 
 =cut
+
