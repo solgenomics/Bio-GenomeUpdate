@@ -13,7 +13,7 @@ use Bio::GenomeUpdate::GFF::GFFRearrange;
 
 =head1 NAME
 
-    GFF - Generic Feature Format (GFF) contains the annotation for a genome.
+    GFF - Generic Feature Format version 3 (GFF3) contains the annotation for a genome.
 
 =head1 SYNOPSIS
 
@@ -21,7 +21,7 @@ use Bio::GenomeUpdate::GFF::GFFRearrange;
 
 =head1 DESCRIPTION
 
-    This class stores Generic Feature Format (GFF) information including coordinates, strand and source. It reads in old and new Accessioned Golden Path (AGP) files and prints a GFF with updated coordinates. GFF features than span scaffolds or map to gaps or map outside the chr or GFF strand = 0 are not handled and written out to errors.gff3 file. 
+    This class stores Generic Feature Format version 3 (GFF3) information including coordinates, strand and source. It reads in old and new Accessioned Golden Path (AGP) files and prints a GFF with updated coordinates. GFF features than span scaffolds or map to gaps or map outside the chr or GFF strand = 0 are not handled and written out to errors.gff3 file.
 
 
 =head2 Methods
@@ -35,18 +35,17 @@ Sets the file name (required).
 =cut
 
 has 'file_name' => (
-					 isa       => 'Str',
-					 is        => 'rw',
-					 predicate => 'has_file_name',
-					 clearer   => 'clear_file_name'
+	isa       => 'Str',
+	is        => 'rw',
+	predicate => 'has_file_name',
+	clearer   => 'clear_file_name'
 );
 
-
 has 'comment_lines' => (
-						 isa       => 'ArrayRef[Str]',
-						 is        => 'rw',
-						 predicate => 'has_comment_lines',
-						 clearer   => 'clear_comment_lines'
+	isa       => 'ArrayRef[Str]',
+	is        => 'rw',
+	predicate => 'has_comment_lines',
+	clearer   => 'clear_comment_lines'
 );
 
 =item C<add_comment_line ( @comment_string )>
@@ -67,10 +66,10 @@ sub add_comment_line {
 }
 
 has 'gff_lines' => (
-					 isa       => 'ArrayRef[HashRef]',
-					 is        => 'rw',
-					 predicate => 'has_gff_lines',
-					 clearer   => 'clear_gff_lines'
+	isa       => 'ArrayRef[HashRef]',
+	is        => 'rw',
+	predicate => 'has_gff_lines',
+	clearer   => 'clear_gff_lines'
 );
 
 =item C<add_gff_line ( $HashRef )>
@@ -90,7 +89,6 @@ sub add_gff_line {
 	$self->set_gff_lines( [@lines] );
 }
 
-
 =item C<get_fasta ( $gff_fasta_str )>
 
 Return Fasta file content for GFF object using Bio::SeqIO. Parameter is content of Fasta file of seq_id's for all features in GFF.
@@ -98,42 +96,48 @@ Return Fasta file content for GFF object using Bio::SeqIO. Parameter is content 
 =cut
 
 sub get_fasta {
-	my $self             = shift;
-	my $gff_fasta_str    = shift;
-	
+	my $self          = shift;
+	my $gff_fasta_str = shift;
+
 	my $gff_fasta_str_fh;
-	open($gff_fasta_str_fh, "<", \$gff_fasta_str)
-		or die "Could not create file handle for reading: $!";
-	my $gff_fasta_obj = Bio::SeqIO->new(-fh => $gff_fasta_str_fh, -format => 'Fasta');
+	open( $gff_fasta_str_fh, "<", \$gff_fasta_str )
+	  or die "Could not create file handle for reading: $!";
+	my $gff_fasta_obj =
+	  Bio::SeqIO->new( -fh => $gff_fasta_str_fh, -format => 'Fasta' );
 	my %gff_fasta_hash;
-	while (my $seq = $gff_fasta_obj->next_seq()){
-	    $gff_fasta_hash{$seq->primary_id()} = $seq->seq();
+	while ( my $seq = $gff_fasta_obj->next_seq() ) {
+		$gff_fasta_hash{ $seq->primary_id() } = $seq->seq();
 	}
-	
-	my ($gff_fasta_feature_str, $gff_fasta_feature_str_fh);
-	open($gff_fasta_feature_str_fh, ">", \$gff_fasta_feature_str)
-		or die "Could not create file handle for writing: $!";
-	my $gff_fasta_feature_obj = Bio::SeqIO->new(-fh => $gff_fasta_feature_str_fh, -format => 'Fasta');
-	
+
+	my ( $gff_fasta_feature_str, $gff_fasta_feature_str_fh );
+	open( $gff_fasta_feature_str_fh, ">", \$gff_fasta_feature_str )
+	  or die "Could not create file handle for writing: $!";
+	my $gff_fasta_feature_obj =
+	  Bio::SeqIO->new( -fh => $gff_fasta_feature_str_fh, -format => 'Fasta' );
+
 	if ( $self->has_gff_lines() ) {
 		foreach my $gff_line_hash ( @{ $self->get_gff_lines() } ) {
-		    if ( exists $gff_fasta_hash{$gff_line_hash->{'seq_id'}}){
-				my $seq_id = $gff_line_hash->{'attributes'}->{'ID'}->[0];
-				my $seq_string = substr($gff_fasta_hash{$gff_line_hash->{'seq_id'}}, 
-							 $gff_line_hash->{'start'} - 1, 
-							 $gff_line_hash->{'end'} - $gff_line_hash->{'start'} + 1);
-	
-				my $temp_seq = Bio::Seq->new( -display_id => $seq_id, -seq => $seq_string);
-				if($gff_line_hash->{'strand'} eq '-'){
+			if ( exists $gff_fasta_hash{ $gff_line_hash->{'seq_id'} } ) {
+				my $seq_id     = $gff_line_hash->{'attributes'}->{'ID'}->[0];
+				my $seq_string = substr(
+					$gff_fasta_hash{ $gff_line_hash->{'seq_id'} },
+					$gff_line_hash->{'start'} - 1,
+					$gff_line_hash->{'end'} - $gff_line_hash->{'start'} + 1
+				);
+
+				my $temp_seq =
+				  Bio::Seq->new( -display_id => $seq_id, -seq => $seq_string );
+				if ( $gff_line_hash->{'strand'} eq '-' ) {
 					$temp_seq = $temp_seq->revcom();
 				}
-				
+
 				$gff_fasta_feature_obj->write_seq($temp_seq);
-		    }
-		    else{#sequence not found
-				die "Could not find source sequence ",$gff_line_hash->{'seq_id'}," for ",
-					$gff_line_hash->{'attributes'}->{'ID'}->[0],"\n";
-		    }
+			}
+			else {    #sequence not found
+				die "Could not find source sequence ",
+				  $gff_line_hash->{'seq_id'}, " for ",
+				  $gff_line_hash->{'attributes'}->{'ID'}->[0], "\n";
+			}
 		}
 	}
 	return $gff_fasta_feature_str;
@@ -168,7 +172,8 @@ sub parse_gff {
 		if ( $line =~ m/^#/ ) {
 			$self->add_comment_line($line);
 			next;
-		} else {
+		}
+		else {
 			my $gff_line_hash = gff3_parse_feature($line);
 			$self->add_gff_line($gff_line_hash);
 
@@ -221,7 +226,7 @@ sub get_reordered_coordinates {
 	$agp_new->set_current_agp_line_number(1);
 
 	my $gff_rearrange_obj = Bio::GenomeUpdate::GFF::GFFRearrange->new();
-	my %coordinates =
+	my %coordinates       =
 	  $gff_rearrange_obj->reordered_coordinates_AGP( $agp_old, $agp_new );
 
 	return %coordinates;
@@ -243,7 +248,7 @@ sub get_flipped_coordinates {
 	$agp_new->set_current_agp_line_number(1);
 
 	my $gff_rearrange_obj = Bio::GenomeUpdate::GFF::GFFRearrange->new();
-	my %flipped =
+	my %flipped           =
 	  $gff_rearrange_obj->flipped_coordinates_AGP( $agp_old, $agp_new );
 
 	return %flipped;
@@ -275,7 +280,7 @@ sub remap_coordinates {
 			my $gff_rearrange_obj = Bio::GenomeUpdate::GFF::GFFRearrange->new();
 			my ( $nstart, $nend, $nstrand ) =
 			  $gff_rearrange_obj->updated_coordinates_strand_AGP( $start, $end,
-								  $strand, $agp_old, $agp_new, $gff_file_name );
+				$strand, $agp_old, $agp_new, $gff_file_name );
 
 			#start/end map to diff scaffolds
 			if ( ( $nstart == 0 ) && ( $nend == 0 ) && ( $nstrand == 0 ) ) {
@@ -290,7 +295,8 @@ sub remap_coordinates {
 			#other errors
 			elsif ( ( $nstart == 1 ) && ( $nend == 0 ) && ( $nstrand == 0 ) ) {
 				$errors .= gff3_format_feature($gff_line_hash);
-			} else {
+			}
+			else {
 				$gff_line_hash->{'start'}  = $nstart;
 				$gff_line_hash->{'end'}    = $nend;
 				$gff_line_hash->{'strand'} = $nstrand;
@@ -335,8 +341,8 @@ sub remap_coordinates_remove_children {
 
 			#check if child of error feature
 			my $skip = 0;
-			if (    ( ( scalar @error_IDs ) > 0 )
-				 && ( exists $gff_line_hash->{'attributes'}->{'Parent'} ) )
+			if (   ( ( scalar @error_IDs ) > 0 )
+				&& ( exists $gff_line_hash->{'attributes'}->{'Parent'} ) )
 			{
 				foreach
 				  my $parent ( @{ $gff_line_hash->{'attributes'}->{'Parent'} } )
@@ -347,7 +353,7 @@ sub remap_coordinates_remove_children {
 							$errors .= gff3_format_feature($gff_line_hash);
 							open( EMSG, ">>${gff_file_name}.error.messages" );
 							foreach my $ID (
-								   @{ $gff_line_hash->{'attributes'}->{'ID'} } )
+								@{ $gff_line_hash->{'attributes'}->{'ID'} } )
 							{
 								print EMSG "$ID added to error parent list\n";
 								print STDERR "$ID added to error parent list\n";
@@ -374,7 +380,7 @@ sub remap_coordinates_remove_children {
 			my $gff_rearrange_obj = Bio::GenomeUpdate::GFF::GFFRearrange->new();
 			my ( $nstart, $nend, $nstrand ) =
 			  $gff_rearrange_obj->updated_coordinates_strand_AGP( $start, $end,
-								  $strand, $agp_old, $agp_new, $gff_file_name );
+				$strand, $agp_old, $agp_new, $gff_file_name );
 
 #start/end map to diff scaffolds if (($nstart == 0) && ($nend == 0) && ($nstrand == 0))
 #feature maps outside scaffolds if(($nstart == 1) && ($nend == 1) && ($nstrand == 1))
@@ -395,7 +401,8 @@ sub remap_coordinates_remove_children {
 					push @error_IDs, $ID;
 				}
 				close(EMSG);
-			} else {
+			}
+			else {
 				$gff_line_hash->{'start'}  = $nstart;
 				$gff_line_hash->{'end'}    = $nend;
 				$gff_line_hash->{'strand'} = $nstrand;
@@ -442,7 +449,8 @@ sub remap_coordinates_hash {
 			if ( $flipped->{$start} ) {
 				if ( $strand eq '+' ) {
 					$gff_line_hash->{'strand'} = '-';
-				} elsif ( $strand eq '-' ) {
+				}
+				elsif ( $strand eq '-' ) {
 					$gff_line_hash->{'strand'} = '+';
 				}
 			}
@@ -451,7 +459,8 @@ sub remap_coordinates_hash {
 			if ( $flipped->{$start} ) {
 				$gff_line_hash->{'start'} = $coordinates->{$end};
 				$gff_line_hash->{'end'}   = $coordinates->{$start};
-			} else {
+			}
+			else {
 				$gff_line_hash->{'start'} = $coordinates->{$start};
 				$gff_line_hash->{'end'}   = $coordinates->{$end};
 			}
@@ -480,3 +489,4 @@ Same as Perl.
 Surya Saha <suryasaha@cornell.edu , @SahaSurya>   
 
 =cut
+
