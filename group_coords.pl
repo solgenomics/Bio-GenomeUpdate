@@ -9,8 +9,10 @@ place_bacs.pl
 
 =head1 COMMAND-LINE OPTIONS
 
- -i  COORDS file created by show-coords (required)
+ -i  COORDS file created by show-coords
+ -u  Sequence ID of chromosome with unmapped contigs 
  -g  Gap size
+ -t  Print header
  -h  Help
 
 =cut
@@ -23,7 +25,7 @@ use File::Slurp;
 use Bio::GenomeUpdate::AlignmentCoords;
 use Bio::GenomeUpdate::AlignmentCoordsGroup;
 
-our ($opt_i, $opt_g, $opt_m, $opt_u, $opt_t, $opt_h);
+our ($opt_i, $opt_g, $opt_u, $opt_t, $opt_h);
 getopts("i:guth");
 if (!$opt_i && !$opt_g && !$opt_u && !$opt_t && !$opt_h) {
   help();
@@ -215,9 +217,11 @@ sub help {
 
     Flags:
 
-       -i  COORDS file created by show-coords (required)
-       -g  Gap size
-       -h  Help
+       -i  <coords file>             COORDS file created by show-coords (required)
+       -g  <int>                     Gap size allowed
+       -u  <str>                     Sequence ID(seqid) of chromosome with unmapped contigs/scaffolds. Typically chromosome 0
+       -t  <T/F>                     Print header. Must be T or F
+       -h  <help>
 EOF
 exit (1);
 }
