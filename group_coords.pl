@@ -26,8 +26,8 @@ use Bio::GenomeUpdate::AlignmentCoords;
 use Bio::GenomeUpdate::AlignmentCoordsGroup;
 
 our ($opt_i, $opt_g, $opt_u, $opt_t, $opt_h);
-getopts("i:guth");
-if (!$opt_i && !$opt_g && !$opt_u && !$opt_t && !$opt_h) {
+getopts("i:g:u:t:h");
+if (!$opt_i || !$opt_g || !$opt_u) {
   help();
 }
 if ($opt_h) {
@@ -57,7 +57,7 @@ if ($opt_t) {
 }
 
 ###parameter not working.  hard coded
-$gap_size_allowed = 100000;
+#$gap_size_allowed = 100000;
 
 
 my $total=0;
@@ -218,9 +218,9 @@ sub help {
     Flags:
 
        -i  <coords file>             COORDS file created by show-coords (required)
-       -g  <int>                     Gap size allowed
-       -u  <str>                     Sequence ID(seqid) of chromosome with unmapped contigs/scaffolds. Typically chromosome 0
-       -t  <T/F>                     Print header. Must be T or F
+       -g  <int>                     Gap size allowed (required)
+       -u  <str>                     Sequence ID(seqid) of chromosome with unmapped contigs/scaffolds. Typically chromosome 0. (required)
+       -t  <T/F>                     Print header. Must be T or F. Default is T
        -h  <help>
 EOF
 exit (1);
