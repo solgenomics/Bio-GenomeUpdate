@@ -1,4 +1,20 @@
 #!/usr/bin/perl
+=head1
+
+place_bacs.pl
+
+=head1 SYNOPSIS
+
+    group_coords.pl -i [coords file] -g [gap size]
+
+=head1 COMMAND-LINE OPTIONS
+
+ -i  COORDS file created by show-coords (required)
+ -g  Gap size
+ -h  Help
+
+=cut
+
 use strict;
 use warnings;
 
@@ -187,6 +203,21 @@ print STDERR "Total sequence extended by BACs:\t$total_extend\n";
 
 
 sub help {
-  print "Help\n";
-  exit (1);
+  print STDERR <<EOF;
+  $0:
+
+    Description:
+
+     This script groups aligned clusters and creates a tab delimited file with BAC alignment details.
+
+    Usage:
+      group_coords.pl -i [coords file] -g [gap size]
+
+    Flags:
+
+       -i  COORDS file created by show-coords (required)
+       -g  Gap size
+       -h  Help
+EOF
+exit (1);
 }
