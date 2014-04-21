@@ -34,10 +34,10 @@ if ($opt_h) {
   help();
 }
 my $input_file;
-my $gap_size_allowed = 10000;
+my $gap_size_allowed;
 my $unmapped_ID;
 #$unmapped_ID = "SL2.40ch00";
-my $print_header = "T";
+my $print_header;
 $input_file = $opt_i || die("-i input_file required\n");
 if ($opt_g) {
   $gap_size_allowed=$opt_g;
@@ -56,10 +56,6 @@ if ($opt_t) {
   }
 }
 
-###parameter not working.  hard coded
-#$gap_size_allowed = 100000;
-
-
 my $total=0;
 my $total_smaller_than_20k=0;
 my $total_mixed=0;
@@ -68,9 +64,6 @@ my $total_alt=0;
 my $total_full_length=0;
 my $total_to_end=0;
 my $total_extend=0;
-
-
-
 
 print STDERR "G0: $gap_size_allowed\n";
 my @lines = read_file($input_file);
@@ -81,6 +74,8 @@ my $last_line_query_id;
 my $last_query_id;
 my $last_query_length;
 print "query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+
+#parse coords file
 foreach my $line (@lines) {
   $currentline++;
   if ($currentline < $startline) {
@@ -189,8 +184,6 @@ sub calc_and_print_info {
   }
 }
 
-
-
   ##summary info
 print STDERR "Total:\t$total\n";
 print STDERR "Total smaller than 5000:\t$total_smaller_than_20k\n";
@@ -200,8 +193,6 @@ print STDERR "Total with alternate alignments > 10,000:\t$total_alt\n";
 print STDERR "Total full length:\t$total_full_length\n";
 print STDERR "Total with alignment to at least one end:\t$total_to_end\n";
 print STDERR "Total sequence extended by BACs:\t$total_extend\n";
-
-
 
 
 sub help {
@@ -218,7 +209,7 @@ sub help {
     Flags:
 
        -i  <coords file>             COORDS file created by show-coords (required)
-       -g  <int>                     Gap size allowed (required)
+       -g  <int>                     Gap size allowed. Recommended 10000 (required)
        -u  <str>                     Sequence ID(seqid) of chromosome with unmapped contigs/scaffolds. Typically chromosome 0. (required)
        -t  <T/F>                     Print header. Must be T or F. Default is T
        -h  <help>
