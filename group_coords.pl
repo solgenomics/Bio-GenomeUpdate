@@ -87,8 +87,8 @@ foreach my $line (@lines) {
   if (!defined($last_line_query_id)) {
     $last_line_query_id = $current_query_id;
   }    
-  if (!($current_query_id eq $last_line_query_id)) {#print for all lines except last
-    calc_and_print_info(\@alignment_coords_array, $last_query_id, $last_query_length);
+  if (!($current_query_id eq $last_line_query_id)) {#exec if query ID changes, i.e., coords for next BAC aligned to chr 
+    calc_and_print_info(\@alignment_coords_array, $last_query_id, $last_query_length);#print info for last query or BAC
     @alignment_coords_array = ();
   }
   my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
@@ -100,7 +100,7 @@ foreach my $line (@lines) {
   $aln_coords->set_query_end_coord($row[3]);
   push(@alignment_coords_array, $aln_coords);
   
-  #deal with last row
+  #deal with last row since no more alignments for query after this
   if ($currentline==scalar(@lines)) {
     #calc_and_print_info(\@alignment_coords_array, $current_query_id, $current_query_length,$gap_size_allowed);
     calc_and_print_info(\@alignment_coords_array, $current_query_id, $current_query_length);
@@ -114,6 +114,7 @@ foreach my $line (@lines) {
 sub calc_and_print_info {
   my ($aref,$q_id,$q_length) = @_;
   my $align_group =  Bio::GenomeUpdate::AlignmentCoordsGroup->new();
+  #assign all coords for query/BAC to obj
   $align_group->set_array_of_alignment_coords($aref);
   my $zero_chromosome_id = $unmapped_ID;
   #returns an array of arrays containing the

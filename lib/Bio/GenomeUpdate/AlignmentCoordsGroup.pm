@@ -200,9 +200,9 @@ sub get_cluster_groups_sorted_by_length {
   }
 }
 
-=item C<get_id_coords_and_direction_of_longest_alignment_cluster_group ( $gap_percent, $gap_allowed )>
+=item C<get_id_coords_and_direction_of_longest_alignment_cluster_group ( $gap_allowed )>
 
-Returns IDs, start and end coordinates, total aligned sequence length, and direction for the longest proximity-grouped alignment clusters sorted by longest to shortest length of non-overlapping sequence covered by alignment clusters.  The proximity grouping is done using the specified length of an allowed gap between aligned clusters in the reference sequence ($gap allowed) plus an adjustment based on a percent of the length of the gap between the aligned clusters on the query sequence. 
+Returns IDs, start and end coordinates, total aligned sequence length, and direction for the longest proximity-grouped alignment clusters sorted by longest to shortest length of non-overlapping sequence covered by alignment clusters.  The proximity grouping is done using the specified length of an allowed gap between aligned clusters in the reference sequence ($gap allowed). 
 
 =cut
 
