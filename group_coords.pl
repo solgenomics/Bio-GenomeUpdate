@@ -36,7 +36,6 @@ if ($opt_h) {
 my $input_file;
 my $gap_size_allowed;
 my $unmapped_ID;
-#$unmapped_ID = "SL2.40ch00";
 my $print_header;
 $input_file = $opt_i || die("-i input_file required\n");
 if ($opt_g) {
@@ -88,7 +87,7 @@ foreach my $line (@lines) {
   if (!defined($last_line_query_id)) {
     $last_line_query_id = $current_query_id;
   }    
-  if (!($current_query_id eq $last_line_query_id)) {
+  if (!($current_query_id eq $last_line_query_id)) {#print for all lines except last
     calc_and_print_info(\@alignment_coords_array, $last_query_id, $last_query_length);
     @alignment_coords_array = ();
   }
@@ -100,9 +99,11 @@ foreach my $line (@lines) {
   $aln_coords->set_query_start_coord($row[2]);
   $aln_coords->set_query_end_coord($row[3]);
   push(@alignment_coords_array, $aln_coords);
+  
   #deal with last row
   if ($currentline==scalar(@lines)) {
-    calc_and_print_info(\@alignment_coords_array, $current_query_id, $current_query_length,$gap_size_allowed);
+    #calc_and_print_info(\@alignment_coords_array, $current_query_id, $current_query_length,$gap_size_allowed);
+    calc_and_print_info(\@alignment_coords_array, $current_query_id, $current_query_length);
     @alignment_coords_array = ();
   }
   $last_line_query_id = $current_query_id;
@@ -115,12 +116,15 @@ sub calc_and_print_info {
   my $align_group =  Bio::GenomeUpdate::AlignmentCoordsGroup->new();
   $align_group->set_array_of_alignment_coords($aref);
   my $zero_chromosome_id = $unmapped_ID;
-  #    print STDERR "G1: $gap_size_allowed\n";
-  my ($ref_id, $query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters,$direction,$is_overlapping,$size_of_next_largest_match,$alternates) = $align_group->get_id_coords_and_direction_of_longest_alignment_cluster_group($gap_size_allowed);
+  #returns an array of arrays containing the
+  #proximity-grouped alignment clusters sorted by longest to shortest
+  #length of non-overlapping sequence covered by alignment clusters.
+  my ($ref_id, $query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters,$direction,$is_overlapping,
+  	$size_of_next_largest_match,$alternates) = $align_group->get_id_coords_and_direction_of_longest_alignment_cluster_group($gap_size_allowed);
   my $is_full_length;
-  my $start_gap_length = $query_start-1;
-  my $end_gap_length = $q_length-$query_end;
-  my $internal_gap_length = ($q_length-$sequence_aligned_in_clusters) - ($start_gap_length + $end_gap_length);
+  my $start_gap_length = $query_start - 1;
+  my $end_gap_length = $q_length - $query_end;
+  my $internal_gap_length = ($q_length - $sequence_aligned_in_clusters) - ($start_gap_length + $end_gap_length);
   if (($query_start == 1) && ($query_end == $q_length)) {
     $is_full_length = "Contains";
   } else {
@@ -130,7 +134,7 @@ sub calc_and_print_info {
   print $ref_id."\t";
   print $ref_start."\t";
   print $ref_end."\t";
-  print $ref_end-$ref_start."\t";
+  print $ref_end - $ref_start."\t";
   print $query_start."\t";
   print $query_end."\t";
   print $q_length."\t";
@@ -157,7 +161,7 @@ sub calc_and_print_info {
   my $flagged = 0;
 
   $total++;
-  if ($ref_end-$ref_start < 20000) {
+  if ($ref_end - $ref_start < 20000) {
     $total_smaller_than_20k++;
     $flagged=1;
   }
@@ -186,7 +190,7 @@ sub calc_and_print_info {
 
   ##summary info
 print STDERR "Total:\t$total\n";
-print STDERR "Total smaller than 5000:\t$total_smaller_than_20k\n";
+print STDERR "Total smaller than 20,000:\t$total_smaller_than_20k\n";
 print STDERR "Total with mixed orientation:\t$total_mixed\n";
 print STDERR "Total with overlapping alignment clusters:\t$total_over\n";
 print STDERR "Total with alternate alignments > 10,000:\t$total_alt\n";
