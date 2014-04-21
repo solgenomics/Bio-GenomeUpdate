@@ -6,12 +6,12 @@ set_scaffold_gap_sizes.pl
 
 =head1 SYNOPSIS
 
-    reorder_scaffolds.pl -t [TPF file] -l [file with gap pairs, sizes, and methods]
+         set_scaffold_gap_sizes.pl -t [TPF file] -l [file with scaffold pairs, size, and method]
 
 =head1 COMMAND-LINE OPTIONS
 
  -t  TPF file
- -l  Tab-delimited file containing tab-delimited lines of scaffold pairs,  gap size, and gap method.
+ -l  Tab-delimited file containing tab-delimited lines of scaffold pairs,  gap size, and gap method
  -h  Help
 =cut
 
@@ -87,7 +87,7 @@ sub help {
     Flags:
 
       -t <TPF_file>                    Original TPF file (mandatory)
-      -l <gap_size_and_method>  Tab-delimited file containing tab-delimited lines of scaffold pairs, gap sizes, and gap methods.
+      -l <gap_size_and_method>  Tab-delimited file containing tab-delimited lines of scaffold pairs, gap sizes, and gap methods
       -h <help>                        Help
 
 EOF

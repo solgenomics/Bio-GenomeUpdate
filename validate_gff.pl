@@ -125,12 +125,12 @@ sub help {
       
     Flags:
 
- -g  old GFF file (required)
- -f  old Fasta file based on old scaffold AGP (required)
- -u  Updated GFF file output by update_coordinates_gff.pl (required)
- -n  New Fasta file based on new scaffold AGP (required)
- -d  debugging messages (1 or 0)
- -h  Help
+		 -g  old GFF file (required)
+		 -f  old Fasta file based on old scaffold AGP (required)
+		 -u  Updated GFF file output by update_coordinates_gff.pl (required)
+		 -n  New Fasta file based on new scaffold AGP (required)
+		 -d  debugging messages (1 or 0)
+		 -h  Help
 
 EOF
 	exit(1);

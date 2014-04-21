@@ -13,7 +13,7 @@ place_bacs.pl
  -t  TPF file
  -s  scaffold AGP file
  -c  chromosome AGP file
- -l  Tab-delimited file containing BAC names and start and end coordinates.
+ -l  Tab-delimited file containing BAC names and start and end coordinates
  -h  Help
 
 =cut
