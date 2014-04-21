@@ -15,7 +15,7 @@ use MooseX::FollowPBP;
 
 =head1 DESCRIPTION
 
-    This class stores alignment coordinates (e.g., from Nucmer show-coords output) for a query sequence (e.g., from a BAC) relative to reference sequences (e.g., chromosome pseudomolecules).
+    This class stores alignment coordinates (e.g., from Nucmer/delta-filter/show-coords output) for a query sequence (e.g., from a BAC) relative to reference sequences (e.g., chromosome pseudomolecules).
 
 =head2 Methods
 
