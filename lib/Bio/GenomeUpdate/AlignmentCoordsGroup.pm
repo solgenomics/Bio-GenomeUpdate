@@ -225,9 +225,9 @@ sub get_id_coords_and_direction_of_longest_alignment_cluster_group {
   my $query_end;
   my $sequence_aligned_in_clusters=0;
   my $prev_end_coord;
-  my $overlap_allowed = 100;
+  my $overlap_allowed = 100;#between tiles in cluster
   my $is_overlapping = 0;
- foreach my $align_coords (@largest_cluster_group) {
+ foreach my $align_coords (@largest_cluster_group) {#parse through alignments in cluster
     $sequence_aligned_in_clusters += (($align_coords->get_reference_end_coord()+1) - $align_coords->get_reference_start_coord());
     if ($prev_end_coord) {
       if ($align_coords->get_reference_start_coord() <= $prev_end_coord) {
