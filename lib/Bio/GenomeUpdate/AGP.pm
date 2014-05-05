@@ -379,6 +379,17 @@ sub get_next_formatted_agp_line {
 	}
 }
 
+=item C<get_summary ( $comment_string )>
+
+Get a string with summary bases covered by sequence and gaps in AGP.
+
+=cut
+
+sub get_summary{
+	
+	
+}
+
 sub get_formatted_agp {
 	my $self = shift;
 	my %lines;

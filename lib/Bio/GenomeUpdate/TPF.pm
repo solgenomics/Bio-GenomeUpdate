@@ -408,6 +408,19 @@ sub parse_tpf {
 	return $self;
 }
 
+=item C<get_summary ()>
+
+Get a string with summary bases covered by sequence and gaps in TPF.
+
+=cut
+
+sub get_summary{
+	my $self = shift;
+	
+	
+	return $self;
+}
+
 sub get_formatted_tpf {
 	my $self = shift;
 	my %lines;
@@ -1069,14 +1082,15 @@ sub flip_scaffold {
 
 =pod
 
-  =back
+=back
 
-  =head1 LICENSE
+=head1 LICENSE
 
-  Same as Perl.
+Same as Perl.
 
-  =head1 AUTHORS
+=head1 AUTHORS
 
   Jeremy D. Edwards <jde22@cornell.edu>
+  Surya Saha        <suryasaha@cornell.edu>
 
-  =cut
+=cut
