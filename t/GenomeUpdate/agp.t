@@ -26,7 +26,7 @@ use strict;
 use warnings;
 use autodie;
 
-use Test::More tests => 51;
+use Test::More tests => 57;
 BEGIN { use_ok('Bio::GenomeUpdate::AGP'); }
 require_ok('Bio::GenomeUpdate::AGP::AGPSequenceLine');
 require_ok('Bio::GenomeUpdate::AGP::AGPGapLine');
@@ -136,3 +136,12 @@ is($agp->get_current_agp_line_number(), 2, 'Got 2 for line number');
 ok($formatted_agp_line=$agp->get_next_formatted_agp_line());
 print $formatted_agp_line;
 
+#test summary methods
+is($agp->get_number_of_gap_lines(),3,'Gap line count is as expected');
+is($agp->get_number_of_scaffold_lines(),2,'Sequence line count is as expected');
+my @compare_gap_lengths=(400,400,400);
+ok(my @gap_lengths_from_tpf=$agp->get_gap_lengths());
+is(@gap_lengths_from_tpf,@compare_gap_lengths,'Gap lengths as expected');
+my @compare_scaffold_lengths=(400,400);
+ok(my @scaffold_lengths_from_tpf=$agp->get_scaffold_lengths());
+is(@scaffold_lengths_from_tpf,@compare_scaffold_lengths,'Scaffold lengths as expected');
