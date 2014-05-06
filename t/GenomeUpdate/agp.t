@@ -138,10 +138,10 @@ print $formatted_agp_line;
 
 #test summary methods
 is($agp->get_number_of_gap_lines(),3,'Gap line count is as expected');
-is($agp->get_number_of_scaffold_lines(),2,'Sequence line count is as expected');
+is($agp->get_number_of_sequence_lines(),2,'Sequence line count is as expected');
 my @compare_gap_lengths=(400,400,400);
 ok(my @gap_lengths_from_tpf=$agp->get_gap_lengths());
 is(@gap_lengths_from_tpf,@compare_gap_lengths,'Gap lengths as expected');
-my @compare_scaffold_lengths=(400,400);
-ok(my @scaffold_lengths_from_tpf=$agp->get_scaffold_lengths());
-is(@scaffold_lengths_from_tpf,@compare_scaffold_lengths,'Scaffold lengths as expected');
+my @compare_sequence_lengths=(400,400);
+ok(my @sequence_lengths_from_tpf=$agp->get_sequence_lengths());
+is(@sequence_lengths_from_tpf,@compare_sequence_lengths,'Sequence lengths as expected');
