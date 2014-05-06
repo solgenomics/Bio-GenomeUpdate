@@ -25,7 +25,7 @@ use strict;
 use warnings;
 use autodie;
 
-use Test::More tests => 30;
+use Test::More tests => 34;
 BEGIN {use_ok( 'Bio::GenomeUpdate::TPF' ); }
 require_ok( 'Bio::GenomeUpdate::TPF::TPFSequenceLine' );
 require_ok( 'Bio::GenomeUpdate::TPF::TPFGapLine' );
@@ -84,3 +84,9 @@ ok($tpf->parse_tpf($compare_str));
 ok(my $out_str_from_tpf_parsed = $tpf->get_formatted_tpf());
 is ($out_str_from_tpf_parsed,$compare_str,'TPF output from parsed is as expected');
 
+#summary functions
+is($tpf->get_number_of_gap_lines(),3,'Gap line count is as expected');
+is($tpf->get_number_of_sequence_lines(),2,'Sequence line count is as expected');
+my @compare_gap_lengths=(100,100,100);
+ok(my @gap_lengths_from_tpf=$tpf->get_gap_lengths());
+is(@gap_lengths_from_tpf,@compare_gap_lengths,'Gap lengths as expected');
