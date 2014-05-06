@@ -416,6 +416,7 @@ Return nof gaps in TPF.
 
 sub get_number_of_gap_lines {
 	my $self = shift;
+	my %lines;
 	my $count=0;
 	
 	if ( $self->has_tpf_lines() ) {
@@ -424,6 +425,8 @@ sub get_number_of_gap_lines {
 		foreach my $line_key (@sorted_line_numbers) {
 			if ( $lines{$line_key}->get_line_type() eq "gap" ) {
 				$count++;
+			}
+		}
 	}
 	return $count;
 }
@@ -435,16 +438,19 @@ Return nof sequences in TPF.
 
 =cut
 
-sub get_number_of_gap_lines {
+sub get_number_of_sequence_lines {
 	my $self = shift;
+	my %lines;
 	my $count=0;
 	
 	if ( $self->has_tpf_lines() ) {
 		%lines = %{ $self->get_tpf_lines() };
 		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
 		foreach my $line_key (@sorted_line_numbers) {
-			if ( $lines{$line_key}->get_line_type() eq "gap" ) {
+			if ( $lines{$line_key}->get_line_type() eq "sequence" ) {
 				$count++;
+			}
+		}
 	}
 	return $count;
 }
@@ -456,25 +462,21 @@ Return array with all gap lengths in TPF.
 
 =cut
 
-
-sub get_summary{
+sub get_gap_lengths{
 	my $self = shift;
 	my (@gap_lengths,%lines);
-	my $seq_count=0;
 	
 	if ( $self->has_tpf_lines() ) {
 		%lines = %{ $self->get_tpf_lines() };
 		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
 		foreach my $line_key (@sorted_line_numbers) {
-			if ( $lines{$line_key}->get_line_type() eq "sequence" ) {
-				$seq_count++;
-			}
-			elsif ( $lines{$line_key}->get_line_type() eq "gap" ) {
+			if ( $lines{$line_key}->get_line_type() eq "gap" ) {
 				push @gap_lengths,$lines{$line_key}->get_gap_size();
+			}
+		}
 	}
 	
-	
-	return $self;
+	return @gap_lengths;
 }
 
 sub get_formatted_tpf {
