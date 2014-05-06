@@ -379,16 +379,100 @@ sub get_next_formatted_agp_line {
 	}
 }
 
-=item C<get_summary ( $comment_string )>
+=item C<get_number_of_gap_lines ()>
 
-Get a string with summary bases covered by sequence and gaps in AGP.
+Return nof gaps in AGP.
 
 =cut
 
-sub get_summary{
+sub get_number_of_gap_lines {
+	my $self = shift;
+	my %lines;
+	my $count=0;
 	
-	
+	if ( $self->has_agp_lines() ) {
+		%lines = %{ $self->get_agp_lines() };
+		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+		foreach my $line_key (@sorted_line_numbers) {
+			if ( $lines{$line_key}->get_line_type() eq "gap" ) {
+				$count++;
+			}
+		}
+	}
+	return $count;
 }
+
+
+=item C<get_number_of_sequence_lines ()>
+
+Return nof sequences in AGP.
+
+=cut
+
+sub get_number_of_sequence_lines {
+	my $self = shift;
+	my %lines;
+	my $count=0;
+	
+	if ( $self->has_agp_lines() ) {
+		%lines = %{ $self->get_agp_lines() };
+		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+		foreach my $line_key (@sorted_line_numbers) {
+			if ( $lines{$line_key}->get_line_type() eq "sequence" ) {
+				$count++;
+			}
+		}
+	}
+	return $count;
+}
+
+
+=item C<get_gap_lengths ()>
+
+Return array with all gap lengths in AGP.
+
+=cut
+
+sub get_gap_lengths{
+	my $self = shift;
+	my (@gap_lengths,%lines);
+	
+	if ( $self->has_agp_lines() ) {
+		%lines = %{ $self->get_agp_lines() };
+		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+		foreach my $line_key (@sorted_line_numbers) {
+			if ( $lines{$line_key}->get_line_type() eq "gap" ) {
+				push @gap_lengths, ($lines{$line_key}->get_object_end()-$lines{$line_key}->get_object_begin()+1);
+			}
+		}
+	}
+	
+	return @gap_lengths;
+}
+
+=item C<get_sequence_lengths ()>
+
+Return array with all sequence lengths in AGP.
+
+=cut
+
+sub get_sequence_lengths{
+	my $self = shift;
+	my (@sequence_lengths,%lines);
+	
+	if ( $self->has_agp_lines() ) {
+		%lines = %{ $self->get_agp_lines() };
+		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+		foreach my $line_key (@sorted_line_numbers) {
+			if ( $lines{$line_key}->get_line_type() eq "sequence" ) {
+				push @sequence_lengths, ($lines{$line_key}->get_component_end()-$lines{$line_key}->get_component_begin()+1);
+			}
+		}
+	}
+	
+	return @sequence_lengths;
+}	
+
 
 sub get_formatted_agp {
 	my $self = shift;
