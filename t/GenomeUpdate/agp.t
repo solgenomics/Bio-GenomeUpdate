@@ -80,18 +80,6 @@ ok( $agp->insert_line_before( 2, $agp_gap_line ) );
 ok( $agp->insert_line_after( 3, $agp_gap_line ) );     #commented out previously
 ok( $agp->delete_line( 2, $agp_gap_line ) );           #commented out previously
 
-#adding chr2 lines
-ok( $agp_sequence_line->set_object_being_assembled("Chromosome2") );
-ok( $agp_gap_line->set_object_being_assembled("Chromosome2") );
-ok( $agp->add_line_to_end($agp_gap_line) );
-ok( $agp->add_line_to_end($agp_sequence_line) );
-ok( $agp->add_line_to_beginning($agp_sequence_line) );
-ok( $agp->add_line_to_beginning($agp_gap_line) );
-ok( $agp->insert_line_before( 2, $agp_gap_line ) );
-ok( $agp->insert_line_after( 3, $agp_gap_line ) );
-ok( $agp->delete_line( 2, $agp_gap_line ) );
-
-
 #get formatted AGP string and compare to expected output
 ok( my $out_str = $agp->get_formatted_agp() );
 my $compare_str = q(##agp-version	2.0
@@ -111,12 +99,6 @@ Chromosome1	1001	1400	3	N	400	scaffold	yes	paired-ends;map
 Chromosome1	1001	1400	4	N	400	scaffold	yes	paired-ends;map
 Chromosome1	1001	1400	5	A	component id	1	400	+
 );
-#removed
-#Chromosome2	1001	1400	1	N	400	scaffold	yes	paired-ends;map
-#Chromosome2	1001	1400	2	A	component id	1	400	+
-#Chromosome2	1001	1400	3	N	400	scaffold	yes	paired-ends;map
-#Chromosome2	1001	1400	4	N	400	scaffold	yes	paired-ends;map
-#Chromosome2	1001	1400	5	A	component id	1	400	+
 is( $out_str, $compare_str, 'AGP output string is as expected' );
 
 #parse formatted AGP string into an AGP object and compare to expected output
