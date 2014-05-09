@@ -50,14 +50,14 @@ if (($type ne lc 'tpf') && ($type ne lc 'agp')){
 if ($type eq lc 'tpf'){
 	my $tpf = Bio::GenomeUpdate::TPF->new();
 	$tpf->parse_tpf($input);
-	print STDERR 'Number of gaps: '.$tpf->get_number_of_gap_lines()."\n";
-	print STDERR 'Number of sequences: '.$tpf->get_number_of_sequence_lines()."\n";
+	print STDERR "Number of gaps:\t".$tpf->get_number_of_gap_lines()."\n";
+	print STDERR "Number of sequences:\t".$tpf->get_number_of_sequence_lines()."\n";
 	
 	my @gap_lengths_from_tpf=$tpf->get_gap_lengths();
 	my $piddle = pdl @gap_lengths_from_tpf;
 	my ($mean,$prms,$median,$min,$max,$adev,$rms) = stats($piddle);
 	print STDERR "\nGap statistics:\n";
-	print STDERR "Mean: $mean\nMedian: $median\nMin: $min\nMax: $max\nAvg abs dev: $adev\nStd dev: $rms\n";
+	print STDERR "Mean:\t$mean\nMedian:\t$median\nMin:\t$min\nMax:\t$max\nAvg abs dev:\t$adev\nStd dev:\t$rms\n";
 	#Std dev is fine here as we know the population of gaps
 }
 elsif($type eq lc 'agp'){
@@ -70,13 +70,13 @@ elsif($type eq lc 'agp'){
 	my $piddle = pdl @gap_lengths_from_agp;
 	my ($mean,$prms,$median,$min,$max,$adev,$rms) = stats($piddle);
 	print STDERR "\nGap statistics:\n";
-	print STDERR "Mean: $mean\nMedian: $median\nMin: $min\nMax: $max\nAvg abs dev: $adev\nStd dev: $rms\n";
+	print STDERR "Mean:\t$mean\nMedian:\t$median\nMin:\t$min\nMax:\t$max\nAvg abs dev:\t$adev\nStd dev:\t$rms\n";
 	
 	my @sequence_lengths_from_agp=$agp->get_sequence_lengths();
 	$piddle = pdl @sequence_lengths_from_agp;
 	($mean,$prms,$median,$min,$max,$adev,$rms) = stats($piddle);
 	print STDERR "\nComponent statistics:\n";
-	print STDERR "Mean: $mean\nPop std dev: $prms\nMedian: $median\nMin: $min\nMax: $max\nAvg abs dev: $adev\nStd dev: $rms\n";
+	print STDERR "Mean:\t$mean\nMedian:\t$median\nMin:\t$min\nMax:\t$max\nAvg abs dev:\t$adev\nStd dev:\t$rms\n";
 	#Std dev is fine here as we know the population of gaps
 }
 else{
