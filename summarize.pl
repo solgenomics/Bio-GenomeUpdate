@@ -54,12 +54,15 @@ if ($type eq lc 'tpf'){
 	print "Number of sequences:\t".$tpf->get_number_of_sequence_lines()."\n";
 	
 	my @gap_lengths_from_tpf=$tpf->get_gap_lengths();
+	my $total_gap_length = 0;
+	foreach my $gap(@gap_lengths_from_tpf){
+		if (defined $gap){$total_gap_length += $gap;}
+	}
 	my $piddle = pdl @gap_lengths_from_tpf; #http://pdl.perl.org/PDLdocs/Primitive.html#stats
 	my ($mean,$prms,$median,$min,$max,$adev,$rms) = stats($piddle);
 	
-	#check out format  
-	
-	print "\nGap statistics:\n";
+	print "\nGap statistics\n";
+	print "Total length: $total_gap_length\n";
 	print "Mean:\t$mean\nMedian:\t$median\nMin:\t$min\nMax:\t$max\nAvg abs dev:\t$adev\nStd dev:\t$rms\n";
 	#Std dev is fine here as we know the population of gaps
 }
@@ -68,17 +71,32 @@ elsif($type eq lc 'agp'){
 	$agp->parse_agp($input);
 	print 'Number of gaps: '.$agp->get_number_of_gap_lines()."\n";
 	print 'Number of sequences: '.$agp->get_number_of_sequence_lines()."\n";
-	
 	my @gap_lengths_from_agp=$agp->get_gap_lengths();
+	my @sequence_lengths_from_agp=$agp->get_sequence_lengths();
+	my $total_length = 0;
+	my $total_gap_length = 0;
+	foreach my $gap(@gap_lengths_from_agp){
+		$total_gap_length += $gap;
+		$total_length += $gap;
+	}
+	my $total_sequence_length = 0;
+	foreach my $seq(@sequence_lengths_from_agp){
+		$total_sequence_length += $seq;
+		$total_length += $seq;
+	}
+	print 'Length: '.$total_length."\n";	
+	
 	my $piddle = pdl @gap_lengths_from_agp;
 	my ($mean,$prms,$median,$min,$max,$adev,$rms) = stats($piddle);
 	print "\nGap statistics:\n";
+	print "Total length: $total_gap_length\n";
 	print "Mean:\t$mean\nMedian:\t$median\nMin:\t$min\nMax:\t$max\nAvg abs dev:\t$adev\nStd dev:\t$rms\n";
 	
-	my @sequence_lengths_from_agp=$agp->get_sequence_lengths();
+	
 	$piddle = pdl @sequence_lengths_from_agp;
 	($mean,$prms,$median,$min,$max,$adev,$rms) = stats($piddle);
 	print "\nComponent statistics:\n";
+	print "Total length: $total_sequence_length\n";
 	print "Mean:\t$mean\nMedian:\t$median\nMin:\t$min\nMax:\t$max\nAvg abs dev:\t$adev\nStd dev:\t$rms\n";
 	#Std dev is fine here as we know the population of gaps
 }
