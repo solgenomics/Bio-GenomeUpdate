@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 =head1
 
-place_bacs.pl
+group_coords.pl
 
 =head1 SYNOPSIS
 
