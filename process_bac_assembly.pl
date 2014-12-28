@@ -102,7 +102,52 @@ sub contig_to_ace(){
 	
 }
 
+=item C<contig_mismatch ( Bio::Assembly::Contig  )>
 
+Accepts a single contig object from an assembly. Returns a float containing the mismatch percentage for the contig.
+
+=cut
+sub contig_mismatch{
+	my $contig = shift;
+	#print STDERR $contig->percentage_identity(),"\n";
+	print STDERR $contig->get_consensus_sequence()->seq()."\n";
+	my $consensus_sequence = $contig->get_consensus_sequence()->seq(); #calling Bio::Seq->seq()
+#	if ($consensus_sequence =~ /-/){
+#		print STDERR "Contig ",$contig->id()," consensus has a gapped sequence which is not expected. Please investigate the assembly ACE file.  Exiting...\n";
+#		exit 1;
+#	}
+	my @consensus_sequence_arr = split '',$consensus_sequence; 
+	
+	#get reads (BACs), positions and consensus. Compare reads to consensus positions to get mismatch.
+#	print STDERR Dumper($contig);
+	
+	
+	my $featureDB = $contig->get_features_collection(); # returns Bio::DB::SeqFeature::Store::memory
+#	print STDERR ref($featureDB)."\n";
+	my $mismatches = 0;
+	foreach my $feature ($featureDB->get_all_features()){#returns Bio::SeqFeature::Generic for each read or BAC in the contig
+#		print STDERR ref($feature)."\n";
+		my $aligned_start = $feature->start();
+		my $aligned_end = $feature->end();
+#		print STDERR ref($feature->seq())."\n";
+		
+		#Workaround for exception when end > length. Happen because start and end in parent consensus seq coordinate space
+		#Reset the start and end to valid values to get the sequence out
+		#------------- EXCEPTION: Bio::Root::Exception ------------- MSG: Bad end parameter. End must be less than the total length of sequence (total=6)
+		$feature->end($feature->length());
+		$feature->start(1);
+		my $aligned_seq = $feature->seq()->seq();
+		my @aligned_seq_arr = split '', $aligned_seq;
+		
+		for (my $pos = $aligned_start; $pos <= $aligned_end; $pos++){
+			
+			
+		}
+	}
+	
+	
+	
+}
 
 =item C<run_tests ()>
 
