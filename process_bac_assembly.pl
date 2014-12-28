@@ -12,7 +12,7 @@ process_bac_assembly.pl -f [ACE file] -m [mismatch %] -o [output directory]
 
  -f  ACE file from Phrap assembly (required)
  -m  Mismatch percentage (recommended 0.5, required)
- -t  Do a test run (no ACE file required)
+ -t  Do a test run (e.g. -t 1, no ACE file required in this case)
  -o  Output directory
  -h  Help
 
@@ -50,38 +50,59 @@ sub scaffold_summary{
 	
 }
 
-
 =item C<contig_to_fasta ( Bio::Assembly::Contig  )>
 
-Accepts a single contig object from an assembly. Returns Bio::SeqIO::fasta object and the corresponding meta-data in a string variable. 
+Accepts a single contig object from an assembly. Returns fasta sequences for contig and assembled BACs.
+
+=cut
+sub contig_to_fasta {
+	my $contig = shift;
+#	print Dumper ($contig);
+	my @seqs = $contig->get_seq_ids();
+	my $BAC_fasta = '';
+	foreach my $seqname (@seqs){
+		my $seq = $contig->get_seq_by_name($seqname); #returns Bio::LocatableSeq
+#		print STDERR $seq->id(),"\n";
+#		print STDERR $seq->seq(),"\n";
+		my $cleaned_seq = $seq->seq();
+		$cleaned_seq =~ s/-//g;
+#		print STDERR $cleaned_seq."\n";
+		$BAC_fasta = $BAC_fasta.'>'.$seq->id()."\n".$cleaned_seq."\n";
+	}
+	my $contig_fasta = '>'.$contig->id()."\n".$contig->get_consensus_sequence()->seq();
+	return ($contig_fasta,$BAC_fasta)
+}
+
+=item C<singlet_to_fasta ( Bio::Assembly::Singlet  )>
+
+Accepts a single singlet object from an assembly. Returns string with Fasta sequence. 
 
 =cut
 
-sub contig_to_fasta {
-	my $contig = shift;
+sub singlet_to_fasta {
+	my $singlet = shift;
+	my $seq = $singlet->seqref();
+	print STDERR $seq->id(),"\n";
+	print STDERR $seq->seq(),"\n";
 	
-	my @seqs = $contig->get_seq_ids();
-	
-	if (scalar @seqs == 1){
-		my $seq = $contig->get_seq_by_name($seqs[0]);
-		print STDERR $seq->seq,"\n";
-		#return ($seq[0] , )	
+	if ($seq->seq() =~ /-/){
+		print STDERR "Singlet ",$seq->id()," has a gapped sequence which is not expected. Please investigate the assembly ACE file.  Exiting...\n";
+		exit 1;
 	}
-	else{
-		
-	}
-	
-	
-	
+	my $fasta = '>'.$seq->id()."\n".$seq->seq()."\n";
+	return ($fasta);
+}
+
+=item C<contig_to_ace  ( Bio::Assembly::Contig  )>
+
+Accepts a single contig object from an assembly. Returns a Bio::Assembly::IO::ace object for the contig.
+
+=cut
+sub contig_to_ace(){
 	
 }
 
 
-=item C<contig_to_ace  ( Bio::Assembly::Contig  )>
-
-Accepts a single contig object from an assembly. Returns a Bio::Assembly::IO::ace object for the contig.If the [mismatch %] is more than threshold then a new ACE file error_contigs.ace will be created with only those erroneous 
-     contigs.
-=cut
 
 =item C<run_tests ()>
 
@@ -115,7 +136,7 @@ sub run_tests{
 #					 -contigs => \@contigs, these do not work 
 #					 -singlets => \@singlets
 					);
-	#had to add contig and scaffold manually
+	#had to add contig and singlet manually
 	$scaffold->add_contig($c1);
 	$scaffold->add_singlet($s1);
 
@@ -123,6 +144,20 @@ sub run_tests{
 	scaffold_summary($scaffold);
 
 	#get seqs and compare
+	my $ctr = 1;
+	foreach my $contig  ($scaffold->all_contigs()){
+		print STDERR "read contig $ctr\n";
+		contig_to_fasta($contig);
+		contig_mismatch($contig);
+		$ctr++
+	}
+	
+	$ctr = 1;
+	foreach my $singlet  ($scaffold->all_singlets()){
+		print STDERR "read singlet $ctr\n";
+		singlet_to_fasta($singlet);
+		$ctr++
+	}
 	
 	
 }
@@ -153,7 +188,7 @@ while (my $contig = $assembly->next_contig()){
 
 	#if only 1 BAC, write out original BAC to singleton_BACs.fas
 	#If >1 BAC write to contigs_BACs.fas and corresponding meta-data to contigs_BACs.txt. 
-	contig_to_fasta($contig);
+	#contig_to_fasta($contig);
 	
 	
 	
