@@ -13,6 +13,7 @@ process_bac_assembly.pl -f [ACE file] -m [mismatch %] -o [output directory]
  -f  ACE file from Phrap assembly (required)
  -m  Mismatch percentage (recommended 0.5, required)
  -t  Do a test run (e.g. -t 1, no ACE file required in this case)
+ -d  Print extra status messages (e.g. -d 1)
  -o  Output directory
  -h  Help
 
@@ -69,7 +70,7 @@ sub contig_to_fasta {
 #		print STDERR $cleaned_seq."\n";
 		$BAC_fasta = $BAC_fasta.'>'.$seq->id()."\n".$cleaned_seq."\n";
 	}
-	my $contig_fasta = '>'.$contig->id()."\n".$contig->get_consensus_sequence()->seq();
+	my $contig_fasta = '>'.$contig->id()."\n".$contig->get_consensus_sequence()->seq()."\n";
 	return ($contig_fasta,$BAC_fasta)
 }
 
@@ -82,8 +83,8 @@ Accepts a single singlet object from an assembly. Returns string with Fasta sequ
 sub singlet_to_fasta {
 	my $singlet = shift;
 	my $seq = $singlet->seqref();
-	print STDERR $seq->id(),"\n";
-	print STDERR $seq->seq(),"\n";
+#	print STDERR $seq->id(),"\n";
+#	print STDERR $seq->seq(),"\n";
 	
 	if ($seq->seq() =~ /-/){
 		print STDERR "Singlet ",$seq->id()," has a gapped sequence which is not expected. Please investigate the assembly ACE file.  Exiting...\n";
@@ -104,13 +105,12 @@ sub contig_to_ace(){
 
 =item C<contig_mismatch ( Bio::Assembly::Contig  )>
 
-Accepts a single contig object from an assembly. Returns a float containing the mismatch percentage for the contig.
+Accepts a single contig object from an assembly. Returns floats containing the mismatch percentage and the gap percentage for the contig.
 
 =cut
 sub contig_mismatch{
-	my $contig = shift;
-	#print STDERR $contig->percentage_identity(),"\n";
-	print STDERR $contig->get_consensus_sequence()->seq()."\n";
+	my ($contig,$debug) = shift;
+#	print STDERR $contig->get_consensus_sequence()->seq()."\n";
 	my $consensus_sequence = $contig->get_consensus_sequence()->seq(); #calling Bio::Seq->seq()
 #	if ($consensus_sequence =~ /-/){
 #		print STDERR "Contig ",$contig->id()," consensus has a gapped sequence which is not expected. Please investigate the assembly ACE file.  Exiting...\n";
@@ -125,28 +125,37 @@ sub contig_mismatch{
 	my $featureDB = $contig->get_features_collection(); # returns Bio::DB::SeqFeature::Store::memory
 #	print STDERR ref($featureDB)."\n";
 	my $mismatches = 0;
+	my $gaps = 0;
 	foreach my $feature ($featureDB->get_all_features()){#returns Bio::SeqFeature::Generic for each read or BAC in the contig
 #		print STDERR ref($feature)."\n";
 		my $aligned_start = $feature->start();
 		my $aligned_end = $feature->end();
 #		print STDERR ref($feature->seq())."\n";
 		
-		#Workaround for exception when end > length. Happen because start and end in parent consensus seq coordinate space
+		#Workaround for exception when end > length. Happens because start and end in parent consensus seq coordinate space
 		#Reset the start and end to valid values to get the sequence out
-		#------------- EXCEPTION: Bio::Root::Exception ------------- MSG: Bad end parameter. End must be less than the total length of sequence (total=6)
+		#------------- EXCEPTION: Bio::Root::Exception ------------- MSG: Bad end parameter. End must be less than the total length of sequence
 		$feature->end($feature->length());
 		$feature->start(1);
 		my $aligned_seq = $feature->seq()->seq();
 		my @aligned_seq_arr = split '', $aligned_seq;
-		
-		for (my $pos = $aligned_start; $pos <= $aligned_end; $pos++){
-			
-			
+		my $aligned_seq_pos = 0;
+		for (my $con_pos = $aligned_start - 1 ; $con_pos <= $aligned_end - 1; $con_pos++){
+			if ($consensus_sequence_arr[$con_pos] ne $aligned_seq_arr[$aligned_seq_pos]){
+				$mismatches++;
+			}
+			if ($aligned_seq_arr[$aligned_seq_pos] eq '-'){
+				$gaps++;	
+			}
+			$aligned_seq_pos++;
+		}
+		if ($debug){
+			print STDERR "cumulative gaps $gaps mismatches $mismatches\n";
 		}
 	}
-	
-	
-	
+	my $mismatch_percent = $mismatches / scalar @consensus_sequence_arr;
+	my $gap_percent = $gaps / scalar @consensus_sequence_arr;
+	return ($mismatch_percent,$gap_percent);
 }
 
 =item C<run_tests ()>
@@ -155,15 +164,16 @@ Runs a test of all functions with dummy data. No ACE file required in this case.
 =cut
 
 sub run_tests{
+	my $debug = shift;
 	#create scaffold
 	my (@contigs,@singlets,$scaffold);
-	
+	print STDERR "Running tests..\ncreating test data..\n";
 	#create contig
 	my $c1 =  Bio::Assembly::Contig->new(-id => 'contig1');
 	my $ls1 = Bio::LocatableSeq->new(-seq=>"ACCG-T", -id=>"bac1", -alphabet=>'dna');
-    my $ls2 = Bio::LocatableSeq->new(-seq=>"ACA-CG-T", -id=>"bac2", -alphabet=>'dna');
-    my $ls1_coord = Bio::SeqFeature::Generic->new(-start=>3, -end=>8, -strand=>1);
-    my $ls2_coord = Bio::SeqFeature::Generic->new(-start=>1, -end=>8, -strand=>1);
+	my $ls2 = Bio::LocatableSeq->new(-seq=>"ACA-CG-T", -id=>"bac2", -alphabet=>'dna');
+	my $ls1_coord = Bio::SeqFeature::Generic->new(-start=>3, -end=>8, -strand=>1);
+	my $ls2_coord = Bio::SeqFeature::Generic->new(-start=>1, -end=>8, -strand=>1);
 	$c1->add_seq($ls1);
 	$c1->add_seq($ls2);
 	$c1->set_seq_coord($ls1_coord,$ls1);
@@ -191,30 +201,55 @@ sub run_tests{
 	#get seqs and compare
 	my $ctr = 1;
 	foreach my $contig  ($scaffold->all_contigs()){
-		print STDERR "read contig $ctr\n";
-		contig_to_fasta($contig);
-		contig_mismatch($contig);
-		$ctr++
+		if ($debug){
+			print STDERR "read contig $ctr\n";	
+		}
+		my($mismatch_percent,$gap_percent) = contig_mismatch($contig,$debug);
+		if ($debug){
+			print STDERR "mismatch % $mismatch_percent \ngap % $gap_percent\n";
+		}
+		if (($mismatch_percent == 0.125) && ($gap_percent == 0.375)){
+		    print STDERR "contig_mismatch() test successful\n";
+		}
+		my ($contig_fasta,$BAC_fasta) = contig_to_fasta($contig);
+		if ($debug){
+			print STDERR $contig_fasta.$BAC_fasta;
+		}
+		my $contig_fasta_test = ">contig1\nACACCG-T\n";
+		my $BAC_fasta_test = ">bac1\nACCGT\n>bac2\nACACGT\n";
+		if (($contig_fasta eq $contig_fasta_test) && ($BAC_fasta eq $BAC_fasta_test)){
+		    print STDERR "contig_fasta() test successful\n";
+		}
+		$ctr++;
 	}
 	
 	$ctr = 1;
 	foreach my $singlet  ($scaffold->all_singlets()){
-		print STDERR "read singlet $ctr\n";
-		singlet_to_fasta($singlet);
+		if ($debug){
+			print STDERR "read singlet $ctr\n";
+		}
+		my $singlet_fasta = singlet_to_fasta($singlet);
+		if ($debug){
+			print STDERR $singlet_fasta;
+		}
+		my $singlet_fasta_test = ">bac3\nATGGGGGTGGTGGTACCCT\n";
+		if ($singlet_fasta eq $singlet_fasta_test){
+			print STDERR "singlet_fasta() test successful\n";
+		}
 		$ctr++
 	}
 	
 	
 }
 
-our ( $opt_f, $opt_m, $opt_t, $opt_o, $opt_h );
-getopts('f:m:t:o:h');
+our ( $opt_f, $opt_m, $opt_t, $opt_d, $opt_o, $opt_h );
+getopts('f:m:t:d:o:h');
 if ($opt_h) {
 	help();
 	exit;
 }
 if ($opt_t){
-	run_tests();
+	run_tests($opt_d);
 	exit;
 }
 
