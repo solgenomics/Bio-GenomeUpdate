@@ -19,7 +19,10 @@ process_bac_assembly.pl -f [ACE file] -m [mismatch %] -o [output directory]
 
 =TODO
 
-Add test param and function (see Aure testing prez)
+If the [mismatch %] is more than threshold then a new ACE file error_contigs.ace will be created with only those erroneous 
+     contigs. Manually explore the erroneous contigs in a ACE viewer (Tablet http://ics.hutton.ac.uk/tablet/) and remove the 
+     misfit BAC(s) from the contigs and treat as singletons. Reassemble the rest of the BACs in the contig and add to final 
+     assembled BAC set.
 
 =cut
 
@@ -88,19 +91,10 @@ sub singlet_to_fasta {
 	
 	if ($seq->seq() =~ /-/){
 		print STDERR "Singlet ",$seq->id()," has a gapped sequence which is not expected. Please investigate the assembly ACE file.  Exiting...\n";
-		exit 1;
+		exit 0;
 	}
 	my $fasta = '>'.$seq->id()."\n".$seq->seq()."\n";
 	return ($fasta);
-}
-
-=item C<contig_to_ace  ( Bio::Assembly::Contig  )>
-
-Accepts a single contig object from an assembly. Returns a Bio::Assembly::IO::ace object for the contig.
-
-=cut
-sub contig_to_ace(){
-	
 }
 
 =item C<contig_mismatch ( Bio::Assembly::Contig  )>
@@ -108,20 +102,16 @@ sub contig_to_ace(){
 Accepts a single contig object from an assembly. Returns floats containing the mismatch percentage and the gap percentage for the contig.
 
 =cut
-sub contig_mismatch{
-	my ($contig,$debug) = shift;
-#	print STDERR $contig->get_consensus_sequence()->seq()."\n";
+sub contig_mismatch {
+	my ($contig,$debug) = @_;
 	my $consensus_sequence = $contig->get_consensus_sequence()->seq(); #calling Bio::Seq->seq()
 #	if ($consensus_sequence =~ /-/){
 #		print STDERR "Contig ",$contig->id()," consensus has a gapped sequence which is not expected. Please investigate the assembly ACE file.  Exiting...\n";
-#		exit 1;
+#		exit 0;
 #	}
 	my @consensus_sequence_arr = split '',$consensus_sequence; 
 	
 	#get reads (BACs), positions and consensus. Compare reads to consensus positions to get mismatch.
-#	print STDERR Dumper($contig);
-	
-	
 	my $featureDB = $contig->get_features_collection(); # returns Bio::DB::SeqFeature::Store::memory
 #	print STDERR ref($featureDB)."\n";
 	my $mismatches = 0;
@@ -130,13 +120,16 @@ sub contig_mismatch{
 #		print STDERR ref($feature)."\n";
 		my $aligned_start = $feature->start();
 		my $aligned_end = $feature->end();
-#		print STDERR ref($feature->seq())."\n";
 		
 		#Workaround for exception when end > length. Happens because start and end in parent consensus seq coordinate space
 		#Reset the start and end to valid values to get the sequence out
 		#------------- EXCEPTION: Bio::Root::Exception ------------- MSG: Bad end parameter. End must be less than the total length of sequence
 		$feature->end($feature->length());
 		$feature->start(1);
+		if ($debug){
+			print STDERR "Read ".$feature->seq()->id()." start $aligned_start end $aligned_end\n";
+		}
+
 		my $aligned_seq = $feature->seq()->seq();
 		my @aligned_seq_arr = split '', $aligned_seq;
 		my $aligned_seq_pos = 0;
@@ -158,6 +151,28 @@ sub contig_mismatch{
 	return ($mismatch_percent,$gap_percent);
 }
 
+=item C<contig_to_scaffold  ( Bio::Assembly::Scaffold, Bio::Assembly::Contig  )>
+
+Accepts a single contig object from an assembly and a test scaffold object. Returns updated scaffold object. ABANDONED for now as new ACE file 
+has wrong coordinates for test ACE assembly. Can just write out the fasta for the BACs in the contig for re-assembly with phrap.
+
+=cut
+sub contig_to_scaffold {
+#	my ($ace,$contig,$debug) = shift;
+#	my ($scaffold,$contig,$debug) = @_;#need to use for passing >1 objects or it fails
+#	print STDERR ref($scaffold)."\n";
+#	print STDERR ref($contig)."\n";
+#	my $status = $scaffold->add_contig($contig);
+#	
+#	if ($debug && $status){
+#		print STDERR $contig->id()." successfully written\n";
+#	}elsif(!$status){
+#		print STDERR $contig->id()." was not added to scaffold. Exiting..\n";
+#		exit 0;
+#	} 
+#	return $scaffold;
+}
+
 =item C<run_tests ()>
 
 Runs a test of all functions with dummy data. No ACE file required in this case.
@@ -174,13 +189,12 @@ sub run_tests{
 	my $ls2 = Bio::LocatableSeq->new(-seq=>"ACA-CG-T", -id=>"bac2", -alphabet=>'dna');
 	my $ls1_coord = Bio::SeqFeature::Generic->new(-start=>3, -end=>8, -strand=>1);
 	my $ls2_coord = Bio::SeqFeature::Generic->new(-start=>1, -end=>8, -strand=>1);
-	$c1->add_seq($ls1);
-	$c1->add_seq($ls2);
-	$c1->set_seq_coord($ls1_coord,$ls1);
-	$c1->set_seq_coord($ls2_coord,$ls2);
+	$c1->add_seq($ls1); $c1->set_seq_coord($ls1_coord,$ls1);
+	$c1->add_seq($ls2);	$c1->set_seq_coord($ls2_coord,$ls2);
 
 	my $con1 = Bio::LocatableSeq->new(-seq=>"ACACCG-T", -alphabet=>'dna');
 	$c1->set_consensus_sequence($con1);
+#	print STDERR Dumper($c1)."\n********************************\n";
 
 	#create singlet
 	my $seq = Bio::Seq->new(-id=>'bac3', -seq=>'ATGGGGGTGGTGGTACCCT');
@@ -239,7 +253,28 @@ sub run_tests{
 		$ctr++
 	}
 	
-	
+	#create new ACE (for error contigs)
+#	my $scaffold_out = Bio::Assembly::Scaffold->new (-id => 'erroneous_contigs',
+#					 -source => 'test_program',
+#					);
+##	$scaffold_out = contig_to_scaffold($scaffold_out,$c1,$debug);
+#	$scaffold_out->add_contig($c1);
+#	my $ace_out = Bio::Assembly::IO->new(	-file   => ">test.ace",
+#											-format => 'ace' );
+##	$ace_out->write_assembly( -scaffold => $scaffold_out);
+##	print STDERR Dumper($c1)."\n";
+#	foreach my $contig ($scaffold_out->all_contigs()){
+#		$ace_out->write_contig($contig);
+#	}
+#	
+#	$ace_out->write_header();
+#	$ace_out->write_footer();
+#	
+#	my $ace_test_in = Bio::Assembly::IO->new(-file   => "test.ace",
+#										-format => 'ace' );
+#	scaffold_summary($ace_test_in->next_assembly());
+#	unlink 'test.ace';	
+	print STDERR "ALL TESTS PASSED\n\n";
 }
 
 our ( $opt_f, $opt_m, $opt_t, $opt_d, $opt_o, $opt_h );
@@ -290,11 +325,9 @@ sub help {
      1 read (BAC) are written to singleton_BACs.fas. Contigs with multiple reads (BACs) are written to contigs_BACs.fas and the 
      corresponding meta-data to contigs_BACs.txt. 
      
-     If the [mismatch %] is more than threshold then a new ACE file error_contigs.ace will be created with only those erroneous 
-     contigs. Manually explore the erroneous contigs in a ACE viewer (Tablet http://ics.hutton.ac.uk/tablet/) and remove the 
-     misfit BAC(s) from the contigs and treat as singletons. Reassemble the rest of the BACs in the contig and add to final 
-     assembled BAC set.
-     
+     If the [mismatch %] is more than threshold then Fasta of BACs in contig will be written to <Contig name> directory for 
+     re-assembly with phrap. Not creating new ACE file as Bio::Assembly::IO::ace writes wrong coordinates for BACs.
+
      Phrap parameters (recommended) to generate assembly and ACE file
       phrap -new_ace -shatter_greedy -penalty -4 -minmatch 20 FILE.fas
 
@@ -305,7 +338,8 @@ sub help {
 
          -f  ACE file from Phrap assembly (required)
          -m  Mismatch percentage (recommended 0.5, required)
-         -t  Do a test run (no ACE file required)
+         -t  Do a test run (e.g. -t 1, no ACE file required)
+         -d  Print extra status messages (e.g. -d 1)
          -o  Output directory 
          -h  Help
 
