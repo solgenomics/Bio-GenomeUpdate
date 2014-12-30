@@ -77,10 +77,13 @@ sub contig_to_fasta {
 #		print STDERR $seq->seq(),"\n";
 		my $cleaned_seq = $seq->seq();
 		$cleaned_seq =~ s/-//g;
+		$cleaned_seq =~ tr/atgc/ATGC/;
 #		print STDERR $cleaned_seq."\n";
 		$BAC_fasta = $BAC_fasta.'>'.$seq->id()."\n".$cleaned_seq."\n";
 	}
-	my $contig_fasta = '>'.$contig->id()."\n".$contig->get_consensus_sequence()->seq()."\n";
+	my $contig_temp_fasta = $contig->get_consensus_sequence()->seq();
+	$contig_temp_fasta =~ tr/atgc/ATGC/;
+	my $contig_fasta = '>'.$contig->id()."\n".$contig_temp_fasta."\n";
 	return ($contig_fasta,$BAC_fasta)
 }
 
@@ -100,7 +103,9 @@ sub singlet_to_fasta {
 		print STDERR "Singlet ",$seq->id()," has a gapped sequence which is not expected. Please investigate the assembly ACE file.  Exiting...\n";
 		exit 0;
 	}
-	my $fasta = '>'.$seq->id()."\n".$seq->seq()."\n";
+	my $temp_fasta = $seq->seq();
+	$temp_fasta =~ tr/atgc/ATGC/;
+	my $fasta = '>'.$seq->id()."\n".$temp_fasta."\n";
 	return ($fasta);
 }
 
