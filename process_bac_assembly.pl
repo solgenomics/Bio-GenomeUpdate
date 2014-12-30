@@ -26,6 +26,10 @@ If the [mismatch %] is more than threshold then a new ACE file error_contigs.ace
      
 Many routines mentioned in Bio::Assembly::Contig documentation ARE NOT IMPLEMENTED. 
 
+TODO: 
+ - Fix contig_mismatch() to work with ACE files from phrap.
+ - Fix add_contig_to_scaffold to work with test ACE object (wrong aligned coordinates reported) and ACE files from phrap.  
+
 =cut
 
 use strict;
@@ -38,6 +42,7 @@ use Bio::SeqFeature::Generic;
 use Bio::Assembly::Singlet;
 use Bio::Seq;
 use Bio::LocatableSeq;
+
 use Cwd;
 use Data::Dumper;
 
@@ -276,7 +281,7 @@ sub run_tests{
 #										-format => 'ace' );
 #	scaffold_summary($ace_test_in->next_assembly());
 #	unlink 'test.ace';	
-	print STDERR "ALL TESTS PASSED\n\n";
+	print STDERR "ALL TESTS PASSED FOR MANUALLY CREATED ACE OBJECT. MAY NOT WORK FOR ACE FILE FROM PHRAP\n\n";
 }
 
 our ( $opt_f, $opt_m, $opt_t, $opt_d, $opt_o, $opt_h );
@@ -333,6 +338,8 @@ foreach my $contig ($scaffold->all_contigs()){
 		print STDERR $contig_fasta.$BAC_fasta;
 	}
 	
+	#Not using mismatch as Bio::Seq objects not created properly in contig_mismatch() for test ACE file. 
+	#Works fine for hand created ACE object.
 #	if ($mismatch_percent >= $opt_m){
 #		open (BF , ">${opt_o}\/poor\/".$contig->id()."_BAC.fas");
 #		print BF $BAC_fasta;
@@ -357,7 +364,6 @@ foreach my $contig ($scaffold->all_contigs()){
 	open (BF ,'>', "${contig_file}_BAC.fas");
 	print BF $BAC_fasta;
 	close BF;
-	
 	
 	$ctr++;
 }
