@@ -17,12 +17,14 @@ process_bac_assembly.pl -f [ACE file] -m [mismatch %] -o [output directory]
  -o  Output directory
  -h  Help
 
-=TODO
+=NOTES
 
-If the [mismatch %] is more than threshold then a new ACE file error_contigs.ace will be created with only those erroneous 
+If the [mismatch %] is more than threshold then a new ACE file error_contigs.ace can be created with only those erroneous 
      contigs. Manually explore the erroneous contigs in a ACE viewer (Tablet http://ics.hutton.ac.uk/tablet/) and remove the 
      misfit BAC(s) from the contigs and treat as singletons. Reassemble the rest of the BACs in the contig and add to final 
      assembled BAC set.
+     
+Many routines mentioned in Bio::Assembly::Contig documentation ARE NOT IMPLEMENTED. 
 
 =cut
 
@@ -36,7 +38,7 @@ use Bio::SeqFeature::Generic;
 use Bio::Assembly::Singlet;
 use Bio::Seq;
 use Bio::LocatableSeq;
-
+use Cwd;
 use Data::Dumper;
 
 =item C<scaffold_summary  ( Bio::Assembly::Scaffold  )>
@@ -103,12 +105,12 @@ Accepts a single contig object from an assembly. Returns floats containing the m
 
 =cut
 sub contig_mismatch {
-	my ($contig,$debug) = @_;
+	my ($contig,$debug) = (@_);
+#	print STDERR ref($contig);
 	my $consensus_sequence = $contig->get_consensus_sequence()->seq(); #calling Bio::Seq->seq()
-#	if ($consensus_sequence =~ /-/){
-#		print STDERR "Contig ",$contig->id()," consensus has a gapped sequence which is not expected. Please investigate the assembly ACE file.  Exiting...\n";
-#		exit 0;
-#	}
+	if ($consensus_sequence =~ /-/){
+		print STDERR "Contig ",$contig->id()," consensus has a gapped sequence which is not expected. Please investigate the assembly ACE file.  Exiting...\n";
+	}
 	my @consensus_sequence_arr = split '',$consensus_sequence; 
 	
 	#get reads (BACs), positions and consensus. Compare reads to consensus positions to get mismatch.
@@ -117,7 +119,7 @@ sub contig_mismatch {
 	my $mismatches = 0;
 	my $gaps = 0;
 	foreach my $feature ($featureDB->get_all_features()){#returns Bio::SeqFeature::Generic for each read or BAC in the contig
-#		print STDERR ref($feature)."\n";
+		print STDERR ref($feature)."\n";
 		my $aligned_start = $feature->start();
 		my $aligned_end = $feature->end();
 		
@@ -127,7 +129,8 @@ sub contig_mismatch {
 		$feature->end($feature->length());
 		$feature->start(1);
 		if ($debug){
-			print STDERR "Read ".$feature->seq()->id()." start $aligned_start end $aligned_end\n";
+			#print STDERR "Read ".$feature->seq()->id()." start $aligned_start end $aligned_end\n";
+			print STDERR "Read ".$feature->seq_id()." start $aligned_start end $aligned_end\n";
 		}
 
 		my $aligned_seq = $feature->seq()->seq();
@@ -151,13 +154,13 @@ sub contig_mismatch {
 	return ($mismatch_percent,$gap_percent);
 }
 
-=item C<contig_to_scaffold  ( Bio::Assembly::Scaffold, Bio::Assembly::Contig  )>
+=item C<add_contig_to_scaffold  ( Bio::Assembly::Scaffold, Bio::Assembly::Contig  )>
 
 Accepts a single contig object from an assembly and a test scaffold object. Returns updated scaffold object. ABANDONED for now as new ACE file 
 has wrong coordinates for test ACE assembly. Can just write out the fasta for the BACs in the contig for re-assembly with phrap.
 
 =cut
-sub contig_to_scaffold {
+sub add_contig_to_scaffold {
 #	my ($ace,$contig,$debug) = shift;
 #	my ($scaffold,$contig,$debug) = @_;#need to use for passing >1 objects or it fails
 #	print STDERR ref($scaffold)."\n";
@@ -194,7 +197,6 @@ sub run_tests{
 
 	my $con1 = Bio::LocatableSeq->new(-seq=>"ACACCG-T", -alphabet=>'dna');
 	$c1->set_consensus_sequence($con1);
-#	print STDERR Dumper($c1)."\n********************************\n";
 
 	#create singlet
 	my $seq = Bio::Seq->new(-id=>'bac3', -seq=>'ATGGGGGTGGTGGTACCCT');
@@ -279,6 +281,10 @@ sub run_tests{
 
 our ( $opt_f, $opt_m, $opt_t, $opt_d, $opt_o, $opt_h );
 getopts('f:m:t:d:o:h');
+
+if (defined $opt_t) {$opt_t = !defined $opt_t ? 0 : 1 unless $opt_t == 0;} #assign 0 if no value, else assign 1 unless value == 0
+if (defined $opt_d) {$opt_d = !defined $opt_d ? 0 : 1 unless $opt_d == 0;}
+$opt_o ||= 'process_bac_assembly_out';
 if ($opt_h) {
 	help();
 	exit;
@@ -288,29 +294,93 @@ if ($opt_t){
 	exit;
 }
 
-if ( !$opt_f ) {
-	print "\nACE file is required. See help below\n\n\n";
+if ( (!$opt_f) || (!$opt_m) ) {
+	print "\nACE file and mismatch % are required. See help below\n\n\n";
 	help();
 }
 
 #prep input data
 my $assembly = Bio::Assembly::IO->new( -file => $opt_f, -format => 'ace'); 
+my $scaffold = $assembly->next_assembly();
+
+#process assembly
+scaffold_summary($scaffold);
 
 
-#process contigs
-while (my $contig = $assembly->next_contig()){
-	#if mismatch % > threshold, add to new ACE file error_contigs.ace 
-
-	#if only 1 BAC, write out original BAC to singleton_BACs.fas
-	#If >1 BAC write to contigs_BACs.fas and corresponding meta-data to contigs_BACs.txt. 
-	#contig_to_fasta($contig);
-	
-	
-	
+#prep dirs
+my $cwd = getcwd();
+my $path_contigs = "$cwd/${opt_o}/contigs/";
+my $path_singletons = "$cwd/${opt_o}/singletons/";
+if (!( -d "$cwd/${opt_o}")) { 
+	mkdir "$cwd/${opt_o}"; 
+	mkdir "$cwd/${opt_o}/contigs/";
+	mkdir "$cwd/${opt_o}/singletons/";
 }
 
+my $ctr = 0;
+foreach my $contig ($scaffold->all_contigs()){
+	if ($opt_d){
+		print STDERR "read contig $ctr\n";	
+	}
+	#if mismatch % > threshold, write contig fasta to error_contigs directory 
+#	my($mismatch_percent,$gap_percent) = contig_mismatch($contig,$opt_d);
+#	if ($opt_d){
+#		print STDERR "mismatch % $mismatch_percent \ngap % $gap_percent\n";
+#	}
 
+	my ($contig_fasta,$BAC_fasta) = contig_to_fasta($contig);
+	if ($opt_d){
+		print STDERR $contig_fasta.$BAC_fasta;
+	}
+	
+#	if ($mismatch_percent >= $opt_m){
+#		open (BF , ">${opt_o}\/poor\/".$contig->id()."_BAC.fas");
+#		print BF $BAC_fasta;
+#		close BF;
+#	}else{
+#		open (CF , ">${opt_o}\/good\/".$contig->id().".fas");
+#		print CF $contig_fasta;
+#		close CF;
+#		
+#		open (BF , ">${opt_o}\/good\/".$contig->id()."_BAC.fas");
+#		print BF $BAC_fasta;
+#		close BF;
+#	}
 
+	#writing out all contigs and BACs
+	my $contig_file = $path_contigs.$contig->id();
+#	print STDERR  "$contig_file.fas\n";
+	open (CF , '>',"$contig_file.fas");
+	print CF $contig_fasta;
+	close CF;
+	
+	open (BF ,'>', "${contig_file}_BAC.fas");
+	print BF $BAC_fasta;
+	close BF;
+	
+	
+	$ctr++;
+}
+print STDERR "$ctr contigs written to $path_contigs\n";
+
+$ctr = 0;
+foreach my $singlet  ($scaffold->all_singlets()){
+	if ($opt_d){
+		print STDERR "read singlet $ctr\n";
+	}
+	my $singlet_fasta = singlet_to_fasta($singlet);
+	if ($opt_d){
+		print STDERR $singlet_fasta;
+	}
+	my $singleton_file = $path_singletons.$singlet->seqref()->id();
+	#open (SF , ">${opt_o}\/good\/singleton_".$singlet->seqref()->id().".fas");
+	open (SF , '>',"${singleton_file}.fas");
+	print SF $singlet_fasta;
+	close SF;
+
+	$ctr++
+}
+print STDERR "$ctr singletons written to $path_singletons\n";
 
 
 #----------------------------------------------------------------------------
