@@ -11,7 +11,7 @@ process_bac_assembly.pl -f [ACE file] -m [mismatch %] -o [output directory]
 =head1 COMMAND-LINE OPTIONS
 
  -f  ACE file from Phrap assembly (required)
- -m  Mismatch percentage (recommended 0.5, required)
+ -m  Mismatch percentage (recommended 0.5, currently not implemented)
  -t  Do a test run (e.g. -t 1, no ACE file required in this case)
  -d  Print extra status messages (e.g. -d 1)
  -o  Output directory
@@ -304,10 +304,15 @@ if ($opt_t){
 	exit;
 }
 
-if ( (!$opt_f) || (!$opt_m) ) {
-	print "\nACE file and mismatch % are required. See help below\n\n\n";
+if ( !$opt_f ) {
+	print "\nACE file is required. See help below\n\n\n";
 	help();
 }
+
+#if ( (!$opt_f) || (!$opt_m) ) {
+#	print "\nACE file and mismatch % are required. See help below\n\n\n";
+#	help();
+#}
 
 #prep input data
 my $assembly = Bio::Assembly::IO->new( -file => $opt_f, -format => 'ace'); 
@@ -366,7 +371,7 @@ foreach my $contig ($scaffold->all_contigs()){
 	print CF $contig_fasta;
 	close CF;
 	
-	open (BF ,'>', "${contig_file}_BAC.fas");
+	open (BF ,'>', "${contig_file}_BACs.fas");
 	print BF $BAC_fasta;
 	close BF;
 	
@@ -418,7 +423,7 @@ sub help {
     Flags:
 
          -f  ACE file from Phrap assembly (required)
-         -m  Mismatch percentage (recommended 0.5, required)
+         -m  Mismatch percentage (recommended 0.5, currently not implemented)
          -t  Do a test run (e.g. -t 1, no ACE file required)
          -d  Print extra status messages (e.g. -d 1)
          -o  Output directory 
