@@ -77,13 +77,14 @@ sub contig_to_fasta {
 #		print STDERR $seq->id(),"\n";
 #		print STDERR $seq->seq(),"\n";
 		my $cleaned_seq = $seq->seq();
-		$cleaned_seq =~ s/-//g;
+		$cleaned_seq =~ s/-//g;#remove pads added for alignment
 		$cleaned_seq =~ tr/atgc/ATGC/;
 #		print STDERR $cleaned_seq."\n";
 		$BAC_fasta = $BAC_fasta.'>'.$seq->id()."\n".$cleaned_seq."\n";
 	}
 	my $contig_temp_fasta = $contig->get_consensus_sequence()->seq();
 	$contig_temp_fasta =~ tr/atgc/ATGC/;
+	$contig_temp_fasta =~ s/-/N/g;#replace gap character by N
 	my $contig_fasta = '>'.$contig->id()."\n".$contig_temp_fasta."\n";
 	return ($contig_fasta,$BAC_fasta)
 }
