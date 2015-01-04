@@ -27,6 +27,7 @@ If the [mismatch %] is more than threshold then a new ACE file error_contigs.ace
 Many routines mentioned in Bio::Assembly::Contig documentation ARE NOT IMPLEMENTED. 
 
 TODO: 
+ - Add test routine that processes a test ACE file from phrap
  - Fix contig_mismatch() to work with ACE files from phrap.
  - Fix add_contig_to_scaffold to work with test ACE object (wrong aligned coordinates reported) and ACE files from phrap.  
 
