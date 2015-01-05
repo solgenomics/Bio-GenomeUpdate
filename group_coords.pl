@@ -9,11 +9,16 @@ group_coords.pl
 
 =head1 COMMAND-LINE OPTIONS
 
- -i  COORDS file created by show-coords
- -u  Sequence ID of chromosome with unmapped contigs 
- -g  Gap size
+ -i  COORDS file created by show-coords (required)
+ -u  Sequence ID of chromosome with unmapped contigs (required) 
+ -g  Gap size allowed between aligned clusters in the reference sequence, typically the mean/median scaffold gap
  -t  Print header
  -h  Help
+
+=head1 TODO
+
+  Print fasta of query seqs that did not align
+  Print # of Ns on ref covered by alignments of query seqs
 
 =cut
 
@@ -56,13 +61,14 @@ if ($opt_t) {
 }
 
 my $total=0;
-my $total_smaller_than_20k=0;
+my $total_smaller_than_20k=0; #for alignments covering < 20k on ref
 my $total_mixed=0;
 my $total_over=0;
 my $total_alt=0;
 my $total_full_length=0;
 my $total_to_end=0;
 my $total_extend=0;
+my $total_ref_covered=0;
 
 print STDERR "G0: $gap_size_allowed\n";
 my @lines = read_file($input_file);
@@ -75,6 +81,7 @@ my $last_query_length;
 print "query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
 
 #parse coords file
+#[S1]	[E1]	[S2]	[E2]	[LEN 1]	[LEN 2]	[% IDY]	[LEN R]	[LEN Q]	[COV R]	[COV Q]	[FRM]	[TAGS]
 foreach my $line (@lines) {
   $currentline++;
   if ($currentline < $startline) {
@@ -86,9 +93,11 @@ foreach my $line (@lines) {
   my $current_query_length = $row[8];
   if (!defined($last_line_query_id)) {
     $last_line_query_id = $current_query_id;
-  }    
-  if (!($current_query_id eq $last_line_query_id)) {#exec if query ID changes, i.e., coords for next BAC aligned to chr 
-    calc_and_print_info(\@alignment_coords_array, $last_query_id, $last_query_length);#print info for last query or BAC
+  }
+  #exec if query ID changes, i.e., coords for next assembled or singleton BAC aligned to chr
+  if (!($current_query_id eq $last_line_query_id)) { 
+  	#print info for last query (assembled or singleton BAC ) to STDOUT
+    calc_and_print_info(\@alignment_coords_array, $last_query_id, $last_query_length);
     @alignment_coords_array = ();
   }
   my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
@@ -114,20 +123,21 @@ foreach my $line (@lines) {
 sub calc_and_print_info {
   my ($aref,$q_id,$q_length) = @_;
   my $align_group =  Bio::GenomeUpdate::AlignmentCoordsGroup->new();
-  #assign all coords for query/BAC to obj
+  #assign all coords for query/assembled or singleton BAC to obj
   $align_group->set_array_of_alignment_coords($aref);
   my $zero_chromosome_id = $unmapped_ID;
-  #returns an array of arrays containing the
-  #proximity-grouped alignment clusters sorted by longest to shortest
-  #length of non-overlapping sequence covered by alignment clusters.
+  #Returns IDs, start and end coordinates, total aligned sequence length, and direction for the longest proximity-grouped 
+  #alignment clusters sorted by longest to shortest length of non-overlapping sequence covered by alignment clusters.  
+  #The proximity grouping is done using the specified length of an allowed gap between aligned clusters in the reference sequence ($gap allowed).
+  #$sequence_aligned_in_clusters is the total length of ref covered by alignment grp
   my ($ref_id, $query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters,$direction,$is_overlapping,
   	$size_of_next_largest_match,$alternates) = $align_group->get_id_coords_and_direction_of_longest_alignment_cluster_group($gap_size_allowed);
   my $is_full_length;
-  my $start_gap_length = $query_start - 1;
-  my $end_gap_length = $q_length - $query_end;
-  my $internal_gap_length = ($q_length - $sequence_aligned_in_clusters) - ($start_gap_length + $end_gap_length);
+  my $start_gap_length = $query_start - 1;#region of query before aligned part
+  my $end_gap_length = $q_length - $query_end;#region of query after aligned part
+  my $internal_gap_length = ($q_length - $sequence_aligned_in_clusters) - ($start_gap_length + $end_gap_length);#not clear how its used, see other scripts
   if (($query_start == 1) && ($query_end == $q_length)) {
-    $is_full_length = "Contains";
+    $is_full_length = "Contains";#entire query is covered in the alignment grp
   } else {
     $is_full_length = "Partial";
   }
@@ -140,7 +150,7 @@ sub calc_and_print_info {
   print $query_end."\t";
   print $q_length."\t";
   print $sequence_aligned_in_clusters."\t";
-  print $direction."\t";
+  print $direction."\t";#strand
   print $align_group->get_count_of_reference_sequence_ids()."\t";;
   print $align_group-> includes_reference_id($zero_chromosome_id)."\t";
   print $is_full_length."\t";    
@@ -166,11 +176,11 @@ sub calc_and_print_info {
     $total_smaller_than_20k++;
     $flagged=1;
   }
-  if ($direction == 0) {
+  if ($direction == 0) {#query aligns to bot + and - strand of ref
     $total_mixed++;
     $flagged=1;
   }
-  if ($is_overlapping == 1) {
+  if ($is_overlapping == 1) {#query alignment tiles overlap
     $total_over++;
     $flagged=1;
   }
@@ -178,26 +188,30 @@ sub calc_and_print_info {
     $total_alt++;
     $flagged=1;
   }
-  if ($start_gap_length < 10 && $end_gap_length < 10 && $flagged==0) {
+  if ($start_gap_length < 10 && $end_gap_length < 10 && $flagged==0) {#alignments cover query
     $total_full_length++;
   }
-  if (($start_gap_length < 10 || $end_gap_length < 10) && $flagged==0) {
+  if (($start_gap_length < 10 || $end_gap_length < 10) && $flagged==0) {#alignments cover till one end of query
     $total_to_end++;
   }
   if ($flagged==0) {
     $total_extend += $start_gap_length + $end_gap_length;
   }
+  if ($flagged==0) {
+    $total_ref_covered += $sequence_aligned_in_clusters;
+  }
 }
 
   ##summary info
 print STDERR "Total:\t$total\n";
-print STDERR "Total smaller than 20,000:\t$total_smaller_than_20k\n";
+print STDERR "Total smaller than 20,000 on ref:\t$total_smaller_than_20k\n";
 print STDERR "Total with mixed orientation:\t$total_mixed\n";
 print STDERR "Total with overlapping alignment clusters:\t$total_over\n";
 print STDERR "Total with alternate alignments > 10,000:\t$total_alt\n";
 print STDERR "Total full length:\t$total_full_length\n";
 print STDERR "Total with alignment to at least one end:\t$total_to_end\n";
-print STDERR "Total sequence extended by BACs:\t$total_extend\n";
+print STDERR "Total reference extended by BACs:\t$total_extend\n";#new seqs from query
+print STDERR "Total reference covered by BACs:\t$total_ref_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
 
 
 sub help {
@@ -215,7 +229,7 @@ sub help {
 
        -i  <coords file>             COORDS file created by show-coords (required)
        -g  <int>                     Gap size allowed. Recommended 10000 (required)
-       -u  <str>                     Sequence ID(seqid) of chromosome with unmapped contigs/scaffolds. Typically chromosome 0. (required)
+       -u  <str>                     Sequence ID(seqid) of chromosome with unmapped contigs/scaffolds. Typically chromosome 0.
        -t  <T/F>                     Print header. Must be T or F. Default is T
        -h  <help>
 EOF
