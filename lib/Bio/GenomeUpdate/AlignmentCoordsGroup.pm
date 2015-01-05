@@ -106,9 +106,9 @@ sub order_alignment_clusters_on_each_reference_sequence {
   return %clusters;
 }
 
-=item C<group_alignment_clusters ( $gap_percent, $gap_allowed )>
+=item C<group_alignment_clusters ( $gap_allowed )>
 
-Calculates and returns a hash of reference IDs and corresponding arrays of arrays of alignment clusters grouped by proximity on the reference sequence.  The proximity grouping is done using the specified length of an allowed gap between aligned clusters in the reference sequence ($gap allowed) plus an adjustment based on a percent of the length of the gap between the aligned clusters on the query sequence. 
+Calculates and returns a hash of reference IDs and corresponding arrays of arrays of alignment clusters grouped by proximity on the reference sequence.  The proximity grouping is done using the specified length of an allowed gap between aligned clusters in the reference sequence ($gap allowed). Not implemented: an adjustment based on a percent ($gap_percent) of the length of the gap between the aligned clusters on the query sequence. 
 
 =cut
 
@@ -116,7 +116,7 @@ sub group_alignment_clusters {
   my $self = shift;
   my $gap_allowed = shift;
   #hash of 
-  my %clusters = $self->order_alignment_clusters_on_each_reference_sequence();
+  my %clusters = $self->order_alignment_clusters_on_each_reference_sequence();#Calculates and returns a hash of reference IDs and corresponding arrays of alignment clusters sorted by reference sequence coordinates.
   my %cluster_groups;
   foreach my $ref_seq_key (keys %clusters) {
     $cluster_groups{$ref_seq_key}=();
@@ -146,9 +146,9 @@ sub group_alignment_clusters {
   return %cluster_groups;
 }
 
-=item C<get_cluster_groups_sorted_by_length ( $gap_percent, $gap_allowed )>
+=item C<get_cluster_groups_sorted_by_length ( $gap_allowed )>
 
-Calculates and returns an array of arrays containing the proximity-grouped alignment clusters sorted by longest to shortest length of non-overlapping sequence covered by alignment clusters.  The proximity grouping is done using the specified length of an allowed gap between aligned clusters in the reference sequence ($gap allowed) plus an adjustment based on a percent of the length of the gap between the aligned clusters on the query sequence. 
+Calculates and returns an array of arrays containing the proximity-grouped alignment clusters sorted by longest to shortest length of non-overlapping sequence covered by alignment clusters.  The proximity grouping is done using the specified length of an allowed gap between aligned clusters in the reference sequence ($gap allowed). Not implemented: plus an adjustment based on a percent ($gap_percent) of the length of the gap between the aligned clusters on the query sequence. 
 
 =cut
 
@@ -209,8 +209,11 @@ Returns IDs, start and end coordinates, total aligned sequence length, and direc
 sub get_id_coords_and_direction_of_longest_alignment_cluster_group {
   my $self = shift;
   my $gap_allowed = shift;
+  #returns an array of arrays containing the
+  #proximity-grouped alignment clusters sorted by longest to shortest
+  #length of non-overlapping sequence covered by alignment clusters.
   my @returnclusters =  $self->get_cluster_groups_sorted_by_length($gap_allowed);
-  my $first_group = shift(@returnclusters);
+  my $first_group = shift(@returnclusters);#first is largest
 
   #my @second_largest_cluster_group;
   #if (defined(@{$returnclusters[1]})){
@@ -229,7 +232,7 @@ sub get_id_coords_and_direction_of_longest_alignment_cluster_group {
   my $is_overlapping = 0;
  foreach my $align_coords (@largest_cluster_group) {#parse through alignments in cluster
     $sequence_aligned_in_clusters += (($align_coords->get_reference_end_coord()+1) - $align_coords->get_reference_start_coord());
-    if ($prev_end_coord) {
+    if ($prev_end_coord) {#if this is not the first hit
       if ($align_coords->get_reference_start_coord() <= $prev_end_coord) {
 	$sequence_aligned_in_clusters -= (($prev_end_coord+1) - $align_coords->get_reference_start_coord()); #subtract overlap between alignment clusters from total alignment length
       }

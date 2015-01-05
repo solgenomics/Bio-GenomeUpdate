@@ -32,7 +32,7 @@ has 'query_id' => (isa => 'Str', is => 'rw',  predicate => 'has_query_id');
 
 =item C<get_direction>
 
-Returns 1 if the reference and query sequences are aligned in the same direction and returns -1 if they are reversed.
+Returns 1 if the reference and query sequences are aligned in the same direction (strand) and returns -1 if they are reversed.
 
 =cut
 
