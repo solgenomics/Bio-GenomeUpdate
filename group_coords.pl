@@ -20,7 +20,6 @@ group_coords.pl
 =head1 TODO
 
   Print fasta of query seqs that did not align
-  Print # of Ns on ref covered by alignments of query seqs
 
 =cut
 
@@ -253,6 +252,8 @@ sub help {
 
        -i  <coords file>             COORDS file created by show-coords (required)
        -g  <int>                     Gap size allowed. Recommended 10000 (required)
+       -r  <fasta file>              Fasta file of reference (required)
+       -q  <fasta file>              Fasta file of query (assembled and singleton BACs)
        -u  <str>                     Sequence ID(seqid) of chromosome with unmapped contigs/scaffolds. Typically chromosome 0.
        -t  <T/F>                     Print header. Must be T or F. Default is T
        -h  <help>
