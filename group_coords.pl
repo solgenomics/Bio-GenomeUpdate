@@ -235,7 +235,7 @@ print STDERR "Total queries aligned full length:\t\t\t\t$total_full_length\n";
 print STDERR "Total with alignment to at least one end:\t\t\t$total_to_end\n";
 print STDERR "Total reference extended by valid BAC hits:\t\t\t$total_extend\n";#new seqs from query
 print STDERR "Total reference covered by valid BAC hits:\t\t\t$total_ref_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
-print STDERR "Total N's in reference covered by valid BAC hits:\t\t$total_ref_Ns_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
+print STDERR "Total N's within reference covered by valid BAC hits:\t\t$total_ref_Ns_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
 
 sub help {
   print STDERR <<EOF;
