@@ -32,7 +32,7 @@ use Bio::GenomeUpdate::AlignmentCoordsGroup;
 
 our ($opt_i, $opt_g, $opt_u, $opt_t, $opt_h);
 getopts("i:g:u:t:h");
-if (!$opt_i || !$opt_g || !$opt_u) {
+if (!$opt_i || !$opt_g ) {
   help();
 }
 if ($opt_h) {
@@ -49,6 +49,8 @@ if ($opt_g) {
 }
 if ($opt_u) {
   $unmapped_ID = $opt_u;
+}else{
+	$unmapped_ID = 'NA';#not required
 }
 if ($opt_t) {
   if ($opt_t eq "T") {
@@ -169,7 +171,7 @@ sub calc_and_print_info {
   #}
   print "\n";
 
-  my $flagged = 0;
+  my $flagged = 0;#potential problem
 
   $total++;
   if ($ref_end - $ref_start < 20000) {
