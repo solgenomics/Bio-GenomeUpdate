@@ -174,10 +174,6 @@ sub calc_and_print_info {
   my $flagged = 0;#potential problem
 
   $total++;
-  if ($ref_end - $ref_start < 20000) {
-    $total_smaller_than_20k++;
-    $flagged=1;
-  }
   if ($direction == 0) {#query aligns to bot + and - strand of ref
     $total_mixed++;
     $flagged=1;
@@ -189,6 +185,10 @@ sub calc_and_print_info {
   if ($size_of_next_largest_match > 10000) {
     $total_alt++;
     $flagged=1;
+  }
+  if ($ref_end - $ref_start < 20000) {
+    $total_smaller_than_20k++;
+    #$flagged=1;#short alignment may be for a BAC end so not always a negative
   }
   if ($start_gap_length < 10 && $end_gap_length < 10 && $flagged==0) {#alignments cover query
     $total_full_length++;
