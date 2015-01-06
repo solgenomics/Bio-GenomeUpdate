@@ -11,6 +11,8 @@ group_coords.pl
 
  -i  COORDS file created by show-coords (required)
  -u  Sequence ID of chromosome with unmapped contigs (required) 
+ -r  Fasta file of reference (required)
+ -q  Fasta file of query (assembled and singleton BACs)
  -g  Gap size allowed between aligned clusters in the reference sequence, typically the mean/median scaffold gap
  -t  Print header
  -h  Help
@@ -29,15 +31,19 @@ use Getopt::Std;
 use File::Slurp;
 use Bio::GenomeUpdate::AlignmentCoords;
 use Bio::GenomeUpdate::AlignmentCoordsGroup;
+use Bio::DB::Fasta;
 
-our ($opt_i, $opt_g, $opt_u, $opt_t, $opt_h);
-getopts("i:g:u:t:h");
-if (!$opt_i || !$opt_g ) {
+our ($opt_i, $opt_g, $opt_f, $opt_q, $opt_u, $opt_t, $opt_h);
+getopts("i:g:f:q:u:t:h");
+if (!$opt_i || !$opt_g || !$opt_f || !$opt_q ) {
   help();
 }
 if ($opt_h) {
   help();
 }
+unless (-e $opt_f){ print STDERR "$opt_f not found. exiting.."; exit;}
+unless (-e $opt_q){ print STDERR "$opt_f not found. exiting.."; exit;}
+
 my $input_file;
 my $gap_size_allowed;
 my $unmapped_ID;
@@ -71,12 +77,23 @@ my $total_full_length=0;
 my $total_to_end=0;
 my $total_extend=0;
 my $total_ref_covered=0;
+my $total_ref_Ns_covered=0;
+my $ref_db = Bio::DB::Fasta->new($opt_f);
+my $query_db = Bio::DB::Fasta->new($opt_q);
 
 print STDERR "G0: $gap_size_allowed\n";
+print STDERR "Number of reference sequences: ";
+print STDERR scalar $ref_db->get_all_ids();
+print STDERR "\nNumber of query sequences: ";
+print STDERR scalar $query_db->get_all_ids();
+print STDERR "\n\n";
+
 my @lines = read_file($input_file);
 my $startline = 5;
 my $currentline = 0;
 my @alignment_coords_array;
+my @query_valid_hits;
+my @query_invalid_hits;
 my $last_line_query_id;
 my $last_query_id;
 my $last_query_length;
@@ -202,6 +219,11 @@ sub calc_and_print_info {
   if ($flagged==0) {
     $total_ref_covered += $sequence_aligned_in_clusters;
   }
+  if ($flagged==0){
+  	my $ref_aligned_seq = $ref_db->seq($ref_id, $ref_start, $ref_end);
+  	$total_ref_Ns_covered += ($ref_aligned_seq =~ tr/N//);
+  	$total_ref_Ns_covered += ($ref_aligned_seq =~ tr/n//);
+  }
 }
 
   ##summary info
@@ -214,7 +236,7 @@ print STDERR "Total full length:\t$total_full_length\n";
 print STDERR "Total with alignment to at least one end:\t$total_to_end\n";
 print STDERR "Total reference extended by BACs:\t$total_extend\n";#new seqs from query
 print STDERR "Total reference covered by BACs:\t$total_ref_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
-
+print STDERR "Total reference covered by BACs:\t$total_ref_Ns_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
 
 sub help {
   print STDERR <<EOF;
