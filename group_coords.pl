@@ -226,16 +226,16 @@ sub calc_and_print_info {
 }
 
   ##summary info
-print STDERR "Total:\t$total\n";
-print STDERR "Total smaller than 20,000 on ref:\t$total_smaller_than_20k\n";
-print STDERR "Total with mixed orientation:\t$total_mixed\n";
-print STDERR "Total with overlapping alignment clusters:\t$total_over\n";
-print STDERR "Total with alternate alignments > 10,000:\t$total_alt\n";
-print STDERR "Total full length:\t$total_full_length\n";
-print STDERR "Total with alignment to at least one end:\t$total_to_end\n";
-print STDERR "Total reference extended by BACs:\t$total_extend\n";#new seqs from query
-print STDERR "Total reference covered by BACs:\t$total_ref_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
-print STDERR "Total reference covered by BACs:\t$total_ref_Ns_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
+print STDERR "Total queries:\t\t\t\t\t\t\t$total\n";
+print STDERR "Total queries with alignments smaller than 20,000 on ref:\t$total_smaller_than_20k\n";
+print STDERR "Total queries with mixed orientation:\t\t\t\t$total_mixed\n";
+print STDERR "Total queries with overlapping alignment clusters:\t\t$total_over\n";
+print STDERR "Total queries with alternate alignments > 10,000:\t\t$total_alt\n";
+print STDERR "Total queries aligned full length:\t\t\t\t$total_full_length\n";
+print STDERR "Total with alignment to at least one end:\t\t\t$total_to_end\n";
+print STDERR "Total reference extended by valid BAC hits:\t\t\t$total_extend\n";#new seqs from query
+print STDERR "Total reference covered by valid BAC hits:\t\t\t$total_ref_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
+print STDERR "Total N's in reference covered by valid BAC hits:\t\t$total_ref_Ns_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
 
 sub help {
   print STDERR <<EOF;
