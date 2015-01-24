@@ -41,7 +41,7 @@ if ($opt_h) {
   help();
 }
 unless (-e $opt_f){ print STDERR "$opt_f not found. exiting.."; exit;}
-unless (-e $opt_q){ print STDERR "$opt_f not found. exiting.."; exit;}
+unless (-e $opt_q){ print STDERR "$opt_q not found. exiting.."; exit;}
 
 my $input_file;
 my $gap_size_allowed;
@@ -153,7 +153,10 @@ sub calc_and_print_info {
   my $is_full_length;
   my $start_gap_length = $query_start - 1;#region of query before aligned part
   my $end_gap_length = $q_length - $query_end;#region of query after aligned part
-  my $internal_gap_length = ($q_length - $sequence_aligned_in_clusters) - ($start_gap_length + $end_gap_length);#not clear how its used, see other scripts
+  #for calculating any gaps within the BAC alignment.
+  #It doesn’t count gaps at the beginning or end of the BAC (those may be from the BAC extending beyond the contig.
+  #Large gaps within the BAC could indicate a problem
+  my $internal_gap_length = ($q_length - $sequence_aligned_in_clusters) - ($start_gap_length + $end_gap_length);
   if (($query_start == 1) && ($query_end == $q_length)) {
     $is_full_length = "Contains";#entire query is covered in the alignment grp
   } else {
@@ -236,6 +239,7 @@ print STDERR "Total with alignment to at least one end:\t\t\t$total_to_end\n";
 print STDERR "Total reference extended by valid BAC hits:\t\t\t$total_extend\n";#new seqs from query
 print STDERR "Total reference covered by valid BAC hits:\t\t\t$total_ref_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
 print STDERR "Total N's within reference covered by valid BAC hits:\t\t$total_ref_Ns_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
+print STDERR "Total novel sequence from valid BAC hits:\t\t\t",$total_ref_Ns_covered+$total_extend,"\n";#includes gaps ($gap_size_allowed) between alignment clusters
 
 sub help {
   print STDERR <<EOF;
