@@ -14,6 +14,8 @@ group_coords.pl
  -r  Fasta file of reference (required)
  -q  Fasta file of query (assembled and singleton BACs)
  -g  Gap size allowed between aligned clusters in the reference sequence, typically the mean/median scaffold gap
+ -c  Contig or component AGP file for reference 
+ -s  Scaffold AGP file for reference 
  -t  Print header
  -h  Help
 
@@ -32,16 +34,21 @@ use Bio::GenomeUpdate::AlignmentCoords;
 use Bio::GenomeUpdate::AlignmentCoordsGroup;
 use Bio::DB::Fasta;
 
-our ($opt_i, $opt_g, $opt_f, $opt_q, $opt_u, $opt_t, $opt_h);
-getopts("i:g:f:q:u:t:h");
-if (!$opt_i || !$opt_g || !$opt_f || !$opt_q ) {
+our ($opt_i, $opt_g, $opt_r, $opt_q, $opt_u, $opt_t, $opt_h, $opt_c, $opt_s);
+getopts("i:g:f:q:u:t:h:c:s");
+if (!$opt_i || !$opt_g || !$opt_r || !$opt_q ) {
+  print STDERR "Required files missing!! exiting..";
   help();
 }
 if ($opt_h) {
   help();
 }
-unless (-e $opt_f){ print STDERR "$opt_f not found. exiting.."; exit;}
+unless (-e $opt_i){ print STDERR "$opt_i not found. exiting.."; exit;}
+unless (-e $opt_u){ print STDERR "$opt_u not found. exiting.."; exit;}
+unless (-e $opt_r){ print STDERR "$opt_r not found. exiting.."; exit;}
 unless (-e $opt_q){ print STDERR "$opt_q not found. exiting.."; exit;}
+if (defined $opt_c) {unless (-e $opt_c){ print STDERR "$opt_c not found. exiting.."; exit;}}
+if (defined $opt_s) {unless (-e $opt_s){ print STDERR "$opt_s not found. exiting.."; exit;}}
 
 my $input_file;
 my $gap_size_allowed;
@@ -77,7 +84,7 @@ my $total_to_end=0;
 my $total_extend=0;
 my $total_ref_covered=0;
 my $total_ref_Ns_covered=0;
-my $ref_db = Bio::DB::Fasta->new($opt_f);
+my $ref_db = Bio::DB::Fasta->new($opt_r);
 my $query_db = Bio::DB::Fasta->new($opt_q);
 
 print STDERR "G0: $gap_size_allowed\n";
@@ -259,6 +266,8 @@ sub help {
        -r  <fasta file>              Fasta file of reference (required)
        -q  <fasta file>              Fasta file of query (assembled and singleton BACs)
        -u  <str>                     Sequence ID(seqid) of chromosome with unmapped contigs/scaffolds. Typically chromosome 0.
+       -c  <AGP file>                Contig or component AGP file for reference 
+       -s  <AGP file>                Scaffold AGP file for reference
        -t  <T/F>                     Print header. Must be T or F. Default is T
        -h  <help>
 EOF
