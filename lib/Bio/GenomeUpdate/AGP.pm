@@ -496,6 +496,20 @@ sub get_gap_ends{
 	return @gap_ends;
 }
 
+=item C<get_sequence_overlap (start, end)>
+
+Returns number and length of sequences in AGP completely and partially covered by region passed as parameter. Return values are number of 
+covered sequences, total length of covered sequences, number of partially covered sequences, total length of partially covered sequences   
+
+=cut
+
+sub get_sequence_overlap{
+	my $self = shift;
+	my (@sequence_lengths,%lines);
+	#TODO	
+}	
+
+
 =item C<get_sequence_lengths ()>
 
 Return array with all sequence lengths in AGP.
@@ -519,6 +533,11 @@ sub get_sequence_lengths{
 	return @sequence_lengths;
 }	
 
+=item C<get_formatted_agp ()>
+
+Return string with fully formatted AGP.
+
+=cut
 
 sub get_formatted_agp {
 	my $self = shift;
@@ -595,6 +614,12 @@ sub get_formatted_agp {
 	}
 	return $out_str;
 }
+
+=item C<parse_agp ()>
+
+Read formatted AGP in module object.
+
+=cut
 
 sub parse_agp {
 	my $self         = shift;
