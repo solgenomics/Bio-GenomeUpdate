@@ -450,6 +450,52 @@ sub get_gap_lengths{
 	return @gap_lengths;
 }
 
+=item C<get_gap_starts ()>
+
+Return array with start coordinates of all gaps in AGP.
+
+=cut
+
+sub get_gap_starts{
+	my $self = shift;
+	my (@gap_starts,%lines);
+	
+	if ( $self->has_agp_lines() ) {
+		%lines = %{ $self->get_agp_lines() };
+		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+		foreach my $line_key (@sorted_line_numbers) {
+			if ( $lines{$line_key}->get_line_type() eq "gap" ) {
+				push @gap_starts, $lines{$line_key}->get_object_begin();
+			}
+		}
+	}
+	
+	return @gap_starts;
+}
+
+=item C<get_gap_ends ()>
+
+Return array with end coordinates of all gaps in AGP.
+
+=cut
+
+sub get_gap_ends{
+	my $self = shift;
+	my (@gap_ends,%lines);
+	
+	if ( $self->has_agp_lines() ) {
+		%lines = %{ $self->get_agp_lines() };
+		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+		foreach my $line_key (@sorted_line_numbers) {
+			if ( $lines{$line_key}->get_line_type() eq "gap" ) {
+				push @gap_ends, $lines{$line_key}->get_object_end();
+			}
+		}
+	}
+	
+	return @gap_ends;
+}
+
 =item C<get_sequence_lengths ()>
 
 Return array with all sequence lengths in AGP.
