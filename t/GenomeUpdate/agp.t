@@ -14,10 +14,12 @@ perl agp.t
 
 =head1 DESCRIPTION
 
-
+Test script for Bio::GenomeUpdate::AGP class. 
+TODO: Should edit coordinates in lines so that it looks like a real AGP file
 
 =head2 Author
 
+Surya Saha <suryasaha at cornell.edu>
 Jeremy Edwards <jde22@cornell.edu>
 
 =cut
@@ -26,7 +28,7 @@ use strict;
 use warnings;
 use autodie;
 
-use Test::More tests => 57;
+use Test::More tests => 83;
 BEGIN { use_ok('Bio::GenomeUpdate::AGP'); }
 require_ok('Bio::GenomeUpdate::AGP::AGPSequenceLine');
 require_ok('Bio::GenomeUpdate::AGP::AGPGapLine');
@@ -51,21 +53,21 @@ ok( $agp->add_comment_line("last comment") );
 
 #create AGP sequence line
 ok( $agp_sequence_line->set_object_being_assembled("Chromosome1") );
-ok( $agp_sequence_line->set_object_begin("1001") );
-ok( $agp_sequence_line->set_object_end("1400") );
+ok( $agp_sequence_line->set_object_begin("1401") );
+ok( $agp_sequence_line->set_object_end("1600") );
 #ok( $agp_sequence_line->set_part_number("1") );
 ok( $agp_sequence_line->set_component_type("A") );
 ok( $agp_sequence_line->set_component_id("component id") );
 ok( $agp_sequence_line->set_component_begin("1") );
-ok( $agp_sequence_line->set_component_end("400") );
+ok( $agp_sequence_line->set_component_end("200") );
 ok( $agp_sequence_line->set_orientation("+") );
 
 #create AGP gap line
 ok( $agp_gap_line->set_object_being_assembled("Chromosome1") );
-ok( $agp_gap_line->set_object_begin("1001") );
+ok( $agp_gap_line->set_object_begin("1") );
 ok( $agp_gap_line->set_object_end("1400") );
 ok( $agp_gap_line->set_component_type("N") );
-ok( $agp_gap_line->set_gap_length("400") );
+ok( $agp_gap_line->set_gap_length("1400") );
 ok( $agp_gap_line->set_gap_type("scaffold") );
 ok( $agp_gap_line->set_linkage("yes") );
 ok( $agp_gap_line->add_linkage_evidence("paired-ends") );
@@ -93,11 +95,11 @@ my $compare_str = q(##agp-version	2.0
 # first comment
 # next comment
 # last comment
-Chromosome1	1001	1400	1	N	400	scaffold	yes	paired-ends;map
-Chromosome1	1001	1400	2	A	component id	1	400	+
-Chromosome1	1001	1400	3	N	400	scaffold	yes	paired-ends;map
-Chromosome1	1001	1400	4	N	400	scaffold	yes	paired-ends;map
-Chromosome1	1001	1400	5	A	component id	1	400	+
+Chromosome1	1	1400	1	N	1400	scaffold	yes	paired-ends;map
+Chromosome1	1401	1600	2	A	component id	1	200	+
+Chromosome1	1	1400	3	N	1400	scaffold	yes	paired-ends;map
+Chromosome1	1	1400	4	N	1400	scaffold	yes	paired-ends;map
+Chromosome1	1401	1600	5	A	component id	1	200	+
 );
 is( $out_str, $compare_str, 'AGP output string is as expected' );
 
@@ -127,3 +129,35 @@ is(@gap_lengths_from_tpf,@compare_gap_lengths,'Gap lengths as expected');
 my @compare_sequence_lengths=(400,400);
 ok(my @sequence_lengths_from_tpf=$agp->get_sequence_lengths());
 is(@sequence_lengths_from_tpf,@compare_sequence_lengths,'Sequence lengths as expected');
+
+#test overlap methods
+ok(my ($cov_seq_count, $cov_seq_length, $par_cov_seq_count, $par_cov_seq_length) = $agp->get_sequence_overlap(1501,1600), 'testing seq region 1501-1600bp'); 
+is($cov_seq_count,0,'Covered sequence component count as expected for 1501-1600bp');
+is($cov_seq_length,0,'Covered sequence component length as expected for 1501-1600bp');
+is($par_cov_seq_count,1,'Partially covered sequence component count as expected for 1501-1600bp');
+is($par_cov_seq_length,100,'Partially covered sequence component length as expected for 1501-1600bp');
+ok(($cov_seq_count, $cov_seq_length, $par_cov_seq_count, $par_cov_seq_length) = $agp->get_sequence_overlap(1401,1600), 'testing seq region 1401-1600bp');
+is($cov_seq_count,1,'Covered sequence component count as expected for 1401-1600bp');
+is($cov_seq_length,200,'Covered sequence component length as expected for 1401-1600bp');
+is($par_cov_seq_count,0,'Partially covered sequence component count as expected for 1401-1600bp');
+is($par_cov_seq_length,0,'Partially covered sequence component length as expected for 1401-1600bp');
+#region covers both gap and seq region  
+ok(($cov_seq_count, $cov_seq_length, $par_cov_seq_count, $par_cov_seq_length) = $agp->get_sequence_overlap(1201,1500), 'testing seq region 1201-1500bp');
+is($par_cov_seq_count,1,'Partially covered sequence component count as expected for 1201-1500bp');
+is($par_cov_seq_length,100,'Partially covered sequence component length as expected for 1201-1500bp');
+
+ok(my ($cov_gap_count, $cov_gap_length, $par_cov_gap_count, $par_cov_gap_length) = $agp->get_gap_overlap(1000,1400), 'testing gap region 1000-1400bp'); 
+is($cov_gap_count,0,'Covered sequence component count as expected for 1000-1400bp');
+is($cov_gap_length,0,'Covered sequence component length as expected for 1000-1400bp');
+is($par_cov_gap_count,1,'Partially covered sequence component count as expected for 1000-1400bp');
+is($par_cov_gap_length,400,'Partially covered sequence component length as expected for 1000-1400bp');
+ok(($cov_gap_count, $cov_gap_length, $par_cov_gap_count, $par_cov_gap_length) = $agp->get_sequence_overlap(1,1400), 'testing gap region 1-1400bp');
+is($cov_gap_count,1,'Covered sequence component count as expected for 1-1400bp');
+is($cov_gap_length,1400,'Covered sequence component length as expected for 1-1400bp');
+is($par_cov_gap_count,0,'Partially covered sequence component count as expected for 1-1400bp');
+is($par_cov_gap_length,0,'Partially covered sequence component length as expected for 1-1400bp');
+#region covers both gap and seq region  
+ok(($cov_gap_count, $cov_gap_length, $par_cov_gap_count, $par_cov_gap_length) = $agp->get_sequence_overlap(1301,1500), 'testing gap region 1301-1500bp');
+is($par_cov_gap_count,1,'Partially covered sequence component count as expected for 1301-1500bp');
+is($par_cov_gap_length,100,'Partially covered sequence component length as expected for 1301-1500bp');
+
