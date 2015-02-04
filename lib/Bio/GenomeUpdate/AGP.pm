@@ -426,6 +426,47 @@ sub get_number_of_sequence_lines {
 	return $count;
 }
 
+=item C<get_gap_overlap (start, end)>
+
+Returns number and length of gaps in AGP completely and partially covered by region passed as parameter. Return values are number of 
+covered gaps, total length of covered gaps, number of partially covered gaps, total length of partially covered gaps
+
+=cut
+
+sub get_gap_overlap{
+	my $self = shift;
+	my $start = shift;
+	my $end = shift;
+	
+	#error check
+	if ($start <= $end ) { print STDERR "$start less than or equal to $end"; exit;}
+	
+	my ($cov_gap_count, $cov_gap_length, $par_cov_gap_count, $par_cov_gap_length) = 0;
+	my %lines;
+	
+	if ( $self->has_agp_lines() ) {
+		%lines = %{ $self->get_agp_lines() };
+		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+		foreach my $line_key (@sorted_line_numbers) {
+			if ( $lines{$line_key}->get_line_type() eq "gap" ) {
+				#push @sequence_lengths, ($lines{$line_key}->get_component_end()-$lines{$line_key}->get_component_begin()+1);
+				if (($start <= $lines{$line_key}->get_component_start()) &&
+					($end >= $lines{$line_key}->get_component_end())){
+						$cov_gap_count++;
+						$cov_gap_length += $lines{$line_key}->get_component_end()-$lines{$line_key}->get_component_begin()+1;
+					}
+				elsif((($start > $lines{$line_key}->get_component_start()) &&
+					($end > $lines{$line_key}->get_component_end()))
+					||($start < $lines{$line_key}->get_component_start()) &&
+					($end < $lines{$line_key}->get_component_end())){
+						$par_cov_gap_count++;
+						$par_cov_gap_length += $lines{$line_key}->get_component_end()-$lines{$line_key}->get_component_begin()+1;
+					}
+			}
+		}
+	}
+	return ($cov_gap_count, $cov_gap_length, $par_cov_gap_count, $par_cov_gap_length);
+}
 
 =item C<get_gap_lengths ()>
 
@@ -505,8 +546,37 @@ covered sequences, total length of covered sequences, number of partially covere
 
 sub get_sequence_overlap{
 	my $self = shift;
-	my (@sequence_lengths,%lines);
-	#TODO	
+	my $start = shift;
+	my $end = shift;
+	
+	#error check
+	if ($start <= $end ) { print STDERR "$start less than or equal to $end"; exit;}
+	
+	my ($cov_seq_count, $cov_seq_length, $par_cov_seq_count, $par_cov_seq_length) = 0;
+	my %lines;
+	
+	if ( $self->has_agp_lines() ) {
+		%lines = %{ $self->get_agp_lines() };
+		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+		foreach my $line_key (@sorted_line_numbers) {
+			if ( $lines{$line_key}->get_line_type() eq "sequence" ) {
+				#push @sequence_lengths, ($lines{$line_key}->get_component_end()-$lines{$line_key}->get_component_begin()+1);
+				if (($start <= $lines{$line_key}->get_component_start()) &&
+					($end >= $lines{$line_key}->get_component_end())){
+						$cov_seq_count++;
+						$cov_seq_length += $lines{$line_key}->get_component_end()-$lines{$line_key}->get_component_begin()+1;
+					}
+				elsif((($start > $lines{$line_key}->get_component_start()) &&
+					($end > $lines{$line_key}->get_component_end()))
+					||($start < $lines{$line_key}->get_component_start()) &&
+					($end < $lines{$line_key}->get_component_end())){
+						$par_cov_seq_count++;
+						$par_cov_seq_length += $lines{$line_key}->get_component_end()-$lines{$line_key}->get_component_begin()+1;
+					}
+			}
+		}
+	}
+	return ($cov_seq_count, $cov_seq_length, $par_cov_seq_count, $par_cov_seq_length);
 }	
 
 
