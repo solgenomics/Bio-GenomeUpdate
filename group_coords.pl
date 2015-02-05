@@ -5,15 +5,15 @@ group_coords.pl
 
 =head1 SYNOPSIS
 
-    group_coords.pl -i [coords file] -g [gap size]
+    group_coords.pl -i [coords file] -g [gap size] -r [fasta] -q [fasta]
 
 =head1 COMMAND-LINE OPTIONS
 
  -i  COORDS file created by show-coords (required)
- -u  Sequence ID of chromosome with unmapped contigs (required) 
+ -u  Sequence ID of chromosome with unmapped contigs 
  -r  Fasta file of reference (required)
- -q  Fasta file of query (assembled and singleton BACs)
- -g  Gap size allowed between aligned clusters in the reference sequence, typically the mean/median scaffold gap
+ -q  Fasta file of query (assembled and singleton BACs) 
+ -g  Gap size allowed between aligned clusters in the reference sequence, typically the mean/median scaffold gap (required)
  -c  Contig or component AGP file for reference 
  -s  Scaffold AGP file for reference 
  -t  Print header
@@ -44,7 +44,6 @@ if ($opt_h) {
   help();
 }
 unless (-e $opt_i){ print STDERR "$opt_i not found. exiting.."; exit;}
-unless (-e $opt_u){ print STDERR "$opt_u not found. exiting.."; exit;}
 unless (-e $opt_r){ print STDERR "$opt_r not found. exiting.."; exit;}
 unless (-e $opt_q){ print STDERR "$opt_q not found. exiting.."; exit;}
 if (defined $opt_c) {unless (-e $opt_c){ print STDERR "$opt_c not found. exiting.."; exit;}}
@@ -256,19 +255,20 @@ sub help {
      This script groups aligned clusters and creates a tab delimited file with BAC alignment details.
 
     Usage:
-      group_coords.pl -i [coords file] -g [gap size]
+      group_coords.pl -i [coords file] -g [gap size] -r [fasta] -q [fasta]
 
     Flags:
 
-       -i  <coords file>             COORDS file created by show-coords (required)
-       -g  <int>                     Gap size allowed. Recommended 10000 (required)
-       -r  <fasta file>              Fasta file of reference (required)
-       -q  <fasta file>              Fasta file of query (assembled and singleton BACs)
-       -u  <str>                     Sequence ID(seqid) of chromosome with unmapped contigs/scaffolds. Typically chromosome 0.
-       -c  <AGP file>                Contig or component AGP file for reference 
-       -s  <AGP file>                Scaffold AGP file for reference
-       -t  <T/F>                     Print header. Must be T or F. Default is T
-       -h  <help>
+    -i  COORDS file created by show-coords (required)
+    -u  Sequence ID of chromosome with unmapped contigs 
+    -r  Fasta file of reference (required)
+    -q  Fasta file of query (assembled and singleton BACs)
+    -g  Gap size allowed between aligned clusters in the reference sequence, typically the mean/median scaffold gap (required)
+    -c  Contig or component AGP file for reference 
+    -s  Scaffold AGP file for reference 
+    -t  Print header
+    -h  Help
+ 
 EOF
 exit (1);
 }
