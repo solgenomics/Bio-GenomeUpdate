@@ -57,10 +57,10 @@ my $print_header;
 $input_file = $opt_i || die("-i input_file required\n");
 if ($opt_g) {
   $gap_size_allowed=$opt_g;
-  print STDERR "Gg: $opt_u\n";
 }
 if ($opt_u) {
   $unmapped_ID = $opt_u;
+  print STDERR "Gg: $opt_u\n";
 }else{
 	$unmapped_ID = 'NA';#not required
 }
@@ -101,8 +101,8 @@ my $total_complete_chr_gaps_covered=0;
 my $total_complete_chr_gap_length_covered=0;
 my $total_partial_chr_gaps_covered=0;
 my $total_partial_chr_gap_length_covered=0;
-my $ref_db = Bio::DB::Fasta->new($opt_r);
-my $query_db = Bio::DB::Fasta->new($opt_q);
+my $ref_db = Bio::DB::Fasta->new($opt_r, '-reindex' => 1);
+my $query_db = Bio::DB::Fasta->new($opt_q, '-reindex' => 1);
 
 print STDERR "G0: $gap_size_allowed\n";
 print STDERR "Number of reference sequences: ";
