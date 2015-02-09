@@ -5,7 +5,7 @@ group_coords.pl
 
 =head1 SYNOPSIS
 
-    group_coords.pl -i [coords file] -g [gap size] -r [fasta] -q [fasta]
+    group_coords.pl -i [coords file] -g [gap size] -r [fasta] -q [fasta] -c [agp] -s [agp]
 
 =head1 COMMAND-LINE OPTIONS
 
@@ -36,19 +36,19 @@ use Bio::GenomeUpdate::AGP;
 use Bio::DB::Fasta;
 
 our ($opt_i, $opt_g, $opt_r, $opt_q, $opt_u, $opt_t, $opt_h, $opt_c, $opt_s);
-getopts("i:g:f:q:u:t:h:c:s");
+getopts("i:g:r:q:u:c:s:t:h");
 if (!$opt_i || !$opt_g || !$opt_r || !$opt_q ) {
-  print STDERR "Required files missing!! exiting..\n";
+  print STDERR "Required files or gap parameter missing!! exiting..\n";
   help();
 }
 if ($opt_h) {
   help();
 }
-unless (-e $opt_i){ print STDERR "$opt_i not found. exiting.."; exit;}
-unless (-e $opt_r){ print STDERR "$opt_r not found. exiting.."; exit;}
-unless (-e $opt_q){ print STDERR "$opt_q not found. exiting.."; exit;}
-if (defined $opt_c) {unless (-e $opt_c){ print STDERR "$opt_c not found. exiting.."; exit;}}
-if (defined $opt_s) {unless (-e $opt_s){ print STDERR "$opt_s not found. exiting.."; exit;}}
+unless (-e $opt_i){ print STDERR "COORDS file $opt_i not found. exiting..\n"; exit;}
+unless (-e $opt_r){ print STDERR "Fasta file $opt_r not found. exiting..\n"; exit;}
+unless (-e $opt_q){ print STDERR "Fasta file $opt_q not found. exiting..\n"; exit;}
+if (defined $opt_c) {unless (-e $opt_c){ print STDERR "Contig or component AGP file $opt_c not found. exiting..\n"; exit;}}
+if (defined $opt_s) {unless (-e $opt_s){ print STDERR "Chromosome AGP file $opt_s not found. exiting..\n"; exit;}}
 
 my $input_file;
 my $gap_size_allowed;
@@ -216,7 +216,8 @@ sub calc_and_print_info {
   my $flagged = 0;#flag 1 for potential problem
 
   $total++;
-  if ($direction == 0) {#query aligns to bot + and - strand of ref
+  #problem alignments
+  if ($direction == 0) {#query aligns to both + and - strand of ref
     $total_mixed++;
     $flagged=1;
   }
@@ -232,6 +233,7 @@ sub calc_and_print_info {
     $total_smaller_than_20k++;
     #$flagged=1;#short alignment may be for a BAC end so not always a negative
   }
+  #good alignments
   if ($start_gap_length < 10 && $end_gap_length < 10 && $flagged==0) {#alignments cover query
     $total_full_length++;
   }
@@ -294,7 +296,7 @@ sub help {
      This script groups aligned clusters and creates a tab delimited file with BAC alignment details.
 
     Usage:
-      group_coords.pl -i [coords file] -g [gap size] -r [fasta] -q [fasta]
+      group_coords.pl -i [coords file] -g [gap size] -r [fasta] -q [fasta] -c [agp] -s [agp]
 
     Flags:
 
