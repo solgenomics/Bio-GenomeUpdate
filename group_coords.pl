@@ -15,7 +15,7 @@ group_coords.pl
  -q  Fasta file of query (assembled and singleton BACs) 
  -g  Gap size allowed between aligned clusters in the reference sequence, typically the mean/median scaffold gap (required)
  -c  Contig or component AGP file for reference (includes scaffold gaps)
- -s  Scaffold AGP file for reference 
+ -s  Chromosome AGP file for reference (with only scaffolds and gaps) 
  -t  Print header
  -h  Help
 
@@ -78,10 +78,10 @@ my $contig_agp_input_file = $opt_c;
 my $contig_input_agp = read_file($contig_agp_input_file) or die "Could not open contig AGP input file: $contig_agp_input_file\n";
 my $contig_agp = Bio::GenomeUpdate::AGP->new();
 $contig_agp->parse_agp($contig_input_agp);
-my $scaffold_agp_input_file = $opt_s;
-my $scaffold_input_agp = read_file($scaffold_agp_input_file) or die "Could not open scaffold AGP input file: $scaffold_agp_input_file\n";
-my $scaffold_agp = Bio::GenomeUpdate::AGP->new();
-$scaffold_agp->parse_agp($scaffold_input_agp);
+my $chr_agp_input_file = $opt_s;
+my $chr_input_agp = read_file($chr_agp_input_file) or die "Could not open chr AGP input file: $chr_agp_input_file\n";
+my $chr_agp = Bio::GenomeUpdate::AGP->new();
+$chr_agp->parse_agp($chr_input_agp);
 
 my $total=0;
 my $total_smaller_than_20k=0; #for alignments covering < 20k on ref
@@ -97,10 +97,10 @@ my $total_complete_contig_gaps_covered=0;
 my $total_complete_contig_gap_length_covered=0;
 my $total_partial_contig_gaps_covered=0;
 my $total_partial_contig_gap_length_covered=0;
-my $total_complete_scaffold_gaps_covered=0;
-my $total_complete_scaffold_gap_length_covered=0;
-my $total_partial_scaffold_gaps_covered=0;
-my $total_partial_scaffold_gap_length_covered=0;
+my $total_complete_chr_gaps_covered=0;
+my $total_complete_chr_gap_length_covered=0;
+my $total_partial_chr_gaps_covered=0;
+my $total_partial_chr_gap_length_covered=0;
 my $ref_db = Bio::DB::Fasta->new($opt_r);
 my $query_db = Bio::DB::Fasta->new($opt_q);
 
@@ -253,15 +253,15 @@ sub calc_and_print_info {
 	$total_partial_contig_gaps_covered += $par_cov_gap_count;
 	$total_partial_contig_gap_length_covered += $par_cov_gap_length;
 	
-	($cov_gap_count, $cov_gap_length, $par_cov_gap_count, $par_cov_gap_length) = $scaffold_agp->get_gap_overlap($ref_start,$ref_end);
-	$total_complete_scaffold_gaps_covered += $cov_gap_count;
-	$total_complete_scaffold_gap_length_covered += $cov_gap_length;
-	$total_partial_scaffold_gaps_covered += $par_cov_gap_count;
-	$total_partial_scaffold_gap_length_covered += $par_cov_gap_length;
+	($cov_gap_count, $cov_gap_length, $par_cov_gap_count, $par_cov_gap_length) = $chr_agp->get_gap_overlap($ref_start,$ref_end);
+	$total_complete_chr_gaps_covered += $cov_gap_count;
+	$total_complete_chr_gap_length_covered += $cov_gap_length;
+	$total_partial_chr_gaps_covered += $par_cov_gap_count;
+	$total_partial_chr_gap_length_covered += $par_cov_gap_length;
   }
 }
 
-  ##summary info
+##summary info
 print STDERR "Total queries:\t\t\t\t\t\t\t$total\n";
 print STDERR "Total queries with alignments smaller than 20,000 on ref:\t$total_smaller_than_20k\n";
 print STDERR "Total queries with mixed orientation:\t\t\t\t$total_mixed\n";
@@ -274,14 +274,16 @@ print STDERR "Total reference covered by valid BAC hits:\t\t\t$total_ref_covered
 print STDERR "Total N's within reference covered by valid BAC hits:\t\t$total_ref_Ns_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
 print STDERR "Total novel sequence from valid BAC hits:\t\t\t",$total_ref_Ns_covered+$total_extend,"\n";#includes gaps ($gap_size_allowed) between alignment clusters
 print STDERR "Statistics from AGPs\n";
-print STDERR "Total gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gaps_covered\tIncludes scaffold gaps\n";
-print STDERR "Total length of gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gap_length_covered\tIncludes scaffold gaps\n";
-print STDERR "Total gaps partially covered from contig AGP:\t\t\t$total_partial_contig_gaps_covered\tIncludes scaffold gaps\n";
-print STDERR "Total length of gaps partially covered from contig AGP:\t\t\t$total_partial_contig_gap_length_covered\tIncludes scaffold gaps\n";
-print STDERR "Total gaps completely covered from scaffold AGP:\t\t\t$total_complete_scaffold_gaps_covered\n";
-print STDERR "Total length of gaps completely covered from scaffold AGP:\t\t\t$total_complete_scaffold_gap_length_covered\n";
-print STDERR "Total gaps partially covered from scaffold AGP:\t\t\t$total_partial_scaffold_gaps_covered\n";
-print STDERR "Total length of gaps partial covered from scaffold AGP:\t\t\t$total_partial_scaffold_gap_length_covered\n";
+print STDERR "Contig or component AGP (contigs and scaffold gaps)\n";
+print STDERR "Total gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gaps_covered\n";
+print STDERR "Total length of gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gap_length_covered\n";
+print STDERR "Total gaps partially covered from contig AGP:\t\t\t$total_partial_contig_gaps_covered\n";
+print STDERR "Total length of gaps partially covered from contig AGP:\t\t\t$total_partial_contig_gap_length_covered\n";
+print STDERR "Chromosome AGP (scaffolds and scaffold gaps)\n";
+print STDERR "Total gaps completely covered from chr AGP:\t\t\t$total_complete_chr_gaps_covered\n";
+print STDERR "Total length of gaps completely covered from chr AGP:\t\t\t$total_complete_chr_gap_length_covered\n";
+print STDERR "Total gaps partially covered from chr AGP(scaffolds and gaps):\t\t\t$total_partial_chr_gaps_covered\n";
+print STDERR "Total length of gaps partial covered from chr AGP(scaffolds and gaps):\t\t\t$total_partial_chr_gap_length_covered\n";
 
 sub help {
   print STDERR <<EOF;
@@ -302,7 +304,7 @@ sub help {
     -q  Fasta file of query (assembled and singleton BACs)
     -g  Gap size allowed between aligned clusters in the reference sequence, typically the mean/median scaffold gap (required)
     -c  Contig or component AGP file for reference (includes scaffold gaps)
-    -s  Scaffold AGP file for reference 
+    -s  Chromosome AGP file for reference (with only scaffolds and gaps) 
     -t  Print header
     -h  Help
  
