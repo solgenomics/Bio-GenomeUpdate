@@ -1,4 +1,5 @@
 *~
+*.index
 .includepath
 .project
 errors.gff3
