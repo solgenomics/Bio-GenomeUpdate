@@ -270,7 +270,7 @@ print STDERR "Total queries with mixed orientation:\t\t\t\t$total_mixed\n";
 print STDERR "Total queries with overlapping alignment clusters:\t\t$total_over\n";
 print STDERR "Total queries with alternate alignments > 10,000:\t\t$total_alt\n";
 print STDERR "Total queries aligned full length:\t\t\t\t$total_full_length\n";
-print STDERR "Total with alignment to at least one end:\t\t\t$total_to_end\n";
+print STDERR "Total queries with alignment to at least one end:\t\t$total_to_end\n";
 print STDERR "Total reference extended by valid BAC hits:\t\t\t$total_extend\n";#new seqs from query
 print STDERR "Total reference covered by valid BAC hits:\t\t\t$total_ref_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
 print STDERR "Total N's within reference covered by valid BAC hits:\t\t$total_ref_Ns_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
@@ -286,6 +286,10 @@ print STDERR "Total gaps completely covered from chr AGP:\t\t\t$total_complete_c
 print STDERR "Total length of gaps completely covered from chr AGP:\t\t\t$total_complete_chr_gap_length_covered\n";
 print STDERR "Total gaps partially covered from chr AGP(scaffolds and gaps):\t\t\t$total_partial_chr_gaps_covered\n";
 print STDERR "Total length of gaps partial covered from chr AGP(scaffolds and gaps):\t\t\t$total_partial_chr_gap_length_covered\n";
+
+#cleanup
+unlink "${opt_r}.index";
+unlink "${opt_q}.index";
 
 sub help {
   print STDERR <<EOF;
