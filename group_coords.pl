@@ -138,7 +138,7 @@ foreach my $line (@lines) {
   }
   #exec if query ID changes, i.e., coords for next assembled or singleton BAC aligned to chr
   if (!($current_query_id eq $last_line_query_id)) { 
-  	#print info for last query (assembled or singleton BAC ) to STDOUT
+  	#print info for prev query (assembled or singleton BAC ) to STDOUT
     calc_and_print_info(\@alignment_coords_array, $last_query_id, $last_query_length);
     @alignment_coords_array = ();
   }
@@ -241,8 +241,10 @@ sub calc_and_print_info {
     $total_to_end++;
   }
   if ($flagged==0) {
-  	print STDERR "**",join(' ',$query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters, $start_gap_length, 
-  		$end_gap_length, $internal_gap_length, $start_gap_length + $end_gap_length + $internal_gap_length),"\n\n";
+  	
+  	#print STDERR "**",join(' ',$query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters, $start_gap_length, 
+  	#	$end_gap_length, $internal_gap_length, $start_gap_length + $end_gap_length + $internal_gap_length),"\n\n";
+    
     $total_extend += $start_gap_length + $end_gap_length + $internal_gap_length;
     
     $total_ref_covered += $sequence_aligned_in_clusters;
@@ -276,7 +278,9 @@ print STDERR "Total queries with alignment to at least one end:\t\t$total_to_end
 print STDERR "Total reference extended by valid BAC hits:\t\t\t$total_extend\n";#new seqs from query
 print STDERR "Total reference covered by valid BAC hits:\t\t\t$total_ref_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
 print STDERR "Total N's within reference covered by valid BAC hits:\t\t$total_ref_Ns_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
-print STDERR "Total novel sequence from valid BAC hits:\t\t\t",$total_ref_Ns_covered+$total_extend,"\n";#includes gaps ($gap_size_allowed) between alignment clusters
+if ( $total_extend > $total_ref_Ns_covered ){ #new sequence beyond ends of chromosome
+	print STDERR "Total novel sequence beyond chr ends from valid BAC hits:\t",$total_extend - $total_ref_Ns_covered,"\n";
+}
 print STDERR "\nStatistics from AGPs\n";
 print STDERR "Contig or component AGP (contigs and scaffold gaps)\n";
 print STDERR "Total gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gaps_covered\n";
