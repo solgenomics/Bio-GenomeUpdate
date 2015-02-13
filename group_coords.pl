@@ -278,9 +278,9 @@ print STDERR "Total queries with alignment to at least one end:\t\t$total_to_end
 print STDERR "Total reference extended by valid BAC hits:\t\t\t$total_extend\n";#new seqs from query
 print STDERR "Total reference covered by valid BAC hits:\t\t\t$total_ref_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
 print STDERR "Total N's within reference covered by valid BAC hits:\t\t$total_ref_Ns_covered\n";#includes gaps ($gap_size_allowed) between alignment clusters
-if ( $total_extend > $total_ref_Ns_covered ){ #new sequence beyond ends of chromosome
-	print STDERR "Total novel sequence beyond chr ends from valid BAC hits:\t",$total_extend - $total_ref_Ns_covered,"\n";
-}
+#if ( $total_extend > $total_ref_Ns_covered ){ #new sequence beyond ends of chromosome
+#	print STDERR "Total novel sequence beyond chr ends from valid BAC hits:\t",$total_extend - $total_ref_Ns_covered,"\n";
+#}
 print STDERR "\nStatistics from AGPs\n";
 print STDERR "Contig or component AGP (contigs and scaffold gaps)\n";
 print STDERR "Total gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gaps_covered\n";
