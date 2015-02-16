@@ -29,12 +29,87 @@ use Bio::GenomeUpdate::AlignmentCoords;
 use Bio::GenomeUpdate::AlignmentCoordsGroup;
 
 
+our ($opt_c, $opt_d, $opt_o, $opt_h);
+getopts("c:d:o:h");
+if (!$opt_c || !$opt_d ) {
+  print STDERR "Required files missing!! exiting..\n";
+  help();
+}
+if ($opt_h) {
+  help();
+}
+unless (-e $opt_c){ print STDERR "COORDS file $opt_c not found. exiting..\n"; exit;}
+unless (-e $opt_d){ print STDERR "DELTA file $opt_d not found. exiting..\n"; exit;}
 
+my $input_coords_file = $opt_c || die("-i input_file required\n");
+my $input_delta_file = $opt_d || die("-i input_file required\n");
 
+my @lines = read_file($input_coords_file);
+my $startline = 5;
+my $currentline = 0;
+my @alignment_coords_array;
+my @query_valid_hits;
+my @query_invalid_hits;
+my $last_line_query_id;
+my $last_query_id;
+my $last_query_length;
 
+#parse coords file
+#[S1]	[E1]	[S2]	[E2]	[LEN 1]	[LEN 2]	[% IDY]	[LEN R]	[LEN Q]	[COV R]	[COV Q]	[FRM]	[TAGS]
+foreach my $line (@lines) {
+  $currentline++;
+  if ($currentline < $startline) {
+    next;
+  }
+  my @row;
+  @row = split('\t',$line);
+  my $current_query_id = $row[14];
+  my $current_query_length = $row[8];
+  if (!defined($last_line_query_id)) {
+    $last_line_query_id = $current_query_id;
+  }
+  #exec if query ID changes, i.e., coords for next assembled or singleton BAC aligned to chr
+  if (!($current_query_id eq $last_line_query_id)) { 
+    #find alignments that align in mixed orientation or in non co-linear order
+    #print DELTA to STDOUT and messages to STDERR
+    calc_and_print_info(\@alignment_coords_array, $last_query_id, $last_query_length);
+    
+    @alignment_coords_array = ();
+  }
+  my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
+  $aln_coords->set_reference_id($row[13]);
+  $aln_coords->set_query_id($row[14]);
+  $aln_coords->set_reference_start_coord($row[0]);
+  $aln_coords->set_reference_end_coord($row[1]);
+  $aln_coords->set_query_start_coord($row[2]);
+  $aln_coords->set_query_end_coord($row[3]);
+  push(@alignment_coords_array, $aln_coords);
+  
+  #deal with last row since no more alignments for query after this
+  if ($currentline==scalar(@lines)) {
+    #find alignments that align in mixed orientation or in non co-linear order
+    #print DELTA to STDOUT and messages to STDERR
+    calc_errors_and_print_delta(\@alignment_coords_array, $last_query_id, $last_query_length);
+    @alignment_coords_array = ();
+  }
+  $last_line_query_id = $current_query_id;
+  $last_query_id = $current_query_id;
+  $last_query_length = $current_query_length;
+}
 
+=item C<calc_errors_and_print_delta (@alignment_coords_array, $last_query_id, $last_query_length)>
 
+If error is found, it prints error info to STDERR and returns 1. Otherwise it return a 0.
 
+=cut
+
+sub calc_errors_and_print_delta {
+  my ($aref,$q_id,$q_length) = @_;
+  my $align_group =  Bio::GenomeUpdate::AlignmentCoordsGroup->new();
+  #assign all coords for query/assembled or singleton BAC to obj
+  $align_group->set_array_of_alignment_coords($aref);
+  
+}
 
 
 
