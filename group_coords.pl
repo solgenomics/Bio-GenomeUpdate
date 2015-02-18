@@ -21,7 +21,7 @@ group_coords.pl
 
 =head1 TODO
 
-  Print fasta of query seqs that did not align
+  See github issues.
 
 =cut
 
@@ -162,6 +162,12 @@ foreach my $line (@lines) {
   $last_query_length = $current_query_length;
 }
 
+=item C<calc_and_print_info (@alignment_coords_array, $last_query_id, $last_query_length)>
+
+Prints info to STDOUT. No return value.
+
+=cut
+
 sub calc_and_print_info {
   my ($aref,$q_id,$q_length) = @_;
   my $align_group =  Bio::GenomeUpdate::AlignmentCoordsGroup->new();
@@ -285,11 +291,13 @@ print STDERR "\nStatistics from AGPs\n";
 print STDERR "Contig or component AGP (contigs and scaffold gaps)\n";
 print STDERR "Total gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gaps_covered\n";
 print STDERR "Total length of gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gap_length_covered\n";
+print STDERR "Avg length of gaps completely covered from contig AGP:\t\t\t".$total_complete_contig_gap_length_covered/$total_complete_contig_gaps_covered."\n";
 print STDERR "Total gaps partially covered from contig AGP:\t\t\t$total_partial_contig_gaps_covered\n";
 print STDERR "Total length of gaps partially covered from contig AGP:\t\t\t$total_partial_contig_gap_length_covered\n";
 print STDERR "Chromosome AGP (scaffolds and scaffold gaps)\n";
 print STDERR "Total gaps completely covered from chr AGP:\t\t\t$total_complete_chr_gaps_covered\n";
 print STDERR "Total length of gaps completely covered from chr AGP:\t\t\t$total_complete_chr_gap_length_covered\n";
+print STDERR "Avg length of gaps completely covered from chr AGP:\t\t\t".$total_complete_chr_gap_length_covered/$total_complete_chr_gaps_covered."\n";
 print STDERR "Total gaps partially covered from chr AGP(scaffolds and gaps):\t\t\t$total_partial_chr_gaps_covered\n";
 print STDERR "Total length of gaps partial covered from chr AGP(scaffolds and gaps):\t\t\t$total_partial_chr_gap_length_covered\n";
 
@@ -323,6 +331,18 @@ sub help {
 EOF
 exit (1);
 }
+
+
+=head1 LICENSE
+
+  Same as Perl.
+
+=head1 AUTHORS
+
+  Surya Saha <suryasaha at cornell.edu, @SahaSurya>
+
+=cut
+
 
 __END__
 
