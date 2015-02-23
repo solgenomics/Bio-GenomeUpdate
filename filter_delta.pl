@@ -16,7 +16,7 @@ filter_delta.pl
 
 =head1 TODO
 
-  Print delta output file
+  See github issues.
 
 =cut
 
@@ -99,18 +99,26 @@ foreach my $line (@lines) {
 
 =item C<calc_errors_and_print_delta (@alignment_coords_array, $last_query_id, $last_query_length)>
 
-If error is found, it prints error info to STDERR and returns 1. Otherwise it return a 0.
+If non co-linear alignment is found, it prints error info to STDERR and returns 1. Otherwise it returns a 0.
 
 =cut
 
 sub calc_errors_and_print_delta {
   my ($aref,$q_id,$q_length) = @_;
   my $align_group =  Bio::GenomeUpdate::AlignmentCoordsGroup->new();
+  
   #assign all coords for query/assembled or singleton BAC to obj
   $align_group->set_array_of_alignment_coords($aref);
   
+  
+  
 }
 
+=item C<help>
+
+duh..
+
+=cut
 
 
 sub help {
@@ -119,7 +127,13 @@ sub help {
 
     Description:
 
-     This script filters the DELTA file produced by nucmer by removing BAC alignments that align in mixed orientation or in non co-linear order.
+     This script filters the DELTA file produced by nucmer by removing BAC alignments that align in non co-linear order. Use the 
+     following commands to generate the COORDS and DELTA files where $1 is chr number
+     
+     nucmer -l 100 -c 500 --noextend -p 500bp.ch0${1}_asm_BACs__SL2.50ch0${1} SL2.50ch0${1}.fa ch0${1}_asm_BACs.fas
+     delta-filter -l 500 -u 99 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta > 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta.filtered
+     show-coords -c -d -l -q -T -o 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta.filtered > 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta.filtered.coords
+     
 
     Usage:
       filter_delta.pl -c [coords file] -d [delta file] -o [delta file]
@@ -134,5 +148,16 @@ sub help {
 EOF
 exit (1);
 }
+
+
+=head1 LICENSE
+
+  Same as Perl.
+
+=head1 AUTHORS
+
+  Surya Saha <suryasaha at cornell.edu, @SahaSurya>
+
+=cut
 
 __END__
