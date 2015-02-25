@@ -131,7 +131,7 @@ sub help {
      following commands to generate the COORDS and DELTA files where $1 is chr number
      
      nucmer -l 100 -c 500 --noextend -p 500bp.ch0${1}_asm_BACs__SL2.50ch0${1} SL2.50ch0${1}.fa ch0${1}_asm_BACs.fas
-     delta-filter -l 500 -u 99 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta > 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta.filtered
+     delta-filter -l 500 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta > 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta.filtered
      show-coords -c -d -l -q -T -o 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta.filtered > 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta.filtered.coords
      
 
