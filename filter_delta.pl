@@ -134,6 +134,8 @@ sub help {
      delta-filter -l 500 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta > 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta.filtered
      show-coords -c -d -l -q -T -o 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta.filtered > 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta.filtered.coords
      
+     COORDS file = 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta.filtered.coords
+     DELTA file  = 500bp.ch0${1}_asm_BACs__SL2.50ch0${1}.delta.filtered
 
     Usage:
       filter_delta.pl -c [coords file] -d [delta file] -o [delta file]
