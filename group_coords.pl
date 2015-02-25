@@ -247,34 +247,34 @@ sub calc_and_print_info {
 	else {
 		$is_full_length = "Partial";
 	}
-	print $q_id. "\t";
-	print $ref_id. "\t";
-	print $ref_start. "\t";
-	print $ref_end. "\t";
-	print $ref_end - $ref_start . "\t";
-	print $query_start. "\t";
-	print $query_end. "\t";
-	print $q_length. "\t";
-	print $sequence_aligned_in_clusters. "\t";
-	print $direction. "\t";    #strand
-	print $align_group->get_count_of_reference_sequence_ids() . "\t";
-	print $align_group->includes_reference_id($zero_chromosome_id) . "\t";
-	print $is_full_length. "\t";
-	print $start_gap_length. "\t";
-	print $end_gap_length. "\t";
-	print $internal_gap_length. "\t";
-	print $is_overlapping. "\t";
-	print $size_of_next_largest_match. "\t";
-	print $alternates. "\t";
-
-	#if (defined($second_id)){
-	#print $second_id."\t";
-	#print $second_size."\t"
-	#}
-	#else {
-	#print "None\tNone\t";
-	#}
-	print "\n";
+#	print $q_id. "\t";
+#	print $ref_id. "\t";
+#	print $ref_start. "\t";
+#	print $ref_end. "\t";
+#	print $ref_end - $ref_start . "\t";
+#	print $query_start. "\t";
+#	print $query_end. "\t";
+#	print $q_length. "\t";
+#	print $sequence_aligned_in_clusters. "\t";
+#	print $direction. "\t";    #strand
+#	print $align_group->get_count_of_reference_sequence_ids() . "\t";
+#	print $align_group->includes_reference_id($zero_chromosome_id) . "\t";
+#	print $is_full_length. "\t";
+#	print $start_gap_length. "\t";
+#	print $end_gap_length. "\t";
+#	print $internal_gap_length. "\t";
+#	print $is_overlapping. "\t";
+#	print $size_of_next_largest_match. "\t";
+#	print $alternates. "\t";
+#
+#	#if (defined($second_id)){
+#	#print $second_id."\t";
+#	#print $second_size."\t"
+#	#}
+#	#else {
+#	#print "None\tNone\t";
+#	#}
+#	print "\n";
 
 	my $flagged = 0;    #flag 1 for potential problem
 
@@ -345,25 +345,51 @@ sub calc_and_print_info {
 		$total_ref_Ns_covered += ( $ref_aligned_seq =~ tr/N// );
 		$total_ref_Ns_covered += ( $ref_aligned_seq =~ tr/n// );
 
-		my (
-			 $cov_gap_count,     $cov_gap_length,
+		my ($cov_gap_count,     $cov_gap_length,
 			 $par_cov_gap_count, $par_cov_gap_length
-		  )
-		  = $contig_agp->get_gap_overlap( $ref_start, $ref_end );
+		  ) = $contig_agp->get_gap_overlap( $ref_start, $ref_end );
 		$total_complete_contig_gaps_covered       += $cov_gap_count;
 		$total_complete_contig_gap_length_covered += $cov_gap_length;
 		$total_partial_contig_gaps_covered        += $par_cov_gap_count;
 		$total_partial_contig_gap_length_covered  += $par_cov_gap_length;
 
-		(
-		   $cov_gap_count,     $cov_gap_length,
+		($cov_gap_count,     $cov_gap_length,
 		   $par_cov_gap_count, $par_cov_gap_length
-		  )
-		  = $chr_agp->get_gap_overlap( $ref_start, $ref_end );
+		  ) = $chr_agp->get_gap_overlap( $ref_start, $ref_end );
 		$total_complete_chr_gaps_covered       += $cov_gap_count;
 		$total_complete_chr_gap_length_covered += $cov_gap_length;
 		$total_partial_chr_gaps_covered        += $par_cov_gap_count;
 		$total_partial_chr_gap_length_covered  += $par_cov_gap_length;
+		
+		print $q_id. "\t";
+		print $ref_id. "\t";
+		print $ref_start. "\t";
+		print $ref_end. "\t";
+		print $ref_end - $ref_start . "\t";
+		print $query_start. "\t";
+		print $query_end. "\t";
+		print $q_length. "\t";
+		print $sequence_aligned_in_clusters. "\t";
+		print $direction. "\t";    #strand
+		print $align_group->get_count_of_reference_sequence_ids() . "\t";
+		print $align_group->includes_reference_id($zero_chromosome_id) . "\t";
+		print $is_full_length. "\t";
+		print $start_gap_length. "\t";
+		print $end_gap_length. "\t";
+		print $internal_gap_length. "\t";
+		print $is_overlapping. "\t";
+		print $size_of_next_largest_match. "\t";
+		print $alternates. "\t";
+	
+		#if (defined($second_id)){
+		#print $second_id."\t";
+		#print $second_size."\t"
+		#}
+		#else {
+		#print "None\tNone\t";
+		#}
+		print "\n";
+			
 	}
 }
 
