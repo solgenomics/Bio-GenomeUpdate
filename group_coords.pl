@@ -74,6 +74,8 @@ if ($opt_t) {
   }
 }
 
+open(MIXED,">mixed_${opt_i}") or die "Could not create mixed_${opt_i} for writing out BACs aligned to ref chr in mixed orientation";
+
 my $contig_agp_input_file = $opt_c;
 my $contig_input_agp = read_file($contig_agp_input_file) or die "Could not open contig AGP input file: $contig_agp_input_file\n";
 my $contig_agp = Bio::GenomeUpdate::AGP->new();
@@ -121,6 +123,7 @@ my $last_line_query_id;
 my $last_query_id;
 my $last_query_length;
 print "query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+print MIXED "query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
 
 #parse coords file
 #[S1]	[E1]	[S2]	[E2]	[LEN 1]	[LEN 2]	[% IDY]	[LEN R]	[LEN Q]	[COV R]	[COV Q]	[FRM]	[TAGS]
@@ -226,6 +229,28 @@ sub calc_and_print_info {
   if ($direction == 0) {#query aligns to both + and - strand of ref
     $total_mixed++;
     $flagged=1;
+    
+  print MIXED $q_id."\t";
+  print MIXED $ref_id."\t";
+  print MIXED $ref_start."\t";
+  print MIXED $ref_end."\t";
+  print MIXED $ref_end - $ref_start."\t";
+  print MIXED $query_start."\t";
+  print MIXED $query_end."\t";
+  print MIXED $q_length."\t";
+  print MIXED $sequence_aligned_in_clusters."\t";
+  print MIXED $direction."\t";#strand
+  print MIXED $align_group->get_count_of_reference_sequence_ids()."\t";;
+  print MIXED $align_group-> includes_reference_id($zero_chromosome_id)."\t";
+  print MIXED $is_full_length."\t";    
+  print MIXED $start_gap_length."\t";
+  print MIXED $end_gap_length."\t";
+  print MIXED $internal_gap_length."\t";
+  print MIXED $is_overlapping."\t";
+  print MIXED $size_of_next_largest_match."\t";
+  print MIXED $alternates."\t";
+  print MIXED "\n";
+  
   }
   if ($is_overlapping == 1) {#query alignment tiles overlap
     $total_over++;
@@ -304,6 +329,7 @@ print STDERR "Total length of gaps partial covered from chr AGP(scaffolds and ga
 #cleanup
 unlink "${opt_r}.index";
 unlink "${opt_q}.index";
+close (MIXED);
 
 sub help {
   print STDERR <<EOF;
