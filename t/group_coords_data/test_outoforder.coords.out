@@ -1,0 +1,27 @@
+surya@caffeine temp$ perl -I ~/work/Eclipse/Bio-GenomeUpdate/lib/ ~/work/Eclipse/Bio-GenomeUpdate/group_coords.pl  -r ref.fas -q query.fas -c contig.agp -s chr.agp -i test_outoforder.coords -g 5000 > /dev/null
+Parsing AGP line 11 of 11
+Parsed 11 AGP lines
+Parsing AGP line 5 of 5
+Parsed 5 AGP lines
+G0: 5000
+Number of reference sequences: 1
+Number of query sequences: 5
+
+Query start error for BAC1
+Total queries:                                                  1
+Total queries with alignments smaller than 20,000 on ref:       1
+Total queries with mixed orientation:                           0
+Total queries with non co-linear alignments:                    1
+Total queries with overlapping alignment clusters:              0
+Total queries with alternate alignments > 10,000:               0
+Total queries aligned full length:                              0
+Total queries with alignment to at least one end:               0
+Total reference extended by valid BAC hits:                     0
+Total reference covered by valid BAC hits:                      0
+Total N's within reference covered by valid BAC hits:           0
+
+Statistics from AGPs
+Contig or component AGP (contigs and scaffold gaps)
+Total gaps completely covered from contig AGP:                  0
+Total length of gaps completely covered from contig AGP:                        0
+Illegal division by zero at /home/surya/work/Eclipse/Bio-GenomeUpdate/group_coords.pl line 469.
