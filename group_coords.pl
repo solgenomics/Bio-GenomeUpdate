@@ -436,7 +436,7 @@ close(NONCOLINEAR);
 if ($total_noncolinear == 0) { unlink "noncolinear_${opt_i}";}
 
 ##summary info
-print STDERR "Total queries:\t\t\t\t\t\t\t$total\n";
+print STDERR "\nTotal queries:\t\t\t\t\t\t\t$total\n";
 print STDERR
 "Total queries with alignments smaller than 20,000 on ref:\t$total_smaller_than_20k\n";
 print STDERR "Total queries with mixed orientation:\t\t\t\t$total_mixed\n";
@@ -461,30 +461,35 @@ print STDERR
 #	print STDERR "Total novel sequence beyond chr ends from valid BAC hits:\t",$total_extend - $total_ref_Ns_covered,"\n";
 #}
 print STDERR "\nStatistics from AGPs\n";
-print STDERR "Contig or component AGP (contigs and scaffold gaps)\n";
+print STDERR "Contig or component AGP (contigs and contig gaps)\n";
 print STDERR
-"Total gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gaps_covered\n";
+"\tTotal gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gaps_covered\n";
 print STDERR
-"Total length of gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gap_length_covered\n";
-print STDERR "Avg length of gaps completely covered from contig AGP:\t\t\t"
+"\tTotal length of gaps completely covered from contig AGP:\t$total_complete_contig_gap_length_covered\n";
+if ( $total_complete_contig_gaps_covered > 0){
+	print STDERR "\tAvg length of gaps completely covered from contig AGP:\t\t"
   . $total_complete_contig_gap_length_covered /
   $total_complete_contig_gaps_covered . "\n";
+}
 print STDERR
-"Total gaps partially covered from contig AGP:\t\t\t$total_partial_contig_gaps_covered\n";
+"\tTotal gaps partially covered from contig AGP:\t\t\t$total_partial_contig_gaps_covered\n";
 print STDERR
-"Total length of gaps partially covered from contig AGP:\t\t\t$total_partial_contig_gap_length_covered\n";
+"\tTotal length of gaps partially covered from contig AGP:\t\t$total_partial_contig_gap_length_covered\n";
+
 print STDERR "Chromosome AGP (scaffolds and scaffold gaps)\n";
 print STDERR
-"Total gaps completely covered from chr AGP:\t\t\t$total_complete_chr_gaps_covered\n";
+"\tTotal gaps completely covered from chr AGP:\t\t\t$total_complete_chr_gaps_covered\n";
 print STDERR
-"Total length of gaps completely covered from chr AGP:\t\t\t$total_complete_chr_gap_length_covered\n";
-print STDERR "Avg length of gaps completely covered from chr AGP:\t\t\t"
+"\tTotal length of gaps completely covered from chr AGP:\t\t$total_complete_chr_gap_length_covered\n";
+if ($total_complete_chr_gaps_covered > 0){
+	print STDERR "Avg length of gaps completely covered from chr AGP:\t\t\t"
   . $total_complete_chr_gap_length_covered / $total_complete_chr_gaps_covered
   . "\n";
+}
 print STDERR
-"Total gaps partially covered from chr AGP(scaffolds and gaps):\t\t\t$total_partial_chr_gaps_covered\n";
+"\tTotal gaps partially covered from chr AGP:\t\t\t$total_partial_chr_gaps_covered\n";
 print STDERR
-"Total length of gaps partial covered from chr AGP(scaffolds and gaps):\t\t\t$total_partial_chr_gap_length_covered\n";
+"\tTotal length of gaps partial covered from chr AGP:\t\t$total_partial_chr_gap_length_covered\n";
 
 sub help {
 	print STDERR <<EOF;
