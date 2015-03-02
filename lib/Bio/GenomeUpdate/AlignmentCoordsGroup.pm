@@ -77,17 +77,6 @@ sub includes_reference_id {
 }
 
 
-=item C<is_alignment_ordered ()>
-
-If non co-linear alignment is found, it prints error info to STDERR and returns 1.  
-
-=cut
-
-sub is_alignment_ordered{
-	
-	
-}
-
 =item C<order_alignment_clusters_on_each_reference_sequence>
 
 Calculates and returns a hash of reference IDs and corresponding arrays of alignment clusters sorted by reference sequence coordinates.
@@ -212,58 +201,9 @@ sub get_cluster_groups_sorted_by_length {
   }
 }
 
-=item C<get_cluster_groups_sorted_by_ref_start ( $gap_allowed )>
-
-Calculates and returns an array of arrays containing the proximity-grouped alignment clusters sorted by aligned position on the reference in ascending order. 
-
-=cut
-
-sub get_cluster_groups_sorted_by_ref_start {
-  my $self = shift;
-  my $gap_allowed = shift;
-  my %cluster_groups = $self->group_alignment_clusters($gap_allowed);
-  my @groups;
-
-  foreach my $ref_seq_key (keys %cluster_groups) {#for each ref chr
-    foreach my $align_coords_groups (@{$cluster_groups{$ref_seq_key}}) {#for each cluster group
-      my @align_group = @$align_coords_groups;
-      push (@groups, [@align_group]);
-    }
-  }
-  my @sorted_groups = sort cluster_group_ref_start_sort @groups;
-  return @sorted_groups;
-
-  sub cluster_group_ref_start_sort {
-    my $a_ref_start = get_group_ref_start([@{$a}]);
-    my $b_ref_start = get_group_ref_start([@{$b}]);
-    if ($a_ref_start > $b_ref_start) {
-      return -1;
-	    
-    } elsif ($a_ref_start == $b_ref_start) {
-      return 0;
-	    
-    } elsif ($a_ref_start < $b_ref_start) {
-      return 1;
-    } else {
-      return 0;
-    }
-    sub get_group_ref_start {
-      my $cluster_ref = shift;
-      my @cluster_group = @{$cluster_ref};
-      my @ref_starts;
-      
-      foreach my $align_coords (@cluster_group){
-      	push (@ref_starts, $align_coords->get_reference_start_coord());
-      }
-      my @sorted_ref_starts = sort { $a <=> $b } @ref_starts;
-      return $sorted_ref_starts[0];
-    }
-  }
-}
-
 =item C<get_id_coords_and_direction_of_longest_alignment_cluster_group ( $gap_allowed )>
 
-Returns IDs, start and end coordinates, total aligned sequence length, and direction for the longest proximity-grouped alignment clusters sorted by longest to shortest length of non-overlapping sequence covered by alignment clusters.  The proximity grouping is done using the specified length of an allowed gap between aligned clusters in the reference sequence ($gap allowed). 
+Returns IDs, start and end coordinates, total aligned sequence length, co-linear alignment flag and direction for the longest proximity-grouped alignment clusters sorted by longest to shortest length of non-overlapping sequence covered by alignment clusters.  The proximity grouping is done using the specified length of an allowed gap between aligned clusters in the reference sequence ($gap allowed). 
 
 =cut
 
@@ -273,6 +213,7 @@ sub get_id_coords_and_direction_of_longest_alignment_cluster_group {
   #returns an array of arrays containing the
   #proximity-grouped alignment clusters sorted by longest to shortest
   #length of non-overlapping sequence covered by alignment clusters.
+  #aligned_coords are ordered acc to ref chr. see order_alignment_clusters_on_each_reference_sequence()
   my @returnclusters =  $self->get_cluster_groups_sorted_by_length($gap_allowed);
   my $first_group = shift(@returnclusters);#first is largest
 
@@ -365,15 +306,23 @@ sub get_id_coords_and_direction_of_longest_alignment_cluster_group {
   }
   
 
-  my $direction_check = check_direction_of_cluster_group(@largest_cluster_group);
-  return ($ref_id, $query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters,$direction_check,$is_overlapping,$size_of_next_largest_match,$alternates);
+  my $direction_check = check_direction_of_cluster_group(\@largest_cluster_group);
+  my $colinear_order_check = check_colinear_order_of_cluster_group(\@largest_cluster_group);
+  return ($ref_id, $query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters,$direction_check,$colinear_order_check,$is_overlapping,$size_of_next_largest_match,$alternates);
+
+=item C<check_direction_of_cluster_group ( @largest_cluster_group )>
+
+Returns 0 for error condition, i.e. if all align_coord's in cluster are not in same orientation.    
+
+=cut
 
   sub check_direction_of_cluster_group {
-    my @cluster_group = shift;
+    my $cluster_group = shift;
     my $direction;
-    foreach my $align_coords (@cluster_group) {
+    foreach my $align_coords (@$cluster_group) {
       if ($direction) {
 	if ($direction != $align_coords->get_direction()) {
+		print STDERR "Mixed orientation for ".$align_coords->get_query_id()."\n";
 	  return 0;
 	}
       } else {
@@ -382,6 +331,32 @@ sub get_id_coords_and_direction_of_longest_alignment_cluster_group {
     }
     return $direction;
   }
+  
+=item C<check_colinear_order_of_cluster_group ( @largest_cluster_group )>
+
+Returns 1 for error condition, i.e. if ref start coordinate of a align_coord is less than the previous one in the cluster.   
+
+=cut
+    sub check_colinear_order_of_cluster_group {
+    	#aligned_coords are ordered acc to ref chr
+    	#see order_alignment_clusters_on_each_reference_sequence()
+    my $cluster_group = shift;
+    my ($query_start,$colinear_order);
+    $colinear_order = 0;
+    foreach my $align_coords (@$cluster_group) {
+      if ($query_start) {#cluster is ordered acc to ref coords so checking if query starts are in order
+	if ($query_start >= $align_coords->get_query_start_coord()) {
+		print STDERR "Query start error for ".$align_coords->get_query_id()."\n";
+	  return 1;
+	}
+      } else {
+	$query_start = $align_coords->get_query_start_coord();
+      }
+    }
+    return $colinear_order;
+  }
+
+
 }
 
 

@@ -101,6 +101,9 @@ if ($opt_t) {
 open( MIXED, ">mixed_${opt_i}" )
   or die
 "Could not create mixed_${opt_i} for writing out BACs aligned to ref chr in mixed orientation";
+open( NONCOLINEAR, ">noncolinear_${opt_i}" )
+  or die
+"Could not create noncolinear_${opt_i} for writing out BACs aligned non co-linearly to ref chr, i.e. different order of aligned tiles on BAC and ref chr. Shows miassembly on ref chr or BAC";
 
 my $contig_agp_input_file = $opt_c;
 my $contig_input_agp      = read_file($contig_agp_input_file)
@@ -116,6 +119,7 @@ $chr_agp->parse_agp($chr_input_agp);
 my $total                  = 0;
 my $total_smaller_than_20k = 0;    #for alignments covering < 20k on ref
 my $total_mixed            = 0;
+my $total_noncolinear      = 0;
 my $total_over             = 0;
 my $total_alt              = 0;
 my $total_full_length      = 0;
@@ -153,6 +157,8 @@ my $last_query_length;
 print
 "query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
 print MIXED
+"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+print NONCOLINEAR
 "query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
 
 #parse coords file
@@ -223,6 +229,7 @@ sub calc_and_print_info {
 		 $ref_start,                    $ref_end,
 		 $query_start,                  $query_end,
 		 $sequence_aligned_in_clusters, $direction,
+		 $colinear_order_check,		
 		 $is_overlapping,               $size_of_next_largest_match,
 		 $alternates
 	  )
@@ -306,6 +313,33 @@ sub calc_and_print_info {
 		print MIXED $size_of_next_largest_match . "\t";
 		print MIXED $alternates . "\t";
 		print MIXED "\n";
+
+	}
+	if ( $colinear_order_check == 1 ) {    #query BACs aligned non co-linearly to ref chr, i.e. different order of aligned tiles on BAC and ref chr. Shows miassembly on ref chr or BAC
+		$total_noncolinear++;
+		$flagged = 1;
+
+		print NONCOLINEAR $q_id . "\t";
+		print NONCOLINEAR $ref_id . "\t";
+		print NONCOLINEAR $ref_start . "\t";
+		print NONCOLINEAR $ref_end . "\t";
+		print NONCOLINEAR $ref_end - $ref_start . "\t";
+		print NONCOLINEAR $query_start . "\t";
+		print NONCOLINEAR $query_end . "\t";
+		print NONCOLINEAR $q_length . "\t";
+		print NONCOLINEAR $sequence_aligned_in_clusters . "\t";
+		print NONCOLINEAR $direction . "\t";    #strand
+		print NONCOLINEAR $align_group->get_count_of_reference_sequence_ids() . "\t";
+		print NONCOLINEAR $align_group->includes_reference_id($zero_chromosome_id)
+		  . "\t";
+		print NONCOLINEAR $is_full_length . "\t";
+		print NONCOLINEAR $start_gap_length . "\t";
+		print NONCOLINEAR $end_gap_length . "\t";
+		print NONCOLINEAR $internal_gap_length . "\t";
+		print NONCOLINEAR $is_overlapping . "\t";
+		print NONCOLINEAR $size_of_next_largest_match . "\t";
+		print NONCOLINEAR $alternates . "\t";
+		print NONCOLINEAR "\n";
 
 	}
 	if ( $is_overlapping == 1 ) {    #query alignment tiles overlap
@@ -393,11 +427,20 @@ sub calc_and_print_info {
 	}
 }
 
+#cleanup
+unlink "${opt_r}.index";
+unlink "${opt_q}.index";
+close(MIXED);
+if ($total_mixed == 0) { unlink "mixed_${opt_i}";}
+close(NONCOLINEAR);
+if ($total_noncolinear == 0) { unlink "noncolinear_${opt_i}";}
+
 ##summary info
 print STDERR "Total queries:\t\t\t\t\t\t\t$total\n";
 print STDERR
 "Total queries with alignments smaller than 20,000 on ref:\t$total_smaller_than_20k\n";
 print STDERR "Total queries with mixed orientation:\t\t\t\t$total_mixed\n";
+print STDERR "Total queries with non co-linear alignments:\t\t\t$total_noncolinear\n";
 print STDERR
   "Total queries with overlapping alignment clusters:\t\t$total_over\n";
 print STDERR
@@ -442,11 +485,6 @@ print STDERR
 "Total gaps partially covered from chr AGP(scaffolds and gaps):\t\t\t$total_partial_chr_gaps_covered\n";
 print STDERR
 "Total length of gaps partial covered from chr AGP(scaffolds and gaps):\t\t\t$total_partial_chr_gap_length_covered\n";
-
-#cleanup
-unlink "${opt_r}.index";
-unlink "${opt_q}.index";
-close(MIXED);
 
 sub help {
 	print STDERR <<EOF;
