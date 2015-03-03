@@ -98,10 +98,10 @@ if ($opt_t) {
 	}
 }
 
-open( MIXED, ">mixed_${opt_i}" )
+open( MIXED, ">mixed_${opt_i}_group_coords.out" )
   or die
 "Could not create mixed_${opt_i} for writing out BACs aligned to ref chr in mixed orientation";
-open( NONCOLINEAR, ">noncolinear_${opt_i}" )
+open( NONCOLINEAR, ">noncolinear_${opt_i}_group_coords.out" )
   or die
 "Could not create noncolinear_${opt_i} for writing out BACs aligned non co-linearly to ref chr, i.e. different order of aligned tiles on BAC and ref chr. Shows miassembly on ref chr or BAC";
 
