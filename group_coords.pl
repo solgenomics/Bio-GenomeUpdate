@@ -431,9 +431,9 @@ sub calc_and_print_info {
 unlink "${opt_r}.index";
 unlink "${opt_q}.index";
 close(MIXED);
-if ($total_mixed == 0) { unlink "mixed_${opt_i}";}
+if ($total_mixed == 0) { unlink "mixed_${opt_i}_group_coords.out";}
 close(NONCOLINEAR);
-if ($total_noncolinear == 0) { unlink "noncolinear_${opt_i}";}
+if ($total_noncolinear == 0) { unlink "noncolinear_${opt_i}_group_coords.out";}
 
 ##summary info
 print STDERR "\nTotal queries:\t\t\t\t\t\t\t$total\n";
