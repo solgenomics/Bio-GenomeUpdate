@@ -13,7 +13,7 @@ group_coords.pl
  -i  COORDS file created by show-coords (required)
  -u  Sequence ID of chromosome with unmapped contigs 
  -r  Fasta file of reference (required)
- -q  Fasta file of query (assembled and singleton BACs) 
+ -q  Fasta file of query (assembled and singleton BACs, required) 
  -g  Gap size allowed between aligned clusters in the reference sequence, typically the mean/median scaffold gap (required)
  -c  Contig or component AGP file for reference (includes scaffold gaps)
  -s  Chromosome AGP file for reference (with only scaffolds and gaps) 
