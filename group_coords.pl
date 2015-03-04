@@ -39,7 +39,7 @@ use Bio::DB::Fasta;
 our ( $opt_i, $opt_g, $opt_r, $opt_q, $opt_u, $opt_t, $opt_h, $opt_c, $opt_s );
 getopts("i:g:r:q:u:c:s:t:h");
 if ( !$opt_i || !$opt_g || !$opt_r || !$opt_q ) {
-	print STDERR "Required files or gap parameter missing!! exiting..\n";
+	print STDERR "\nRequired files or gap parameter missing!! exiting..\n\n";
 	help();
 }
 if ($opt_h) {
@@ -94,7 +94,8 @@ if ($opt_t) {
 		$print_header = "F";
 	}
 	else {
-		die("-t must be T or F\n");
+		#die("-t must be T or F\n");
+		$print_header = "T"; #default behavior
 	}
 }
 
@@ -154,12 +155,16 @@ my @query_invalid_hits;
 my $last_line_query_id;
 my $last_query_id;
 my $last_query_length;
-print
+
+if ($print_header eq 'T'){
+	print
 "query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
-print MIXED
-"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
-print NONCOLINEAR
-"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+	print MIXED
+	"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+	print NONCOLINEAR
+	"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+		
+}
 
 #parse coords file
 #[S1]	[E1]	[S2]	[E2]	[LEN 1]	[LEN 2]	[% IDY]	[LEN R]	[LEN Q]	[COV R]	[COV Q]	[FRM]	[TAGS]
@@ -497,7 +502,7 @@ sub help {
 
     Description:
 
-     This script groups aligned clusters and creates a tab delimited file with BAC alignment details.
+     This script groups aligned clusters and creates a tab delimited file with BAC alignment details. Mixed and out of order alignments are written to separate files.
 
     Usage:
       group_coords.pl -i [coords file] -g [gap size] -r [fasta] -q [fasta] -c [agp] -s [agp]
