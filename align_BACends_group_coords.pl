@@ -72,7 +72,7 @@ if ( defined $opt_s ) {
 
 my $unmapped_ID;
 my $print_header;
-my $BACend_length;
+my $bacend_length;
 if ($opt_u) {
 	$unmapped_ID = $opt_u;
 	print STDERR "Gg: $opt_u\n";
@@ -92,7 +92,7 @@ if ($opt_t) {
 	}
 }
 if (looks_like_number($opt_l)){
-	$BACend_length = $opt_l;
+	$bacend_length = $opt_l;
 }
 else{
 	die("$opt_l is not a number");
@@ -121,34 +121,44 @@ $chr_agp->parse_agp($chr_input_agp);
 my $ref_db   = Bio::DB::Fasta->new( $opt_r, '-reindex' => 1 );
 my $query_db = Bio::DB::Fasta->new( $opt_q, '-reindex' => 1 );
 
-my $query_bacends_fasta = Bio::SeqIO->new( -file => "query_bacends.fasta" -format => 'Fasta');
+if ( -e 'query_bacends.fasta'){ 
+	system('mv query_bacends.fasta query_bacends.fasta.old');
+	die("\nCould not remove old query_bacends.fasta file. Exiting...\n\n") if ($? == -1);
+	
+}
+my $query_bacends_fasta = Bio::SeqIO->new( -file => ">query_bacends.fasta", -format => 'Fasta');
 
 # Loop through sequence objects
 my $stream  = $query_db->get_PrimarySeq_stream();
-while (my $query_seq_obj = $stream->next_seq()) {
-	my ($bacend_source,$bacend_seq,$query_seq_length);
+while (my $query_seq_obj = $stream->next_seq()) { # returns Bio::PrimarySeqI obj
+	my ($bacend_source, $bacend_name, $bacend_seq, $bacend_start, $bacend_stop);
 	#5' end
 	$bacend_source = $query_seq_obj->display_id();
-	#$bacend_name .="_left_500";
-	$bacend_seq = $query_seq_obj->subseq(1,$BACend_length);
-	my $left_end_seq = Bio::Seq->new( -display_id => $bacend_source."_left_".$BACend_length
+	$bacend_name .=$bacend_source."_left_".$bacend_length;
+	$bacend_start = 1;
+	$bacend_stop = $bacend_length;
+	$bacend_seq = $query_seq_obj->subseq($bacend_start, $bacend_stop);
+	my $left_end_seq = Bio::Seq->new( -display_id => $bacend_name,
 										-seq => $bacend_seq);
 	$query_bacends_fasta->write_seq($left_end_seq);
 	
 	#3' end
-	$query_seq_length = length  $query_seq_obj->seq();
-	$bacend_seq = $query_seq_obj->subseq( $query_seq_length - $BACend_length + 1 , $BACend_length );
-	my $right_end_seq = Bio::Seq->new( -display_id => $bacend_source."_right_".$BACend_length
+	$bacend_name = $bacend_source."_right_".$bacend_length;
+	#$query_seq_length = length  $query_seq_obj->seq();
+	$bacend_start = $query_seq_obj->length() - $bacend_length + 1 ;
+	$bacend_stop = $bacend_start + $bacend_length - 1;  
+	#print STDERR "\n**\nname:",$query_seq_obj->display_id(),"\nlength:",$query_seq_obj->length(),"\nstart: $bacend_start \nend: $bacend_stop\n";
+	$bacend_seq = $query_seq_obj->subseq( $bacend_start, $bacend_stop );
+	my $right_end_seq = Bio::Seq->new( -display_id => $bacend_name,
 										-seq => $bacend_seq);
 	$query_bacends_fasta->write_seq($right_end_seq);
 	
-	#TODO: remember the name, length of query
+	#TODO: remember the name, length of query?? not reqd, can just retrieve it and get length when needed
 }
 
 
 
 ###### run mummer with optimized paramaters ######
-
 
 
 
