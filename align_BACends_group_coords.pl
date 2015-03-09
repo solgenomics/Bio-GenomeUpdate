@@ -160,7 +160,7 @@ while (my $query_seq_obj = $stream->next_seq()) { # returns Bio::PrimarySeqI obj
 
 archive_old('nucmer.coords','Could not remove old nucmer.coords');
 #system('nucmer', '-l 100', "-c $bacend_length", '-p nucmer.coords', $opt_r, $opt_q );
-system("nucmer -l 100 -c $bacend_length -p nucmer.coords $opt_r query_bacends.fasta");
+system("nucmer --noextend -l 100 -c $bacend_length -p nucmer.coords $opt_r query_bacends.fasta");
 die("\nCould not run nucmer. $!\nExiting...\n\n") if ($? == -1);
 
 archive_old('nucmer.coords.delta.filtered','Could not remove old nucmer.coords.delta.filtered');
