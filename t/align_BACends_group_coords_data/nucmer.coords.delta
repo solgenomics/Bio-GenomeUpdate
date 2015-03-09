@@ -1,15 +1,17 @@
-ref.fas query.fas
+/home/surya/work/workspace6/split_chrs/phrap_assembled_BACs_align_mummer_BACends/temp/ref.fas /home/surya/work/workspace6/split_chrs/phrap_assembled_BACs_align_mummer_BACends/temp/query_bacends.fasta
 NUCMER
->CHR01 BAC1 20000 4000
-4001 5000 1 1000 0 0 0
+>CHR01 BAC2_right_500 20000 500
+15501 16000 1 500 0 0 0
 0
-7001 8000 3001 4000 0 0 0
+>CHR01 BAC1_left_500 20000 500
+4001 4500 1 500 0 0 0
 0
->CHR01 BAC2 20000 4000
-10001 11000 1 1000 0 0 0
+>CHR01 BAC1_right_500 20000 500
+7501 8000 1 500 0 0 0
 0
->CHR01 BAC3 20000 6000
-4001 5000 1 1000 0 0 0
+>CHR01 BAC3_left_500 20000 500
+2001 2500 1 500 0 0 0
 0
-7001 8000 5001 6000 0 0 0
+>CHR01 BAC3_right_500 20000 500
+10501 11000 1 500 0 0 0
 0
