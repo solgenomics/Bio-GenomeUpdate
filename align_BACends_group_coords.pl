@@ -117,10 +117,11 @@ my $chr_input_agp      = read_file($chr_agp_input_file)
 my $chr_agp = Bio::GenomeUpdate::AGP->new();
 $chr_agp->parse_agp($chr_input_agp);
 
-###### create fasta file of BACends ###### 
 my $ref_db   = Bio::DB::Fasta->new( $opt_r, '-reindex' => 1 );
 my $query_db = Bio::DB::Fasta->new( $opt_q, '-reindex' => 1 );
 
+
+###### create fasta file of BACends ###### 
 my $return_value = archive_old('query_bacends.fasta', 'Could not remove old query_bacends.fasta file.');
 if (!$return_value) {print STDERR "Old query_bacends.fasta moved to query_bacends.fasta.old.\n";}
 my $query_bacends_fasta = Bio::SeqIO->new( -file => ">query_bacends.fasta", -format => 'Fasta');
@@ -159,7 +160,7 @@ while (my $query_seq_obj = $stream->next_seq()) { # returns Bio::PrimarySeqI obj
 
 archive_old('nucmer.coords','Could not remove old nucmer.coords');
 #system('nucmer', '-l 100', "-c $bacend_length", '-p nucmer.coords', $opt_r, $opt_q );
-system("nucmer -l 100 -c $bacend_length -p nucmer.coords $opt_r $opt_q");
+system("nucmer -l 100 -c $bacend_length -p nucmer.coords $opt_r query_bacends.fasta");
 die("\nCould not run nucmer. $!\nExiting...\n\n") if ($? == -1);
 
 archive_old('nucmer.coords.delta.filtered','Could not remove old nucmer.coords.delta.filtered');
