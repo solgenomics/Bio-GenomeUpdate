@@ -121,11 +121,8 @@ $chr_agp->parse_agp($chr_input_agp);
 my $ref_db   = Bio::DB::Fasta->new( $opt_r, '-reindex' => 1 );
 my $query_db = Bio::DB::Fasta->new( $opt_q, '-reindex' => 1 );
 
-if ( -e 'query_bacends.fasta'){ 
-	system('mv query_bacends.fasta query_bacends.fasta.old');
-	die("\nCould not remove old query_bacends.fasta file. Exiting...\n\n") if ($? == -1);
-	
-}
+my $return_value = archive_old('query_bacends.fasta', 'Could not remove old query_bacends.fasta file.');
+if (!$return_value) {print STDERR "Old query_bacends.fasta moved to query_bacends.fasta.old.\n";}
 my $query_bacends_fasta = Bio::SeqIO->new( -file => ">query_bacends.fasta", -format => 'Fasta');
 
 # Loop through sequence objects
@@ -159,6 +156,19 @@ while (my $query_seq_obj = $stream->next_seq()) { # returns Bio::PrimarySeqI obj
 
 
 ###### run mummer with optimized paramaters ######
+
+archive_old('nucmer.coords','Could not remove old nucmer.coords');
+#system('nucmer', '-l 100', "-c $bacend_length", '-p nucmer.coords', $opt_r, $opt_q );
+system("nucmer -l 100 -c $bacend_length -p nucmer.coords $opt_r $opt_q");
+die("\nCould not run nucmer. $!\nExiting...\n\n") if ($? == -1);
+
+archive_old('nucmer.coords.delta.filtered','Could not remove old nucmer.coords.delta.filtered');
+system("delta-filter -l $bacend_length nucmer.coords.delta > nucmer.coords.delta.filtered");
+die("\nCould not run delta-filter. $!\nExiting...\n\n") if ($? == -1);
+
+archive_old('nucmer.coords.delta.filtered.coords','Could not remove old nucmer.coords.delta.filtered.coords');
+system("show-coords -c -d -l -q -T -o nucmer.coords.delta.filtered > nucmer.coords.delta.filtered.coords");
+die("\nCould not run show-coords. $!\nExiting...\n\n") if ($? == -1);
 
 
 
@@ -212,6 +222,22 @@ if ($total_mixed == 0) { unlink "mixed_qry_${opt_q}_ref_${opt_r}_group_coords.ou
 close(NONCOLINEAR);
 if ($total_noncolinear == 0) { unlink "noncolinear_qry_${opt_q}_ref_${opt_r}_group_coords.out";}
 
+=item C<archive_old ($file, $message)>
+
+Checks if file exists. If yes, moves to file.old. Returns 1 if no file found and 0 if found and moved.
+
+=cut
+sub archive_old{
+	my ($file, $message)= @_;
+	if ( -e $file){ 
+		system("mv $file ${file}.old");
+		die("\n$message. $!\nExiting...\n\n") if ($? == -1);
+		return 0;
+	}
+	else{
+		return 1;
+	}
+}
 
 sub help {
 	print STDERR <<EOF;
