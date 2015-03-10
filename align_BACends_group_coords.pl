@@ -119,6 +119,7 @@ $chr_agp->parse_agp($chr_input_agp);
 
 my $ref_db   = Bio::DB::Fasta->new( $opt_r, '-reindex' => 1 );
 my $query_db = Bio::DB::Fasta->new( $opt_q, '-reindex' => 1 );
+my %query_lengths;
 
 
 ###### create fasta file of BACends ###### 
@@ -151,7 +152,8 @@ while (my $query_seq_obj = $stream->next_seq()) { # returns Bio::PrimarySeqI obj
 										-seq => $bacend_seq);
 	$query_bacends_fasta->write_seq($right_end_seq);
 	
-	#TODO: remember the name, length of query?? not reqd, can just retrieve it and get length when needed
+	#remember the name, length of query
+	$query_lengths{$bacend_source} = $query_seq_obj->length(); 
 }
 
 
@@ -163,6 +165,7 @@ archive_old('nucmer.coords','Could not remove old nucmer.coords');
 system("nucmer --noextend -l 100 -c $bacend_length -p nucmer.coords $opt_r query_bacends.fasta");
 die("\nCould not run nucmer. $!\nExiting...\n\n") if ($? == -1);
 
+#is this required any more?? cluster size in nucmer should only report alignment >= $bacend_length 
 archive_old('nucmer.coords.delta.filtered','Could not remove old nucmer.coords.delta.filtered');
 system("delta-filter -l $bacend_length nucmer.coords.delta > nucmer.coords.delta.filtered");
 die("\nCould not run delta-filter. $!\nExiting...\n\n") if ($? == -1);
@@ -177,7 +180,71 @@ die("\nCould not run show-coords. $!\nExiting...\n\n") if ($? == -1);
 ###### compute alignment and coverage statistics ######
 
 
+#read nucmer.coords.delta.filtered.coords
+my @lines       = read_file('nucmer.coords.delta.filtered.coords');
+my $startline   = 5;
+my $currentline = 0;
+my @alignment_coords_array;
+my @query_valid_hits;
+my @query_invalid_hits;
+my $last_line_query_id;
+my $last_query_id;
+my $last_query_length;
 
+if ($print_header eq 'T'){
+	print
+"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+	print MIXED
+	"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+	print NONCOLINEAR
+	"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+		
+}
+
+#parse coords file, convert BAC right end coordinates to BAC   
+#[S1]	[E1]	[S2]	[E2]	[LEN 1]	[LEN 2]	[% IDY]	[LEN R]	[LEN Q]	[COV R]	[COV Q]	[FRM]	[TAGS]
+foreach my $line (@lines) {
+	$currentline++;
+	if ( $currentline < $startline ) {
+		next;
+	}
+	my @row;
+	@row = split( '\t', $line );
+	my $current_query_id     = $row[14];
+	my $current_query_length = $row[8];
+	if ( !defined($last_line_query_id) ) {
+		$last_line_query_id = $current_query_id;
+	}
+
+#exec if query ID changes, i.e., coords for next assembled or singleton BAC aligned to chr
+	if ( !( $current_query_id eq $last_line_query_id ) ) {
+
+		#print info for prev query (assembled or singleton BAC ) to STDOUT
+		calc_and_print_info( \@alignment_coords_array, $last_query_id,
+							 $last_query_length );
+		@alignment_coords_array = ();
+	}
+	my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
+	$aln_coords->set_reference_id( $row[13] );
+	$aln_coords->set_query_id( $row[14] );
+	$aln_coords->set_reference_start_coord( $row[0] );
+	$aln_coords->set_reference_end_coord( $row[1] );
+	$aln_coords->set_query_start_coord( $row[2] );
+	$aln_coords->set_query_end_coord( $row[3] );
+	push( @alignment_coords_array, $aln_coords );
+
+	#deal with last row since no more alignments for query after this
+	if ( $currentline == scalar(@lines) ) {
+
+#calc_and_print_info(\@alignment_coords_array, $current_query_id, $current_query_length,$gap_size_allowed);
+		calc_and_print_info( \@alignment_coords_array, $current_query_id,
+							 $current_query_length );
+		@alignment_coords_array = ();
+	}
+	$last_line_query_id = $current_query_id;
+	$last_query_id      = $current_query_id;
+	$last_query_length  = $current_query_length;
+}
 
 
 
