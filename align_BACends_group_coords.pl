@@ -118,6 +118,7 @@ my $chr_agp = Bio::GenomeUpdate::AGP->new();
 $chr_agp->parse_agp($chr_input_agp);
 
 my $ref_db   = Bio::DB::Fasta->new( $opt_r, '-reindex' => 1 );
+die "\nMultiple references will break the BAC end comparison logic. Please run for individual chromosomes. Exiting...\n" if (scalar $ref_db->get_all_ids() > 1);
 my $query_db = Bio::DB::Fasta->new( $opt_q, '-reindex' => 1 );
 my %query_lengths;
 
@@ -157,11 +158,12 @@ while (my $query_seq_obj = $stream->next_seq()) { # returns Bio::PrimarySeqI obj
 }
 
 
-
 ###### run mummer with optimized paramaters ######
 
 archive_old('nucmer.coords','Could not remove old nucmer.coords');
 #system('nucmer', '-l 100', "-c $bacend_length", '-p nucmer.coords', $opt_r, $opt_q );
+#anchors matches that are unique in in the reference but not necessarily unique in the query
+#so only 1 match reported for both BAC ends, it one exists 
 system("nucmer --noextend -l 100 -c $bacend_length -p nucmer.coords $opt_r query_bacends.fasta");
 die("\nCould not run nucmer. $!\nExiting...\n\n") if ($? == -1);
 
@@ -175,12 +177,8 @@ system("show-coords -c -d -l -q -T -o nucmer.coords.delta.filtered > nucmer.coor
 die("\nCould not run show-coords. $!\nExiting...\n\n") if ($? == -1);
 
 
-
-
 ###### compute alignment and coverage statistics ######
 
-
-#read nucmer.coords.delta.filtered.coords
 my @lines       = read_file('nucmer.coords.delta.filtered.coords');
 my $startline   = 5;
 my $currentline = 0;
@@ -201,8 +199,10 @@ if ($print_header eq 'T'){
 		
 }
 
-#parse coords file, convert BAC right end coordinates to BAC   
+#parse nucmer.coords.delta.filtered.coords, convert BAC right end coordinates to BAC   
 #[S1]	[E1]	[S2]	[E2]	[LEN 1]	[LEN 2]	[% IDY]	[LEN R]	[LEN Q]	[COV R]	[COV Q]	[FRM]	[TAGS]
+my ($left_reference_start_coord, $left_reference_end_coord, $left_aligned, $left_aligned_reference_direction, $left_aligned_query_direction);
+$left_aligned = 0;
 foreach my $line (@lines) {
 	$currentline++;
 	if ( $currentline < $startline ) {
@@ -210,13 +210,19 @@ foreach my $line (@lines) {
 	}
 	my @row;
 	@row = split( '\t', $line );
-	my $current_query_id     = $row[14];
-	my $current_query_length = $row[8];
+	
+	my $query_name =  $row[14];
+	$query_name =~ s/_\w+_\d+$//; #trim BAC end suffix 
+	
+	my $current_query_id     = $query_name;
+	#my $current_query_length = $row[8];
+	my $current_query_length = $query_lengths{$query_name};
+	
 	if ( !defined($last_line_query_id) ) {
 		$last_line_query_id = $current_query_id;
 	}
 
-#exec if query ID changes, i.e., coords for next assembled or singleton BAC aligned to chr
+	#exec if query ID changes, i.e., coords for next assembled or singleton BAC aligned to chr
 	if ( !( $current_query_id eq $last_line_query_id ) ) {
 
 		#print info for prev query (assembled or singleton BAC ) to STDOUT
@@ -224,19 +230,61 @@ foreach my $line (@lines) {
 							 $last_query_length );
 		@alignment_coords_array = ();
 	}
-	my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
-	$aln_coords->set_reference_id( $row[13] );
-	$aln_coords->set_query_id( $row[14] );
-	$aln_coords->set_reference_start_coord( $row[0] );
-	$aln_coords->set_reference_end_coord( $row[1] );
-	$aln_coords->set_query_start_coord( $row[2] );
-	$aln_coords->set_query_end_coord( $row[3] );
-	push( @alignment_coords_array, $aln_coords );
+	
+	
+	#no need to convert left BAC end coordinates
+	if ( $row[14] =~ /_left_\d+/){
+		$left_reference_start_coord = $row[0];
+		$left_reference_end_coord = $row[1];
+				
+		#package BAC end coords as BAC coords
+		my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
+		$aln_coords->set_reference_id( $row[13] );
+		$aln_coords->set_query_id( $query_name );	
+		$aln_coords->set_reference_start_coord( $row[0] );
+		$aln_coords->set_reference_end_coord( $row[1] );
+		$aln_coords->set_query_start_coord( $row[2] );
+		$aln_coords->set_query_end_coord( $row[3] );
+		push( @alignment_coords_array, $aln_coords );
+		
+		$left_aligned = 1;#found left BAC end alignment
+		$left_aligned_reference_direction = $row[11];
+		$left_aligned_query_direction =  $row[12];
+	}
+	#convert right BAC end coordinates into BAC coordinate space
+	#right BAC end is always after the left BAC end in query_bacends.fasta
+	elsif( $row[14] =~ /_right_\d+/){
+		my ( $reference_start_coord, $reference_end_coord, $query_start_coord, $query_end_coord);
+		$reference_start_coord = $row[0];
+		$reference_end_coord = $row[1];
+		$query_start_coord = $query_lengths{$query_name} - $bacend_length + 1;
+		$query_end_coord = $query_lengths{$query_name};
+		
+		if ($left_aligned){
+			#check if ref and query are aligned in same orientation
+			if (($left_aligned_reference_direction == $row[11])
+				&& ($left_aligned_query_direction == $row[12])){
+				#check if BAC ends align within range +- 5% of BAC length
+				my ($min_reference_aligned_length, $max_reference_aligned_length, $reference_aligned_length);
+				#TODO: chk strand of alignment, math with be diff for each strand
+				# FIX $reference_aligned_length =   
+				# FIX $min_reference_aligned_length = $query_lengths{$query_name} - (0.05 * $query_lengths{$query_name}) + 1;
+				# FIX $max_reference_aligned_length = $query_lengths{$query_name} + (0.05 * $query_lengths{$query_name}) - 1;
+					
+				}
+		}
+		
+		$left_aligned = 0;
+	}
+	
+	 
+	
+	
 
 	#deal with last row since no more alignments for query after this
 	if ( $currentline == scalar(@lines) ) {
 
-#calc_and_print_info(\@alignment_coords_array, $current_query_id, $current_query_length,$gap_size_allowed);
+		#calc_and_print_info(\@alignment_coords_array, $current_query_id, $current_query_length,$gap_size_allowed);
 		calc_and_print_info( \@alignment_coords_array, $current_query_id,
 							 $current_query_length );
 		@alignment_coords_array = ();
