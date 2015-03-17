@@ -181,7 +181,7 @@ foreach my $line (@lines) {
 		$last_line_query_id = $current_query_id;
 	}
 
-#exec if query ID changes, i.e., coords for next assembled or singleton BAC aligned to chr
+	#exec if query ID changes, i.e., coords for next assembled or singleton BAC aligned to chr
 	if ( !( $current_query_id eq $last_line_query_id ) ) {
 
 		#print info for prev query (assembled or singleton BAC ) to STDOUT
@@ -201,7 +201,7 @@ foreach my $line (@lines) {
 	#deal with last row since no more alignments for query after this
 	if ( $currentline == scalar(@lines) ) {
 
-#calc_and_print_info(\@alignment_coords_array, $current_query_id, $current_query_length,$gap_size_allowed);
+	#calc_and_print_info(\@alignment_coords_array, $current_query_id, $current_query_length,$gap_size_allowed);
 		calc_and_print_info( \@alignment_coords_array, $current_query_id,
 							 $current_query_length );
 		@alignment_coords_array = ();
