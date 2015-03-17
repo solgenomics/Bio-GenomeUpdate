@@ -231,8 +231,6 @@ foreach my $line (@lines) {
 		@alignment_coords_array = ();
 	}
 	
-	
-	#no need to convert left BAC end coordinates
 	if ( $row[14] =~ /_left_\d+/){
 		$left_reference_start_coord = $row[0];
 		$left_reference_end_coord = $row[1];
@@ -254,33 +252,106 @@ foreach my $line (@lines) {
 	#convert right BAC end coordinates into BAC coordinate space
 	#right BAC end is always after the left BAC end in query_bacends.fasta
 	elsif( $row[14] =~ /_right_\d+/){
-		my ( $reference_start_coord, $reference_end_coord, $query_start_coord, $query_end_coord);
-		$reference_start_coord = $row[0];
-		$reference_end_coord = $row[1];
-		$query_start_coord = $query_lengths{$query_name} - $bacend_length + 1;
-		$query_end_coord = $query_lengths{$query_name};
+		my ( $right_reference_start_coord, $right_reference_end_coord, $right_aligned_reference_direction, $right_aligned_query_direction, $query_start_coord, $query_end_coord);
+		$right_reference_start_coord = $row[0];
+		$right_reference_end_coord = $row[1];
+		$right_aligned_reference_direction = $row[11]; 
+		$right_aligned_query_direction = $row[12];
+
+		$query_start_coord = $query_lengths{$query_name} - $bacend_length + 1 ;
+		$query_end_coord = $query_lengths{$query_name};		
 		
 		if ($left_aligned){
-			#check if ref and query are aligned in same orientation
-			if (($left_aligned_reference_direction == $row[11])
-				&& ($left_aligned_query_direction == $row[12])){
+			#if BAC was from +ive strand
+			#alignments on the reference will be on +ive strand
+			if (($left_aligned_reference_direction == 1 )
+				&& ($left_aligned_query_direction == 1 )
+				&& ($right_aligned_reference_direction == 1 )
+				&& ($right_aligned_query_direction == 1 )){
+				
 				#check if BAC ends align within range +- 5% of BAC length
 				my ($min_reference_aligned_length, $max_reference_aligned_length, $reference_aligned_length);
-				#TODO: chk strand of alignment, math with be diff for each strand
-				# FIX $reference_aligned_length =   
-				# FIX $min_reference_aligned_length = $query_lengths{$query_name} - (0.05 * $query_lengths{$query_name}) + 1;
-				# FIX $max_reference_aligned_length = $query_lengths{$query_name} + (0.05 * $query_lengths{$query_name}) - 1;
-					
+				$reference_aligned_length =  $right_reference_end_coord - $right_reference_start_coord + 1 ;
+				
+				$min_reference_aligned_length = $query_lengths{$query_name} - (0.05 * $query_lengths{$query_name});
+				$max_reference_aligned_length = $query_lengths{$query_name} + (0.05 * $query_lengths{$query_name});
+				
+				#if valid query alignment
+				if (($reference_aligned_length >= $min_reference_aligned_length)
+				|| ($reference_aligned_length <= $max_reference_aligned_length)){
+					my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
+					$aln_coords->set_reference_id( $row[13] );
+					$aln_coords->set_query_id( $query_name );
+					$aln_coords->set_reference_start_coord( $right_reference_start_coord );
+					$aln_coords->set_reference_end_coord( $right_reference_end_coord );
+					$aln_coords->set_query_start_coord( $query_start_coord );
+					$aln_coords->set_query_end_coord( $query_end_coord );
+					push( @alignment_coords_array, $aln_coords );					
+				}	
+			}
+			#if BAC was from -ive strand
+			#alignments on the reference will be on -ive strand
+			elsif(($left_aligned_reference_direction == -1 )
+				&& ($left_aligned_query_direction == 1 )
+				&& ($right_aligned_reference_direction == -1 )
+				&& ($right_aligned_query_direction == 1 )){
+				
+				#check if BAC ends align within range +- 5% of BAC length
+				my ($min_reference_aligned_length, $max_reference_aligned_length, $reference_aligned_length);
+				$reference_aligned_length =  $right_reference_end_coord - $right_reference_start_coord + 1 ;
+				
+				$min_reference_aligned_length = $query_lengths{$query_name} - (0.05 * $query_lengths{$query_name});
+				$max_reference_aligned_length = $query_lengths{$query_name} + (0.05 * $query_lengths{$query_name});
+				
+				#if valid query alignment
+				if (($reference_aligned_length >= $min_reference_aligned_length)
+				|| ($reference_aligned_length <= $max_reference_aligned_length)){
+					my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
+					$aln_coords->set_reference_id( $row[13] );
+					$aln_coords->set_query_id( $query_name );
+					$aln_coords->set_reference_start_coord( $right_reference_start_coord );
+					$aln_coords->set_reference_end_coord( $right_reference_end_coord );
+					$aln_coords->set_query_start_coord( $query_start_coord );
+					$aln_coords->set_query_end_coord( $query_end_coord );
+					push( @alignment_coords_array, $aln_coords );					
 				}
+				
+				## TODO: Combine the 2 conditions as no diff in logic??
+				
+			}
+			elsif(($left_aligned_query_direction != $right_aligned_query_direction)
+				|| ($left_aligned_reference_direction != $right_aligned_reference_direction)){
+				print STDERR "\nBAC ends or ref orientation is opposite for $query_name. Ignoring. See mummer output files.\n";
+			}
+			elsif(($left_aligned_query_direction == -1 )
+				|| ($right_aligned_reference_direction == -1 )){
+				print STDERR "\nComplimentary strand of BAC end from $query_name aligns to ref chr. Ignoring. See mummer output files.\n";
+			}
+			else{
+				print STDERR "\nUnhandled case from $query_name\n";
+			}
+				
+			#prep for next BAC end pair
+			$left_aligned = 0;
+			undef $left_reference_start_coord;
+			undef $left_reference_start_coord;
+			undef $left_reference_end_coord; 
+			undef $left_aligned;
+			undef $left_aligned_reference_direction;
+			undef $left_aligned_query_direction;
 		}
-		
-		$left_aligned = 0;
+		else{# solo right BAC end alignment
+			my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
+			$aln_coords->set_reference_id( $row[13] );
+			$aln_coords->set_query_id( $query_name );
+			$aln_coords->set_reference_start_coord( $right_reference_start_coord );
+			$aln_coords->set_reference_end_coord( $right_reference_end_coord );
+			$aln_coords->set_query_start_coord( $query_start_coord );
+			$aln_coords->set_query_end_coord( $query_end_coord );
+			push( @alignment_coords_array, $aln_coords );				
+		}
 	}
-	
-	 
-	
-	
-
+		
 	#deal with last row since no more alignments for query after this
 	if ( $currentline == scalar(@lines) ) {
 
@@ -293,14 +364,6 @@ foreach my $line (@lines) {
 	$last_query_id      = $current_query_id;
 	$last_query_length  = $current_query_length;
 }
-
-
-
-
-
-
-
-
 
 my $total                  = 0;
 my $total_smaller_than_20k = 0;    #for alignments covering < 20k on ref
