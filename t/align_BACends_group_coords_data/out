@@ -1,5 +1,4 @@
-perl -I ~/work/Eclipse/Bio-GenomeUpdate/lib/ ~/work/Eclipse/Bio-GenomeUpdate/align_BACends_group_coords.pl -l 500 -r ref.fas -q q
-uery.fas -c contig.agp -s chr.agp
+perl -I ~/work/Eclipse/Bio-GenomeUpdate/lib/ ~/work/Eclipse/Bio-GenomeUpdate/align_BACends_group_coords.pl -l 500 -r ref.fas -q query.fas -c contig.agp -s chr.agp
 Parsing AGP line 11 of 11
 Parsed 11 AGP lines  
 Parsing AGP line 5 of 5
