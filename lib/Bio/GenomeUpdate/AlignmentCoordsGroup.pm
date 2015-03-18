@@ -446,7 +446,7 @@ Returns 1 for error condition, i.e. if query start coordinate of a align_coord i
 				}
 			}
 			else {
-				print STDERR "\n******** align_coords->get_query_start_coord(): ",$align_coords->get_query_start_coord(),"\n";
+				#print STDERR "\n******** align_coords->get_query_start_coord(): ",$align_coords->get_query_start_coord(),"\n";
 				$query_start = $align_coords->get_query_start_coord();
 			}
 		}
