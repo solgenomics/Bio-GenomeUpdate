@@ -1,0 +1,57 @@
+perl -I ~/work/Eclipse/Bio-GenomeUpdate/lib/ ~/work/Eclipse/Bio-GenomeUpdate/align_BACends_group_coords.pl -l 500 -r ref.fas -q q
+uery.fas -c contig.agp -s chr.agp
+Parsing AGP line 11 of 11
+Parsed 11 AGP lines  
+Parsing AGP line 5 of 5
+Parsed 5 AGP lines   
+Number of reference sequences: 1
+Number of query sequences: 4
+
+Old query_bacends.fasta moved to query_bacends.fasta.old.
+
+Starting mummer run
+1: PREPARING DATA
+2,3: RUNNING mummer AND CREATING CLUSTERS
+# reading input file "nucmer.coords.ntref" of length 20001
+# construct suffix tree for sequence of length 20001
+# (maximum reference length is 2305843009213693948)
+# (maximum query length is 18446744073709551615)
+# CONSTRUCTIONTIME /home/surya/tools/MUMmer3.23/mummer nucmer.coords.ntref 0.00
+# reading input file "/home/surya/work/workspace6/split_chrs/phrap_assembled_BACs_align_mummer_BACends/temp/query_bacends.fasta" of length 4007
+# matching query-file "/home/surya/work/workspace6/split_chrs/phrap_assembled_BACs_align_mummer_BACends/temp/query_bacends.fasta"
+# against subject-file "nucmer.coords.ntref"
+# COMPLETETIME /home/surya/tools/MUMmer3.23/mummer nucmer.coords.ntref 0.00
+# SPACE /home/surya/tools/MUMmer3.23/mummer nucmer.coords.ntref 0.02
+4: FINISHING DATA
+
+query   reference       ref_start       ref_end length  q_start q_end   q_length        seq_in_clusters direction       ref_count       includes_0   full_length      from_start      from_end        internal_gap    is_overlapping  size_of_alt     alternates
+BAC1    CHR01   4001    8000    3999    1       4000    4000    1000    1       1       0       Contains        0       0       3000    0       0
+BAC2    CHR01   15501   16000   499     3501    4000    4000    500     1       1       0       Partial 3500    0       0       0       0
+BAC3    CHR01   2001    11000   8999    1       12000   12000   1000    1       1       0       Contains        0       0       11000   0       0
+
+Total queries:                                                  3
+Total queries with alignments smaller than 20,000 on ref:       3
+Total queries with mixed orientation:                           0
+Total queries with non co-linear alignments:                    0
+Total queries with overlapping alignment clusters:              0
+Total queries with alternate alignments > 10,000:               0
+Total queries aligned full length:                              2
+Total queries with alignment to at least one end:               3
+Total reference extended by valid BAC hits:                     17500
+Total reference covered by valid BAC hits:                      2500
+Total N's within reference covered by valid BAC hits:           5000
+
+Statistics from AGPs
+Contig or component AGP (contigs and contig gaps)
+        Total gaps completely covered from contig AGP:                  4
+        Total length of gaps completely covered from contig AGP:        5000
+        Avg length of gaps completely covered from contig AGP:          1250
+        Total gaps partially covered from contig AGP:                   0
+        Total length of gaps partially covered from contig AGP:         0
+Chromosome AGP (scaffolds and scaffold gaps)
+        Total gaps completely covered from chr AGP:                     2
+        Total length of gaps completely covered from chr AGP:           4000
+Avg length of gaps completely covered from chr AGP:                     2000
+        Total gaps partially covered from chr AGP:                      0
+        Total length of gaps partial covered from chr AGP:              0
+
