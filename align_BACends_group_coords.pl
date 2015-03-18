@@ -297,12 +297,16 @@ foreach my $line (@lines) {
 		$query_end_coord = $query_lengths{$query_name};		
 		
 		if ($left_aligned){
-			#if BAC was from +ive strand
+			#if BAC ends from +ive strand
 			#alignments on the reference will be on +ive strand
-			if (($left_aligned_reference_direction == 1 )
-				&& ($left_aligned_query_direction == 1 )
-				&& ($right_aligned_reference_direction == 1 )
-				&& ($right_aligned_query_direction == 1 )){
+#			if (($left_aligned_reference_direction == 1 )
+#				&& ($left_aligned_query_direction == 1 )
+#				&& ($right_aligned_reference_direction == 1 )
+#				&& ($right_aligned_query_direction == 1 )){
+			#if BAC ends align on the same strand
+			#alignments on the reference on same strand
+			if (($left_aligned_reference_direction == $left_aligned_query_direction )
+				&& ($right_aligned_reference_direction == $right_aligned_query_direction )){
 				
 				#check if BAC ends align within range +- 5% of BAC length
 #				my ($min_reference_aligned_length, $max_reference_aligned_length, $reference_aligned_length);
@@ -333,14 +337,20 @@ foreach my $line (@lines) {
 				$aln_coords->set_query_start_coord( $query_start_coord );
 				$aln_coords->set_query_end_coord( $query_end_coord );
 				push( @alignment_coords_array, $aln_coords );	
+				
+				if(($left_aligned_query_direction == -1 )
+				|| ($right_aligned_query_direction == -1 )){
+					print STDERR "\nComplimentary strand of BAC end from $query_name aligns to ref chr. See mummer output files.\n";
+				}
+
 			}
 			#if BAC was from -ive strand
 			#alignments on the reference will be on -ive strand
-			elsif(($left_aligned_reference_direction == -1 )
-				&& ($left_aligned_query_direction == 1 )
-				&& ($right_aligned_reference_direction == -1 )
-				&& ($right_aligned_query_direction == 1 )){
-				
+#			elsif(($left_aligned_reference_direction == -1 )
+#				&& ($left_aligned_query_direction == 1 )
+#				&& ($right_aligned_reference_direction == -1 )
+#				&& ($right_aligned_query_direction == 1 )){
+#				
 				#check if BAC ends align within range +- 5% of BAC length
 #				my ($min_reference_aligned_length, $max_reference_aligned_length, $reference_aligned_length);
 #				$reference_aligned_length =  $right_reference_end_coord - $right_reference_start_coord + 1 ;
@@ -360,33 +370,33 @@ foreach my $line (@lines) {
 #					$aln_coords->set_query_end_coord( $query_end_coord );
 #					push( @alignment_coords_array, $aln_coords );					
 #				}
-				
-				my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
-				$aln_coords->set_reference_id( $row[13] );
-				$aln_coords->set_query_id( $query_name );
-				$aln_coords->set_reference_start_coord( $right_reference_start_coord );
-				$aln_coords->set_reference_end_coord( $right_reference_end_coord );
-				$aln_coords->set_query_start_coord( $query_start_coord );
-				$aln_coords->set_query_end_coord( $query_end_coord );
-				push( @alignment_coords_array, $aln_coords );
-			}
-			#if BAC ends align -ive strand
-			#should be fine as long as ref dir is same for both ends			
-			elsif(($left_aligned_reference_direction == $right_aligned_reference_direction )
-				&& ($left_aligned_query_direction == -1 )
-				&& ($right_aligned_query_direction == -1 )){
-				print STDERR "\nComplimentary strand of BAC end from $query_name aligns to ref chr. See mummer output files.\n";
-				my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
-				$aln_coords->set_reference_id( $row[13] );
-				$aln_coords->set_query_id( $query_name );
-				$aln_coords->set_reference_start_coord( $right_reference_start_coord );
-				$aln_coords->set_reference_end_coord( $right_reference_end_coord );
-				$aln_coords->set_query_start_coord( $query_start_coord );
-				$aln_coords->set_query_end_coord( $query_end_coord );
-				push( @alignment_coords_array, $aln_coords );				
-				
-				## TODO: Combine the 3 conditions as no diff in logic??
-			}
+#				
+#				my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
+#				$aln_coords->set_reference_id( $row[13] );
+#				$aln_coords->set_query_id( $query_name );
+#				$aln_coords->set_reference_start_coord( $right_reference_start_coord );
+#				$aln_coords->set_reference_end_coord( $right_reference_end_coord );
+#				$aln_coords->set_query_start_coord( $query_start_coord );
+#				$aln_coords->set_query_end_coord( $query_end_coord );
+#				push( @alignment_coords_array, $aln_coords );
+#			}
+#			#if BAC ends align -ive strand
+#			#should be fine as long as ref dir is same for both ends			
+#			elsif(($left_aligned_reference_direction == $right_aligned_reference_direction )
+#				&& ($left_aligned_query_direction == -1 )
+#				&& ($right_aligned_query_direction == -1 )){
+#				print STDERR "\nComplimentary strand of BAC end from $query_name aligns to ref chr. See mummer output files.\n";
+#				my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
+#				$aln_coords->set_reference_id( $row[13] );
+#				$aln_coords->set_query_id( $query_name );
+#				$aln_coords->set_reference_start_coord( $right_reference_start_coord );
+#				$aln_coords->set_reference_end_coord( $right_reference_end_coord );
+#				$aln_coords->set_query_start_coord( $query_start_coord );
+#				$aln_coords->set_query_end_coord( $query_end_coord );
+#				push( @alignment_coords_array, $aln_coords );				
+#				
+#				## TODO: Combine the 3 conditions as no diff in logic??
+#			}
 			elsif(($left_aligned_query_direction != $right_aligned_query_direction)
 				|| ($left_aligned_reference_direction != $right_aligned_reference_direction)){
 				print STDERR "\nBAC ends or ref orientation is opposite for $query_name. Ignoring. Can be misassembly in ref chr. See mummer output files.";
