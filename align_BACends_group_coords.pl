@@ -305,8 +305,8 @@ foreach my $line (@lines) {
 #				&& ($right_aligned_query_direction == 1 )){
 			#if BAC ends align on the same strand
 			#alignments on the reference on same strand
-			if (($left_aligned_reference_direction == $left_aligned_query_direction )
-				&& ($right_aligned_reference_direction == $right_aligned_query_direction )){
+			if (($left_aligned_reference_direction == $right_aligned_reference_direction )
+				&& ($left_aligned_query_direction == $right_aligned_query_direction )){
 				
 				#check if BAC ends align within range +- 5% of BAC length
 #				my ($min_reference_aligned_length, $max_reference_aligned_length, $reference_aligned_length);
@@ -340,7 +340,7 @@ foreach my $line (@lines) {
 				
 				if(($left_aligned_query_direction == -1 )
 				|| ($right_aligned_query_direction == -1 )){
-					print STDERR "\nComplimentary strand of BAC end from $query_name aligns to ref chr. See mummer output files.\n";
+					print STDERR "\nComplimentary strand of BAC end from $query_name aligns to ref chr.\n";
 				}
 
 			}
@@ -399,7 +399,7 @@ foreach my $line (@lines) {
 #			}
 			elsif(($left_aligned_query_direction != $right_aligned_query_direction)
 				|| ($left_aligned_reference_direction != $right_aligned_reference_direction)){
-				print STDERR "\nBAC ends or ref orientation is opposite for $query_name. Ignoring. Can be misassembly in ref chr. See mummer output files.";
+				print STDERR "\nBAC ends or ref orientation is opposite for $query_name. Ignoring. Can be misassembly in ref chr.";
 				$total_mixed_end_orientation++;
 			}
 			else{
