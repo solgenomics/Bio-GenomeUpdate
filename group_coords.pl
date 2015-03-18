@@ -194,8 +194,10 @@ foreach my $line (@lines) {
 	$aln_coords->set_query_id( $row[14] );
 	$aln_coords->set_reference_start_coord( $row[0] );
 	$aln_coords->set_reference_end_coord( $row[1] );
+	$aln_coords->set_reference_strand( $row[11] );
 	$aln_coords->set_query_start_coord( $row[2] );
 	$aln_coords->set_query_end_coord( $row[3] );
+	$aln_coords->set_query_strand( $row[12] );
 	push( @alignment_coords_array, $aln_coords );
 
 	#deal with last row since no more alignments for query after this
