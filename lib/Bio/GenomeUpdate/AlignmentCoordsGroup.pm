@@ -395,7 +395,7 @@ sub get_id_coords_and_direction_of_longest_alignment_cluster_group {
 
 =item C<check_direction_of_cluster_group ( @largest_cluster_group )>
 
-Returns 0 for error condition, i.e. if all align_coord's in cluster are not in same orientation.    
+Returns 0 for if all align_coord's in cluster are not in same orientation.    
 
 =cut
 
@@ -419,7 +419,7 @@ Returns 0 for error condition, i.e. if all align_coord's in cluster are not in s
 
 =item C<check_colinear_order_of_cluster_group ( @largest_cluster_group )>
 
-Returns 1 for error condition, i.e. if ref start coordinate of a align_coord is less than the previous one in the cluster.   
+Returns 1 for error condition, i.e. if query start coordinate of a align_coord is out of order with prev one in the cluster. Note that alignments are ordered by ref start coordinate.   
 
 =cut
 
@@ -431,15 +431,22 @@ Returns 1 for error condition, i.e. if ref start coordinate of a align_coord is 
 		my ( $query_start, $colinear_order );
 		$colinear_order = 0;
 		foreach my $align_coords (@$cluster_group) {
-			if ($query_start)
-			{ #cluster is ordered acc to ref coords so checking if query starts are in order
-				if ( $query_start >= $align_coords->get_query_start_coord() ) {
+			if ($query_start){
+				#cluster is ordered acc to ref coords so checking if query starts are in order
+				#order is affected by strand as nucmer records alignments on -ive strand in opposite order
+				#presuming all query sequences are aligned in same orientation
+				if ((($query_start >= $align_coords->get_query_start_coord())
+					&& ($align_coords->get_query_strand() == 1 ))
+					||($query_start <= $align_coords->get_query_start_coord())
+					&& ($align_coords->get_query_strand() == -1 )) {
+					#print STDERR "******** query_start: $query_start\talign_coords->get_query_start_coord(): ",$align_coords->get_query_start_coord(),"\n";
 					print STDERR "Query start error for "
 					  . $align_coords->get_query_id() . "\n";
 					return 1;
 				}
 			}
 			else {
+				print STDERR "\n******** align_coords->get_query_start_coord(): ",$align_coords->get_query_start_coord(),"\n";
 				$query_start = $align_coords->get_query_start_coord();
 			}
 		}

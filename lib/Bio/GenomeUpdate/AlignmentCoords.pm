@@ -22,17 +22,22 @@ use MooseX::FollowPBP;
 
 =cut
 
+has 'reference_id' =>
+  ( isa => 'Str', is => 'rw', predicate => 'has_reference_id' );
 has 'reference_start_coord' =>
   ( isa => 'Num', is => 'rw', predicate => 'has_reference_start_coord' );
 has 'reference_end_coord' =>
   ( isa => 'Num', is => 'rw', predicate => 'has_reference_end_coord' );
+has 'reference_strand' =>
+  ( isa => 'Str', is => 'rw', predicate => 'has_reference_strand' );
+  
+has 'query_id' => ( isa => 'Str', is => 'rw', predicate => 'has_query_id' );
 has 'query_start_coord' =>
   ( isa => 'Num', is => 'rw', predicate => 'has_query_start_coord' );
 has 'query_end_coord' =>
   ( isa => 'Num', is => 'rw', predicate => 'has_query_end_coord' );
-has 'reference_id' =>
-  ( isa => 'Str', is => 'rw', predicate => 'has_reference_id' );
-has 'query_id' => ( isa => 'Str', is => 'rw', predicate => 'has_query_id' );
+has 'query_strand' =>
+  ( isa => 'Str', is => 'rw', predicate => 'has_query_strand' );
 
 =item C<get_direction>
 
@@ -42,6 +47,10 @@ Returns 1 if the reference and query sequences are aligned in the same direction
 
 sub get_direction {
 	my $self = shift;
+	
+#	print STDERR "\t******** ref id: ",$self->get_reference_id(),"\tref start: ",$self->get_reference_start_coord(),"\tref end: ",$self->get_reference_end_coord(),"\n";
+#	print STDERR "\t******** qry id: ",$self->get_query_id(),"\tqry start: ",$self->get_query_start_coord(),"\tqry end: ",$self->get_query_end_coord(),"\n";
+	
 	if (
 		 !(
 			   $self->has_reference_start_coord()

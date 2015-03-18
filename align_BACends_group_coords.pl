@@ -276,8 +276,10 @@ foreach my $line (@lines) {
 		$aln_coords->set_query_id( $query_name );	
 		$aln_coords->set_reference_start_coord( $row[0] );
 		$aln_coords->set_reference_end_coord( $row[1] );
+		$aln_coords->set_reference_strand( $row[11] );
 		$aln_coords->set_query_start_coord( $row[2] );
 		$aln_coords->set_query_end_coord( $row[3] );
+		$aln_coords->set_query_strand( $row[12] );
 		push( @alignment_coords_array, $aln_coords );
 		
 		$left_aligned = 1;#found left BAC end alignment
@@ -344,8 +346,10 @@ foreach my $line (@lines) {
 				$aln_coords->set_query_id( $query_name );
 				$aln_coords->set_reference_start_coord( $right_reference_start_coord );
 				$aln_coords->set_reference_end_coord( $right_reference_end_coord );
+				$aln_coords->set_reference_strand( $right_aligned_reference_direction );
 				$aln_coords->set_query_start_coord( $query_start_coord );
 				$aln_coords->set_query_end_coord( $query_end_coord );
+				$aln_coords->set_query_strand( $right_aligned_query_direction );
 				push( @alignment_coords_array, $aln_coords );	
 				
 				if(($left_aligned_query_direction == -1 )
@@ -432,8 +436,10 @@ foreach my $line (@lines) {
 			$aln_coords->set_query_id( $query_name );
 			$aln_coords->set_reference_start_coord( $right_reference_start_coord );
 			$aln_coords->set_reference_end_coord( $right_reference_end_coord );
+			$aln_coords->set_reference_strand( $right_aligned_reference_direction );
 			$aln_coords->set_query_start_coord( $query_start_coord );
 			$aln_coords->set_query_end_coord( $query_end_coord );
+			$aln_coords->set_query_strand( $right_aligned_query_direction );
 			push( @alignment_coords_array, $aln_coords );				
 		}
 	}
