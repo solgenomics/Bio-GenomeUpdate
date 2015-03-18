@@ -225,10 +225,10 @@ sub calc_and_print_info {
 	$align_group->set_array_of_alignment_coords($aref);
 	my $zero_chromosome_id = $unmapped_ID;
 
-#Returns IDs, start and end coordinates, total aligned sequence length, and direction for the longest proximity-grouped
-#alignment clusters sorted by longest to shortest length of non-overlapping sequence covered by alignment clusters.
-#The proximity grouping is done using the specified length of an allowed gap between aligned clusters in the reference sequence ($gap allowed).
-#$sequence_aligned_in_clusters is the total length of ref covered by alignment grp
+	#Returns IDs, start and end coordinates, total aligned sequence length, and direction for the longest proximity-grouped
+	#alignment clusters sorted by longest to shortest length of non-overlapping sequence covered by alignment clusters.
+	#The proximity grouping is done using the specified length of an allowed gap between aligned clusters in the reference sequence ($gap allowed).
+	#$sequence_aligned_in_clusters is the total length of ref covered by alignment grp
 	my (
 		 $ref_id,                       $query_id,
 		 $ref_start,                    $ref_end,
@@ -358,7 +358,7 @@ sub calc_and_print_info {
 	if ( $ref_end - $ref_start < 20000 ) {
 		$total_smaller_than_20k++;
 
-	  #$flagged=1;#short alignment may be for a BAC end so not always a negative
+		#$flagged=1;#short alignment may be for a BAC end so not always a negative
 	}
 
 	#good alignments
@@ -372,8 +372,8 @@ sub calc_and_print_info {
 	}
 	if ( $flagged == 0 ) {
 
-#print STDERR "**",join(' ',$query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters, $start_gap_length,
-#	$end_gap_length, $internal_gap_length, $start_gap_length + $end_gap_length + $internal_gap_length),"\n\n";
+		#print STDERR "**",join(' ',$query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters, $start_gap_length,
+		#	$end_gap_length, $internal_gap_length, $start_gap_length + $end_gap_length + $internal_gap_length),"\n\n";
 
 		$total_extend +=
 		  $start_gap_length + $end_gap_length + $internal_gap_length;
