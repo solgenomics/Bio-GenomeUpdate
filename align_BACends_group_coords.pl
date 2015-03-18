@@ -103,12 +103,12 @@ else{
 }
   
 
-open( MIXED, ">mixed_qry_${opt_q}_ref_${opt_r}_group_coords.out" )
+open( MIXED, ">mixed_end_${bacend_length}_align_BACends_group_coords.out" )
   or die
-"Could not create mixed_qry_${opt_q}_ref_${opt_r}_group_coords.out for writing out BACs aligned to ref chr in mixed orientation";
-open( NONCOLINEAR, ">noncolinear_qry_${opt_q}_ref_${opt_r}_group_coords.out" )
+"Could not create mixed_end_${bacend_length}_align_BACends_group_coords.out for writing out BACs aligned to ref chr in mixed orientation";
+open( NONCOLINEAR, ">noncolinear_end_${bacend_length}_align_BACends_group_coords.out" )
   or die
-"Could not create noncolinear_qry_${opt_q}_ref_${opt_r}_group_coords.out for writing out BACs aligned non co-linearly to ref chr, i.e. different order of aligned tiles on BAC and ref chr. Shows miassembly on ref chr or BAC";
+"Could not create noncolinear_end_${bacend_length}_align_BACends_group_coords.out for writing out BACs aligned non co-linearly to ref chr, i.e. different order of aligned tiles on BAC and ref chr. Shows miassembly on ref chr or BAC";
 
 my $contig_agp_input_file = $opt_c;
 my $contig_input_agp      = read_file($contig_agp_input_file)
@@ -191,6 +191,8 @@ print STDERR "\n";
 
 ###### compute alignment and coverage statistics ######
 my $total                  = 0;
+my $total_mixed_end_orientation = 0;
+my $total_unhandled        = 0;
 my $total_smaller_than_20k = 0;    #for alignments covering < 20k on ref
 my $total_mixed            = 0;
 my $total_noncolinear      = 0;
@@ -257,8 +259,10 @@ foreach my $line (@lines) {
 	if ( !( $current_query_id eq $last_line_query_id ) ) {
 
 		#print info for prev query (assembled or singleton BAC ) to STDOUT
-		calc_and_print_info( \@alignment_coords_array, $last_query_id,
+		if (scalar @alignment_coords_array > 0 ){
+			calc_and_print_info( \@alignment_coords_array, $last_query_id,
 							 $last_query_length, $bacend_length );
+		}
 		@alignment_coords_array = ();
 	}
 	
@@ -311,7 +315,7 @@ foreach my $line (@lines) {
 #				
 #				#if valid query alignment
 #				if (($reference_aligned_length >= $min_reference_aligned_length)
-#				|| ($reference_aligned_length <= $max_reference_aligned_length)){
+#				&& ($reference_aligned_length <= $max_reference_aligned_length)){
 #					my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
 #					$aln_coords->set_reference_id( $row[13] );
 #					$aln_coords->set_query_id( $query_name );
@@ -346,7 +350,7 @@ foreach my $line (@lines) {
 #				
 #				#if valid query alignment
 #				if (($reference_aligned_length >= $min_reference_aligned_length)
-#				|| ($reference_aligned_length <= $max_reference_aligned_length)){
+#				&& ($reference_aligned_length <= $max_reference_aligned_length)){
 #					my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
 #					$aln_coords->set_reference_id( $row[13] );
 #					$aln_coords->set_query_id( $query_name );
@@ -364,21 +368,33 @@ foreach my $line (@lines) {
 				$aln_coords->set_reference_end_coord( $right_reference_end_coord );
 				$aln_coords->set_query_start_coord( $query_start_coord );
 				$aln_coords->set_query_end_coord( $query_end_coord );
+				push( @alignment_coords_array, $aln_coords );
+			}
+			#if BAC ends align -ive strand
+			#should be fine as long as ref dir is same for both ends			
+			elsif(($left_aligned_reference_direction == $right_aligned_reference_direction )
+				&& ($left_aligned_query_direction == -1 )
+				&& ($right_aligned_query_direction == -1 )){
+				print STDERR "\nComplimentary strand of BAC end from $query_name aligns to ref chr. See mummer output files.\n";
+				my $aln_coords = Bio::GenomeUpdate::AlignmentCoords->new();
+				$aln_coords->set_reference_id( $row[13] );
+				$aln_coords->set_query_id( $query_name );
+				$aln_coords->set_reference_start_coord( $right_reference_start_coord );
+				$aln_coords->set_reference_end_coord( $right_reference_end_coord );
+				$aln_coords->set_query_start_coord( $query_start_coord );
+				$aln_coords->set_query_end_coord( $query_end_coord );
 				push( @alignment_coords_array, $aln_coords );				
 				
-				## TODO: Combine the 2 conditions as no diff in logic??
-				
+				## TODO: Combine the 3 conditions as no diff in logic??
 			}
 			elsif(($left_aligned_query_direction != $right_aligned_query_direction)
 				|| ($left_aligned_reference_direction != $right_aligned_reference_direction)){
-				print STDERR "\nBAC ends or ref orientation is opposite for $query_name. Ignoring. Can be misassembly in ref chr. See mummer output files.\n";
-			}
-			elsif(($left_aligned_query_direction == -1 )
-				|| ($right_aligned_reference_direction == -1 )){
-				print STDERR "\nComplimentary strand of BAC end from $query_name aligns to ref chr. Ignoring. See mummer output files.\n";
+				print STDERR "\nBAC ends or ref orientation is opposite for $query_name. Ignoring. Can be misassembly in ref chr. See mummer output files.";
+				$total_mixed_end_orientation++;
 			}
 			else{
-				print STDERR "\nUnhandled case from $query_name\n";
+				print STDERR "\nUnhandled case from $query_name";
+				$total_unhandled++;
 			}
 				
 			#prep for next BAC end pair
@@ -404,8 +420,10 @@ foreach my $line (@lines) {
 		
 	#deal with last row since no more alignments for query after this
 	if ( $currentline == scalar(@lines) ) {
-		calc_and_print_info( \@alignment_coords_array, $current_query_id,
+		if (scalar @alignment_coords_array > 0 ){
+			calc_and_print_info( \@alignment_coords_array, $current_query_id,
 							 $current_query_length, $bacend_length );
+		}
 		@alignment_coords_array = ();
 	}
 	$last_line_query_id = $current_query_id;
@@ -422,8 +440,10 @@ close(NONCOLINEAR);
 if ($total_noncolinear == 0) { unlink "noncolinear_qry_${opt_q}_ref_${opt_r}_group_coords.out";}
 
 ##summary info
-print STDERR "\nTotal queries:\t\t\t\t\t\t\t$total\n";
-print STDERR
+print STDERR "\n\nTotal queries:\t\t\t\t\t\t\t$total\n";
+print STDERR "Total ignored ends/ref dir is opposite:\t\t\t\t$total_mixed_end_orientation\n";
+print STDERR "Total unhandled and ignored queries:\t\t\t\t$total_unhandled\n";
+print STDERR 
 "Total queries with alignments smaller than 20,000 on ref:\t$total_smaller_than_20k\n";
 print STDERR "Total queries with mixed orientation:\t\t\t\t$total_mixed\n";
 print STDERR "Total queries with non co-linear alignments:\t\t\t$total_noncolinear\n";
@@ -434,14 +454,15 @@ print STDERR
 print STDERR "Total queries aligned full length:\t\t\t\t$total_full_length\n";
 print STDERR
   "Total queries with alignment to at least one end:\t\t$total_to_end\n";
+
 print STDERR "Total reference extended by valid BAC hits:\t\t\t$total_extend\n"
   ;    #new seqs from query
 print STDERR
   "Total reference covered by valid BAC hits:\t\t\t$total_ref_covered\n"
-  ;    #includes gaps ($gap_size_allowed) between alignment clusters
+  ;    #includes gaps ($gap_size_allowed) between alignment clusters so BAC ends + seq in middle
 print STDERR
 "Total N's within reference covered by valid BAC hits:\t\t$total_ref_Ns_covered\n"
-  ;    #includes gaps ($gap_size_allowed) between alignment clusters
+  ;    #includes gaps ($gap_size_allowed) between alignment clusters so BAC ends + seq in middle
 
 #if ( $total_extend > $total_ref_Ns_covered ){ #new sequence beyond ends of chromosome
 #	print STDERR "Total novel sequence beyond chr ends from valid BAC hits:\t",$total_extend - $total_ref_Ns_covered,"\n";
