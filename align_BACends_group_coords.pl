@@ -293,9 +293,19 @@ foreach my $line (@lines) {
 		$right_aligned_reference_direction = $row[11]; 
 		$right_aligned_query_direction = $row[12];
 
-		$query_start_coord = $query_lengths{$query_name} - $bacend_length + 1 ;
-		$query_end_coord = $query_lengths{$query_name};		
+		if ($right_aligned_query_direction == 1){
+			$query_start_coord = $query_lengths{$query_name} - $bacend_length + 1 ;
+			$query_end_coord = $query_lengths{$query_name};	
+		}
+		elsif($right_aligned_query_direction == -1){
+			$query_start_coord = $query_lengths{$query_name};
+			$query_end_coord = $query_lengths{$query_name} - $bacend_length + 1 ;
+		}
+		else{
+			die "Invalid direction for query. Exiting...\n";
+		}
 		
+
 		if ($left_aligned){
 			#if BAC ends from +ive strand
 			#alignments on the reference will be on +ive strand
