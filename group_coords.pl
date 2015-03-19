@@ -94,9 +94,11 @@ if ($opt_t) {
 		$print_header = "F";
 	}
 	else {
-		#die("-t must be T or F\n");
-		$print_header = "T"; #default behavior
+		die("-t must be T or F\n");
 	}
+}
+else{
+	$print_header = "T";
 }
 
 open( MIXED, ">mixed_${opt_i}_group_coords.out" )
