@@ -110,16 +110,20 @@ open( NONCOLINEAR, ">noncolinear_end_${bacend_length}_align_BACends_group_coords
   or die
 "Could not create noncolinear_end_${bacend_length}_align_BACends_group_coords.out for writing out BACs aligned non co-linearly to ref chr, i.e. different order of aligned tiles on BAC and ref chr. Shows miassembly on ref chr or BAC";
 
-my $contig_agp_input_file = $opt_c;
-my $contig_input_agp      = read_file($contig_agp_input_file)
-  or die "Could not open contig AGP input file: $contig_agp_input_file\n";
-my $contig_agp = Bio::GenomeUpdate::AGP->new();
-$contig_agp->parse_agp($contig_input_agp);
-my $chr_agp_input_file = $opt_s;
-my $chr_input_agp      = read_file($chr_agp_input_file)
-  or die "Could not open chr AGP input file: $chr_agp_input_file\n";
-my $chr_agp = Bio::GenomeUpdate::AGP->new();
-$chr_agp->parse_agp($chr_input_agp);
+my ($contig_agp,$chr_agp);
+
+if ($opt_c && $opt_s){
+	my $contig_agp_input_file = $opt_c;
+	my $contig_input_agp      = read_file($contig_agp_input_file)
+	  or die "Could not open contig AGP input file: $contig_agp_input_file\n";
+	$contig_agp = Bio::GenomeUpdate::AGP->new();
+	$contig_agp->parse_agp($contig_input_agp);
+	my $chr_agp_input_file = $opt_s;
+	my $chr_input_agp      = read_file($chr_agp_input_file)
+	  or die "Could not open chr AGP input file: $chr_agp_input_file\n";
+	$chr_agp = Bio::GenomeUpdate::AGP->new();
+	$chr_agp->parse_agp($chr_input_agp);
+}
 
 my $ref_db   = Bio::DB::Fasta->new( $opt_r, '-reindex' => 1 );
 die "\nMultiple references will break the BAC end comparison logic. Please run for individual chromosomes. Exiting...\n" if (scalar $ref_db->get_all_ids() > 1);
@@ -493,36 +497,39 @@ print STDERR
 #if ( $total_extend > $total_ref_Ns_covered ){ #new sequence beyond ends of chromosome
 #	print STDERR "Total novel sequence beyond chr ends from valid BAC hits:\t",$total_extend - $total_ref_Ns_covered,"\n";
 #}
-print STDERR "\nStatistics from AGPs\n";
-print STDERR "Contig or component AGP (contigs and contig gaps)\n";
-print STDERR
-"\tTotal gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gaps_covered\n";
-print STDERR
-"\tTotal length of gaps completely covered from contig AGP:\t$total_complete_contig_gap_length_covered\n";
-if ( $total_complete_contig_gaps_covered > 0){
-	print STDERR "\tAvg length of gaps completely covered from contig AGP:\t\t"
-  . $total_complete_contig_gap_length_covered /
-  $total_complete_contig_gaps_covered . "\n";
-}
-print STDERR
-"\tTotal gaps partially covered from contig AGP:\t\t\t$total_partial_contig_gaps_covered\n";
-print STDERR
-"\tTotal length of gaps partially covered from contig AGP:\t\t$total_partial_contig_gap_length_covered\n";
 
-print STDERR "Chromosome AGP (scaffolds and scaffold gaps)\n";
-print STDERR
-"\tTotal gaps completely covered from chr AGP:\t\t\t$total_complete_chr_gaps_covered\n";
-print STDERR
-"\tTotal length of gaps completely covered from chr AGP:\t\t$total_complete_chr_gap_length_covered\n";
-if ($total_complete_chr_gaps_covered > 0){
-	print STDERR "Avg length of gaps completely covered from chr AGP:\t\t\t"
-  . $total_complete_chr_gap_length_covered / $total_complete_chr_gaps_covered
-  . "\n";
+if ($opt_c && $opt_s){
+	print STDERR "\nStatistics from AGPs\n";
+	print STDERR "Contig or component AGP (contigs and contig gaps)\n";
+	print STDERR
+	"\tTotal gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gaps_covered\n";
+	print STDERR
+	"\tTotal length of gaps completely covered from contig AGP:\t$total_complete_contig_gap_length_covered\n";
+	if ( $total_complete_contig_gaps_covered > 0){
+		print STDERR "\tAvg length of gaps completely covered from contig AGP:\t\t"
+	  . $total_complete_contig_gap_length_covered /
+	  $total_complete_contig_gaps_covered . "\n";
+	}
+	print STDERR
+	"\tTotal gaps partially covered from contig AGP:\t\t\t$total_partial_contig_gaps_covered\n";
+	print STDERR
+	"\tTotal length of gaps partially covered from contig AGP:\t\t$total_partial_contig_gap_length_covered\n";
+	
+	print STDERR "Chromosome AGP (scaffolds and scaffold gaps)\n";
+	print STDERR
+	"\tTotal gaps completely covered from chr AGP:\t\t\t$total_complete_chr_gaps_covered\n";
+	print STDERR
+	"\tTotal length of gaps completely covered from chr AGP:\t\t$total_complete_chr_gap_length_covered\n";
+	if ($total_complete_chr_gaps_covered > 0){
+		print STDERR "Avg length of gaps completely covered from chr AGP:\t\t\t"
+	  . $total_complete_chr_gap_length_covered / $total_complete_chr_gaps_covered
+	  . "\n";
+	}
+	print STDERR
+	"\tTotal gaps partially covered from chr AGP:\t\t\t$total_partial_chr_gaps_covered\n";
+	print STDERR
+	"\tTotal length of gaps partial covered from chr AGP:\t\t$total_partial_chr_gap_length_covered\n";
 }
-print STDERR
-"\tTotal gaps partially covered from chr AGP:\t\t\t$total_partial_chr_gaps_covered\n";
-print STDERR
-"\tTotal length of gaps partial covered from chr AGP:\t\t$total_partial_chr_gap_length_covered\n";
 
 
 =item C<calc_and_print_info (@alignment_coords_array, $last_query_id, $last_query_length, $bacend_length)>
@@ -674,21 +681,23 @@ sub calc_and_print_info {
 		$total_ref_Ns_covered += ( $ref_aligned_seq =~ tr/N// );
 		$total_ref_Ns_covered += ( $ref_aligned_seq =~ tr/n// );
 
+		if ($opt_c && $opt_s){
 		my ($cov_gap_count,     $cov_gap_length,
 			 $par_cov_gap_count, $par_cov_gap_length
-		  ) = $contig_agp->get_gap_overlap( $ref_start, $ref_end );
-		$total_complete_contig_gaps_covered       += $cov_gap_count;
-		$total_complete_contig_gap_length_covered += $cov_gap_length;
-		$total_partial_contig_gaps_covered        += $par_cov_gap_count;
-		$total_partial_contig_gap_length_covered  += $par_cov_gap_length;
-
-		($cov_gap_count,     $cov_gap_length,
-		   $par_cov_gap_count, $par_cov_gap_length
-		  ) = $chr_agp->get_gap_overlap( $ref_start, $ref_end );
-		$total_complete_chr_gaps_covered       += $cov_gap_count;
-		$total_complete_chr_gap_length_covered += $cov_gap_length;
-		$total_partial_chr_gaps_covered        += $par_cov_gap_count;
-		$total_partial_chr_gap_length_covered  += $par_cov_gap_length;
+			  ) = $contig_agp->get_gap_overlap( $ref_start, $ref_end );
+			$total_complete_contig_gaps_covered       += $cov_gap_count;
+			$total_complete_contig_gap_length_covered += $cov_gap_length;
+			$total_partial_contig_gaps_covered        += $par_cov_gap_count;
+			$total_partial_contig_gap_length_covered  += $par_cov_gap_length;
+	
+			($cov_gap_count,     $cov_gap_length,
+			   $par_cov_gap_count, $par_cov_gap_length
+			  ) = $chr_agp->get_gap_overlap( $ref_start, $ref_end );
+			$total_complete_chr_gaps_covered       += $cov_gap_count;
+			$total_complete_chr_gap_length_covered += $cov_gap_length;
+			$total_partial_chr_gaps_covered        += $par_cov_gap_count;
+			$total_partial_chr_gap_length_covered  += $par_cov_gap_length;
+		}
 		
 		print $q_id. "\t";
 		print $ref_id. "\t";
