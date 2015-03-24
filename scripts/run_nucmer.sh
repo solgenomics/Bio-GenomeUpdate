@@ -2,7 +2,7 @@
 
 # Surya Saha
 # PPath@Cornell/BTI
-# Purpose: Run nucmer pipeline to align BACs (param 1) to chr ref (param 2). NOT USING delta-filter -u 99 as diff BACs can contain same repeat and that does not make the alignment to ref chr invalid. 
+# Purpose: Run nucmer pipeline to align BACs (param 1) to chr ref (param 2). NOT USING delta-filter -u 99 as diff BACs can contain same repeat and that does not make the alignment to ref chr invalid. Also BAC can map to chr00 and chr1-12 which is important to identify cases where contigs from chr00 can be integrated into chr1-12.
 
 usage(){
 	echo "usage:
