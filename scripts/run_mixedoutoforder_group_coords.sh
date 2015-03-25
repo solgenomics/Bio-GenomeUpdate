@@ -9,19 +9,19 @@
 BG_DIR="/home/surya/work/Eclipse/Bio-GenomeUpdate/"
 
 ch=0
-while [ $ch -le 12 ]
-	do printf "Processing $ch\n"
-	cd $ch
+while [ "$ch" -le 12 ]
+	do printf "Processing %s\n" "$ch"
+	cd "$ch" || exit
 	
-	if [ $ch -le 9 ]
+	if [ "$ch" -le 9 ]
 		then
-		perl -I ${BG_DIR}lib ${BG_DIR}group_coords.pl -i 500bp.ch0${ch}_asm_BACs__SL2.50ch0${ch}.delta.filtered.coords -g 100000 -u "dummy" -r SL2.50ch0${ch}.fa -q ch0${ch}_asm_BACs.fas -c noscafgaps.chr0${ch}_fish2_gaps.comp.agp -s chr0${ch}_fish2_gaps.chr.agp  > 500bp.mixedoutoforder.agp.group_coords.stdout 2> 500bp.mixedoutoforder.agp.group_coords.stderr
+		perl -I "${BG_DIR}"lib "${BG_DIR}"group_coords.pl -i 500bp.ch0"${ch}"_asm_BACs__SL2.50ch0"${ch}".delta.filtered.coords -g 100000 -u "dummy" -r SL2.50ch0"${ch}".fa -q ch0"${ch}"_asm_BACs.fas -c noscafgaps.chr0"${ch}"_fish2_gaps.comp.agp -s chr0"${ch}"_fish2_gaps.chr.agp  > 500bp.mixedoutoforder.agp.group_coords.stdout 2> 500bp.mixedoutoforder.agp.group_coords.stderr
 	
 	else
-		perl -I ${BG_DIR}lib ${BG_DIR}group_coords.pl -i 500bp.ch${ch}_asm_BACs__SL2.50ch${ch}.delta.filtered.coords -g 100000 -u "dummy" -r SL2.50ch${ch}.fa -q ch${ch}_asm_BACs.fas -c noscafgaps.chr${ch}_fish2_gaps.comp.agp -s chr${ch}_fish2_gaps.chr.agp  > 500bp.mixedoutoforder.agp.group_coords.stdout 2> 500bp.mixedoutoforder.agp.group_coords.stderr
+		perl -I "${BG_DIR}"lib "${BG_DIR}"group_coords.pl -i 500bp.ch"${ch}"_asm_BACs__SL2.50ch"${ch}".delta.filtered.coords -g 100000 -u "dummy" -r SL2.50ch"${ch}".fa -q ch"${ch}"_asm_BACs.fas -c noscafgaps.chr"${ch}"_fish2_gaps.comp.agp -s chr"${ch}"_fish2_gaps.chr.agp  > 500bp.mixedoutoforder.agp.group_coords.stdout 2> 500bp.mixedoutoforder.agp.group_coords.stderr
 	
 	fi
 	cd ..
 	
-	ch=$(($ch+1)); 
+	ch=$(("$ch"+1)); 
 done

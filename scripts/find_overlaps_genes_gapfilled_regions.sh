@@ -12,34 +12,34 @@ BG_DIR="/home/surya/work/Eclipse/Bio-GenomeUpdate/"
 printf "Stats for proper alignments\n"
 
 ch=0
-while [ $ch -le 12 ]
-	do printf "Processing $ch\n"
-	cd $ch
+while [ "$ch" -le 12 ]
+	do printf "Processing %s\n" "$ch"
+	cd "$ch" || exit
 
-	${BG_DIR}scripts/grouped_coords_to_bed.sh 500bp.mixedoutoforder.agp.group_coords.stdout > 500bp.mixedoutoforder.agp.group_coords.stdout.bed
+	"${BG_DIR}"scripts/grouped_coords_to_bed.sh 500bp.mixedoutoforder.agp.group_coords.stdout > 500bp.mixedoutoforder.agp.group_coords.stdout.bed
 	
-	if [ $ch -le 9 ]
+	if [ "$ch" -le 9 ]
 	then
-		bedtools intersect -a ch0${ch}.genes.ITAG2.4_gene_models.gff3 -b 500bp.mixedoutoforder.agp.group_coords.stdout.bed > 500bp.mixedoutoforder.agp.group_coords.stdout.bed.genes.gff3
+		bedtools intersect -a ch0"${ch}".genes.ITAG2.4_gene_models.gff3 -b 500bp.mixedoutoforder.agp.group_coords.stdout.bed > 500bp.mixedoutoforder.agp.group_coords.stdout.bed.genes.gff3
 	else
-		bedtools intersect -a ch${ch}.genes.ITAG2.4_gene_models.gff3 -b 500bp.mixedoutoforder.agp.group_coords.stdout.bed > 500bp.mixedoutoforder.agp.group_coords.stdout.bed.genes.gff3
+		bedtools intersect -a ch"${ch}".genes.ITAG2.4_gene_models.gff3 -b 500bp.mixedoutoforder.agp.group_coords.stdout.bed > 500bp.mixedoutoforder.agp.group_coords.stdout.bed.genes.gff3
 
 	fi
 
 	#total region covered
-	covered=`awk '{covered+=$3-$2} END {print covered}' 500bp.mixedoutoforder.agp.group_coords.stdout.bed`
-	printf "Chr coverage: $covered bp\n"
+	covered=$(awk '{covered+=$3-$2} END {print covered}' 500bp.mixedoutoforder.agp.group_coords.stdout.bed)
+	printf "Chr coverage: %s bp\n" "$covered"
 
-	fixed=`wc -l 500bp.mixedoutoforder.agp.group_coords.stdout.bed.genes.gff3 | awk '{print $1}'`
+	fixed=$(wc -l 500bp.mixedoutoforder.agp.group_coords.stdout.bed.genes.gff3 | awk '{print $1}')
 	#if any genes were covered
 	if [ "$fixed" -gt "0" ]
 		then
-		printf "Genes overlapping filled gaps: $fixed\n"
+		printf "Genes overlapping filled gaps: %s\n" "$fixed"
 	else
 		unlink 500bp.mixedoutoforder.agp.group_coords.stdout.bed.genes.gff3
 	fi
 	
 	cd ..
-	ch=$(($ch+1)); 
+	ch=$(("$ch"+1)); 
 done
 
