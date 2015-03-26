@@ -1,4 +1,4 @@
-/home/surya/work/workspace6/split_chrs/phrap_assembled_BACs_align_mummer_BACends/temp/ref.fas /home/surya/work/workspace6/split_chrs/phrap_assembled_BACs_align_mummer_BACends/temp/query_bacends.fasta
+/home/surya/work/Eclipse/Bio-GenomeUpdate/t/align_BACends_group_coords_data/ref.fas /home/surya/work/Eclipse/Bio-GenomeUpdate/t/align_BACends_group_coords_data/query_bacends.fasta
 NUCMER
 
 [S1]	[E1]	[S2]	[E2]	[LEN 1]	[LEN 2]	[% IDY]	[LEN R]	[LEN Q]	[COV R]	[COV Q]	[FRM]	[TAGS]
