@@ -207,6 +207,7 @@ my $total_to_end           = 0;
 my $total_extend           = 0;
 my $total_ref_covered      = 0;
 my $total_ref_Ns_covered   = 0;
+my $total_query_Ns_covered   = 0;
 my $total_complete_contig_gaps_covered       = 0;
 my $total_complete_contig_gap_length_covered = 0;
 my $total_partial_contig_gaps_covered        = 0;
@@ -493,7 +494,10 @@ print STDERR
 print STDERR
 "Total N's within reference covered by valid BAC hits:\t\t$total_ref_Ns_covered\n"
   ;    #includes gaps ($gap_size_allowed) between alignment clusters so BAC ends + seq in middle
-
+print STDERR
+"Total N's within queries covered by valid reference hits:\t$total_query_Ns_covered\n"
+  ;    #includes gaps ($gap_size_allowed) between alignment clusters
+  
 #if ( $total_extend > $total_ref_Ns_covered ){ #new sequence beyond ends of chromosome
 #	print STDERR "Total novel sequence beyond chr ends from valid BAC hits:\t",$total_extend - $total_ref_Ns_covered,"\n";
 #}
@@ -680,6 +684,10 @@ sub calc_and_print_info {
 		my $ref_aligned_seq = $ref_db->seq( $ref_id, $ref_start, $ref_end );
 		$total_ref_Ns_covered += ( $ref_aligned_seq =~ tr/N// );
 		$total_ref_Ns_covered += ( $ref_aligned_seq =~ tr/n// );
+		
+		my $query_aligned_seq = $query_db->seq( $query_id, $query_start, $query_end );
+		$total_query_Ns_covered += ( $query_aligned_seq =~ tr/N// );
+		$total_query_Ns_covered += ( $query_aligned_seq =~ tr/n// );
 
 		if ($opt_c && $opt_s){
 		my ($cov_gap_count,     $cov_gap_length,
