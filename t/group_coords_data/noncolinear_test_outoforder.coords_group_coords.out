@@ -1,0 +1,2 @@
+query	reference	ref_start	ref_end	length	q_start	q_end	q_length	seq_in_clusters	direction	ref_count	includes_0	full_length	from_start	from_end	internal_gap	is_overlapping	size_of_alt	alternates	
+BAC1	CHR01	501	2000	1499	500	1001	1500	1000	1	1	0	Partial	499	499	-498	0	0		
