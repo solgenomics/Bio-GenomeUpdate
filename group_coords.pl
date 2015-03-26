@@ -17,7 +17,8 @@ group_coords.pl
  -g  Gap size allowed between aligned clusters in the reference sequence, typically the mean/median scaffold gap (required)
  -c  Contig or component AGP file for reference (includes scaffold gaps)
  -s  Chromosome AGP file for reference (with only scaffolds and gaps) 
- -t  Print header
+ -t  Print header (T/F)
+ -d  Debug messages (T/F)
  -h  Help
 
 =head1 TODO
@@ -36,8 +37,8 @@ use Bio::GenomeUpdate::AlignmentCoordsGroup;
 use Bio::GenomeUpdate::AGP;
 use Bio::DB::Fasta;
 
-our ( $opt_i, $opt_g, $opt_r, $opt_q, $opt_u, $opt_t, $opt_h, $opt_c, $opt_s );
-getopts("i:g:r:q:u:c:s:t:h");
+our ( $opt_i, $opt_g, $opt_r, $opt_q, $opt_u, $opt_t, $opt_h, $opt_c, $opt_s, $opt_d );
+getopts("i:g:r:q:u:c:s:t:h:d");
 if ( !$opt_i || !$opt_g || !$opt_r || !$opt_q ) {
 	print STDERR "\nRequired files or gap parameter missing!! exiting..\n\n";
 	help();
@@ -74,7 +75,7 @@ if ( defined $opt_s ) {
 my $input_file;
 my $gap_size_allowed;
 my $unmapped_ID;
-my $print_header;
+my ($debug,$print_header);
 $input_file = $opt_i || die("-i input_file required\n");
 if ($opt_g) {
 	$gap_size_allowed = $opt_g;
@@ -99,6 +100,21 @@ if ($opt_t) {
 }
 else{
 	$print_header = "T";
+}
+
+if ($opt_d) {
+	if ( $opt_d eq "T" ) {
+		$debug = 1 ;
+	}
+	elsif ( $opt_d eq "F" ) {
+		$debug = 0 ;
+	}
+	else {
+		die("-d must be T or F\n");
+	}
+}
+else{
+	$debug = 0 ; #false by default
 }
 
 open( MIXED, ">mixed_${opt_i}_group_coords.out" )
@@ -269,34 +285,6 @@ sub calc_and_print_info {
 	else {
 		$is_full_length = "Partial";
 	}
-#	print $q_id. "\t";
-#	print $ref_id. "\t";
-#	print $ref_start. "\t";
-#	print $ref_end. "\t";
-#	print $ref_end - $ref_start . "\t";
-#	print $query_start. "\t";
-#	print $query_end. "\t";
-#	print $q_length. "\t";
-#	print $sequence_aligned_in_clusters. "\t";
-#	print $direction. "\t";    #strand
-#	print $align_group->get_count_of_reference_sequence_ids() . "\t";
-#	print $align_group->includes_reference_id($zero_chromosome_id) . "\t";
-#	print $is_full_length. "\t";
-#	print $start_gap_length. "\t";
-#	print $end_gap_length. "\t";
-#	print $internal_gap_length. "\t";
-#	print $is_overlapping. "\t";
-#	print $size_of_next_largest_match. "\t";
-#	print $alternates. "\t";
-#
-#	#if (defined($second_id)){
-#	#print $second_id."\t";
-#	#print $second_size."\t"
-#	#}
-#	#else {
-#	#print "None\tNone\t";
-#	#}
-#	print "\n";
 
 	my $flagged = 0;    #flag 1 for potential problem
 
@@ -382,8 +370,10 @@ sub calc_and_print_info {
 	}
 	if ( $flagged == 0 ) {
 
-		#print STDERR "**",join(' ',$query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters, $start_gap_length,
-		#	$end_gap_length, $internal_gap_length, $start_gap_length + $end_gap_length + $internal_gap_length),"\n\n";
+		if($debug){
+			print STDERR "**",join(' ',$query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters, $start_gap_length,
+			$end_gap_length, $internal_gap_length, $start_gap_length + $end_gap_length + $internal_gap_length),"\n\n";
+		}
 
 		$total_extend +=
 		  $start_gap_length + $end_gap_length + $internal_gap_length;
@@ -391,6 +381,15 @@ sub calc_and_print_info {
 		$total_ref_covered += $sequence_aligned_in_clusters;
 
 		my $ref_aligned_seq = $ref_db->seq( $ref_id, $ref_start, $ref_end );
+		
+		if($debug){
+			print STDERR "** ref_id: ",$ref_id,"\n";
+			print STDERR "** ref_start: ",$ref_start,"\n";
+			print STDERR "** ref_end: ",$ref_end,"\n";
+			print STDERR "** ref_aligned_seq: ",$ref_aligned_seq,"\n";
+			print STDERR "** total_ref_Ns_covered: ",$total_ref_Ns_covered,"\n"; 
+		}
+		
 		$total_ref_Ns_covered += ( $ref_aligned_seq =~ tr/N// );
 		$total_ref_Ns_covered += ( $ref_aligned_seq =~ tr/n// );
 		
@@ -436,13 +435,6 @@ sub calc_and_print_info {
 		print $size_of_next_largest_match. "\t";
 		print $alternates. "\t";
 	
-		#if (defined($second_id)){
-		#print $second_id."\t";
-		#print $second_size."\t"
-		#}
-		#else {
-		#print "None\tNone\t";
-		#}
 		print "\n";
 	}
 }
@@ -537,7 +529,8 @@ sub help {
     -g  Gap size allowed between aligned clusters in the reference sequence, typically the mean/median scaffold gap (required)
     -c  Contig or component AGP file for reference (includes scaffold gaps)
     -s  Chromosome AGP file for reference (with only scaffolds and gaps) 
-    -t  Print header
+    -t  Print header (T/F)
+    -d  Debug messages (T/F)
     -h  Help
  
 EOF
