@@ -28,7 +28,7 @@ use strict;
 use warnings;
 use autodie;
 
-use Test::More tests => 94;
+use Test::More tests => 100;
 BEGIN { use_ok('Bio::GenomeUpdate::AGP'); }
 require_ok('Bio::GenomeUpdate::AGP::AGPSequenceLine');
 require_ok('Bio::GenomeUpdate::AGP::AGPGapLine');
@@ -177,3 +177,12 @@ ok(($cov_gap_count, $cov_gap_length, $par_cov_gap_count, $par_cov_gap_length) = 
 is($par_cov_gap_count,1,'Partially covered gap component count as expected for 1301-1500bp');
 is($par_cov_gap_length,100,'Partially covered gap component length as expected for 1301-1500bp');
 
+#region covers both gap and seq region for seq_id in AGP  
+ok(($cov_gap_count, $cov_gap_length, $par_cov_gap_count, $par_cov_gap_length) = $agp->get_gap_overlap(1301,1500,'Chromosome1'), 'testing gap region 1301-1500bp for Chromosome1');
+is($par_cov_gap_count,1,'Partially covered gap component count as expected for 1301-1500bp');
+is($par_cov_gap_length,100,'Partially covered gap component length as expected for 1301-1500bp');
+
+#region covers both gap and seq region for seq_id NOT in AGP  
+ok(($cov_gap_count, $cov_gap_length, $par_cov_gap_count, $par_cov_gap_length) = $agp->get_gap_overlap(1301,1500,'Chromosome2'), 'testing gap region 1301-1500bp for dummy Chromosome2');
+is($par_cov_gap_count,0,'Partially covered gap component count as expected for 1301-1500bp');
+is($par_cov_gap_length,0,'Partially covered gap component length as expected for 1301-1500bp');

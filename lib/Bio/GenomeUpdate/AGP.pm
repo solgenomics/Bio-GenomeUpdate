@@ -426,9 +426,9 @@ sub get_number_of_sequence_lines {
 	return $count;
 }
 
-=item C<get_gap_overlap (start, end)>
+=item C<get_gap_overlap (start, end, seq_id)>
 
-Returns number and length of gaps in AGP completely and partially covered by region passed as parameter. Return values are number of 
+Returns number and length of gaps in AGP (of seq_id if supplied) completely and partially covered by region passed as parameter. Return values are number of 
 covered gaps, total length of covered gaps, number of partially covered gaps, total length of partially covered gaps
 
 =cut
@@ -437,6 +437,7 @@ sub get_gap_overlap{
 	my $self = shift;
 	my $start = shift;
 	my $end = shift;
+	my $seq_id = shift;
 	
 	#error check
 	if ($start >= $end ) { print STDERR "$start less than or equal to $end. exiting..\n"; exit;}
@@ -449,32 +450,54 @@ sub get_gap_overlap{
 		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
 		foreach my $line_key (@sorted_line_numbers) {
 			if ( $lines{$line_key}->get_line_type() eq "gap" ) {
-				if (($start <= $lines{$line_key}->get_object_begin()) &&
-					($end >= $lines{$line_key}->get_object_end())){
-						$cov_gap_count++;
-						$cov_gap_length += $lines{$line_key}->get_object_end()-$lines{$line_key}->get_object_begin()+1;
+				if (defined $seq_id){
+					if (($start <= $lines{$line_key}->get_object_begin()) &&
+						($end >= $lines{$line_key}->get_object_end()) &&
+						($lines{$line_key}->get_object_being_assembled() eq $seq_id)){
+							$cov_gap_count++;
+							$cov_gap_length += $lines{$line_key}->get_object_end()-$lines{$line_key}->get_object_begin()+1;
+						}
+					elsif(($lines{$line_key}->get_object_being_assembled() eq $seq_id) &&
+						($start < $lines{$line_key}->get_object_begin()) &&
+						($end >= $lines{$line_key}->get_object_begin() &&
+						($end < $lines{$line_key}->get_object_end()))
+						||(($start >= $lines{$line_key}->get_object_begin()) &&
+						($end < $lines{$line_key}->get_object_end()))){
+							$par_cov_gap_count++;
+							$par_cov_gap_length += $end - $lines{$line_key}->get_object_begin() + 1;
+						}
+					elsif(($lines{$line_key}->get_object_being_assembled() eq $seq_id) &&
+						($start > $lines{$line_key}->get_object_begin()) &&
+						($end <= $lines{$line_key}->get_object_end())
+						||($start >= $lines{$line_key}->get_object_begin()) &&
+						($start < $lines{$line_key}->get_object_end()) &&
+						($end > $lines{$line_key}->get_object_end())){
+							$par_cov_gap_count++;
+							$par_cov_gap_length += $lines{$line_key}->get_object_end() - $start + 1;
 					}
-				elsif(($start < $lines{$line_key}->get_object_begin()) &&
-					($end >= $lines{$line_key}->get_object_begin() &&
-					($end < $lines{$line_key}->get_object_end()))
-					||(($start >= $lines{$line_key}->get_object_begin()) &&
-					($end < $lines{$line_key}->get_object_end()))){
-						$par_cov_gap_count++;
-						$par_cov_gap_length += $end - $lines{$line_key}->get_object_begin() + 1;
-#						print STDERR "added1 ";
-#						print STDERR $end - $lines{$line_key}->get_object_begin() + 1;
-#						print STDERR "\n";
+				}
+				else{
+					if (($start <= $lines{$line_key}->get_object_begin()) &&
+						($end >= $lines{$line_key}->get_object_end())){
+							$cov_gap_count++;
+							$cov_gap_length += $lines{$line_key}->get_object_end()-$lines{$line_key}->get_object_begin()+1;
+						}
+					elsif(($start < $lines{$line_key}->get_object_begin()) &&
+						($end >= $lines{$line_key}->get_object_begin() &&
+						($end < $lines{$line_key}->get_object_end()))
+						||(($start >= $lines{$line_key}->get_object_begin()) &&
+						($end < $lines{$line_key}->get_object_end()))){
+							$par_cov_gap_count++;
+							$par_cov_gap_length += $end - $lines{$line_key}->get_object_begin() + 1;
+						}
+					elsif(($start > $lines{$line_key}->get_object_begin()) &&
+						($end <= $lines{$line_key}->get_object_end())
+						||($start >= $lines{$line_key}->get_object_begin()) &&
+						($start < $lines{$line_key}->get_object_end()) &&
+						($end > $lines{$line_key}->get_object_end())){
+							$par_cov_gap_count++;
+							$par_cov_gap_length += $lines{$line_key}->get_object_end() - $start + 1;
 					}
-				elsif(($start > $lines{$line_key}->get_object_begin()) &&
-					($end <= $lines{$line_key}->get_object_end())
-					||($start >= $lines{$line_key}->get_object_begin()) &&
-					($start < $lines{$line_key}->get_object_end()) &&
-					($end > $lines{$line_key}->get_object_end())){
-						$par_cov_gap_count++;
-						$par_cov_gap_length += $lines{$line_key}->get_object_end() - $start + 1;
-#						print STDERR "added2 ";
-#						print STDERR $lines{$line_key}->get_object_end() - $start + 1;
-#						print STDERR "\n";
 				}
 			}
 		}
