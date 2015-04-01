@@ -499,7 +499,7 @@ if ($opt_c && $opt_s){
 	print STDERR
 	"\tTotal length of gaps completely covered from chr AGP:\t\t$total_complete_chr_gap_length_covered\n";
 	if ($total_complete_chr_gaps_covered > 0){
-		print STDERR "Avg length of gaps completely covered from chr AGP:\t\t\t"
+		print STDERR "\tAvg length of gaps completely covered from chr AGP:\t\t\t"
 	  . $total_complete_chr_gap_length_covered / $total_complete_chr_gaps_covered
 	  . "\n";
 	}
