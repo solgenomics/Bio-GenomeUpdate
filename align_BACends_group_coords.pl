@@ -484,22 +484,16 @@ sub calc_and_print_info {
 		 $alternates
 	  )
 	  = $align_group
-	  ->get_id_coords_and_direction_of_longest_alignment_cluster_group(
-															 $gap_size_allowed);
+	  ->get_id_coords_and_direction_of_longest_alignment_cluster_group($gap_size_allowed);
 	my $is_full_length;
-	my $start_gap_length =
-	  $query_start - 1;    #region of query before aligned part
-	my $end_gap_length =
-	  $q_length - $query_end;    #region of query after aligned part
+	my $start_gap_length = $query_start - 1;    #region of query before aligned part
+	my $end_gap_length = $q_length - $query_end;    #region of query after aligned part
 	 #for calculating any gaps within the BAC alignment. It doesn’t count gaps at the beginning or end of the BAC
 	 #(those may be from the BAC extending beyond the contig. Large gaps within the BAC could indicate a problem
-	my $internal_gap_length =
-	  ( $q_length - $sequence_aligned_in_clusters ) -
-	  ( $start_gap_length + $end_gap_length );
+	my $internal_gap_length = ( $q_length - $sequence_aligned_in_clusters ) - ( $start_gap_length + $end_gap_length );
 
 	if ( ( $query_start == 1 ) && ( $query_end == $q_length ) ) {
-		$is_full_length =
-		  "Contains";    #entire query is covered in the alignment grp
+		$is_full_length = "Contains";    #entire query is covered in the alignment grp
 	}
 	else {
 		$is_full_length = "Partial";
