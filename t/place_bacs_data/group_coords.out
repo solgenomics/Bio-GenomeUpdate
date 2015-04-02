@@ -1,0 +1,4 @@
+query	reference	ref_start	ref_end	length	q_start	q_end	q_length	seq_in_clusters	direction	ref_count	includes_0	full_length	from_start	from_end	internal_gap	is_overlapping	size_of_alt	alternates	
+Contig1	SL2.50ch01	12001	16000	4000	1	4000	4000	3404	-1	1	0	Contains	0	0	0	0	0		
+Contig2	SL2.50ch01	35267599	35287598	20000	20001	40000	20000	19532	1	1	0	Contains	0	20000	0	0	0		
+gi|118344469|gb|AC193777.1|	SL2.50ch01	35307598	35477598	210000	1	210000	210000	206348	1	1	0	Contains	0	0	0	0	0		
