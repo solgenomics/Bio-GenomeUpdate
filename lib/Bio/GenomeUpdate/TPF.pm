@@ -766,11 +766,17 @@ sub get_tpf_in_new_scaffold_order {
 	return $self;
 }
 
+=item C<get_tpf_with_bacs_inserted ( @bacs, %scaffold_agp_coords )>
+
+Returns a full TPF with the BAC accessions inserted in order.
+
+=cut
+
 sub get_tpf_with_bacs_inserted {
 	my $self           = shift;
 	my $bacs_ref       = shift;
 	my $agp_coords_ref = shift;
-	my @bacs           = @$bacs_ref;
+	my @bacs           = @$bacs_ref; # ref to array of arrays with bac names and coordinates
 	my %agp_coords     = %$agp_coords_ref;
 
 	#make sure BACs are sorted by position
@@ -798,8 +804,7 @@ sub get_tpf_with_bacs_inserted {
 			$bac_end   = $bac[1];
 		}
 		else {
-			die
-"Error in BAC coordinates for BAC $bac_start Start: $bac_start End: $bac_end\n";
+			die	"Error in BAC coordinates for BAC $bac_start Start: $bac_start End: $bac_end\n";
 		}
 		my $prev_agp_start = 0;
 		my $prev_agp_end   = 0;
@@ -815,8 +820,7 @@ sub get_tpf_with_bacs_inserted {
 		my @rev_sorted_gaps_to_remove;
 		my $insert_before_or_after = undef;
 		my $insert_line_number     = undef;
-		my %contained_contigs
-		  ;    #key will be line number and value will be the contig accession
+		my %contained_contigs;    #key will be line number and value will be the contig accession
 		my $past_bac = 0;
 		my $line_key = 1;
 
@@ -871,8 +875,7 @@ sub get_tpf_with_bacs_inserted {
 				{
 					$gaps_to_remove{ $line_key - 1 } = 'delete';
 					my $gap_location = $line_key - 1;
-					print STDERR
-"Removing gap at line $gap_location between $accession and $prev_accession\n";
+					print STDERR "Removing gap at line $gap_location between $accession and $prev_accession\n";
 				}
 
 				#shrink gaps when partially spanned by a BAC
