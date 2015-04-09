@@ -10,10 +10,10 @@ place_bacs.pl
 
 =head1 COMMAND-LINE OPTIONS
 
- -t  TPF file
- -s  scaffold AGP file
- -c  chromosome AGP file
- -l  Tab-delimited file containing BAC names and start and end coordinates
+ -t  TPF file (required)
+ -s  scaffold AGP file (required)
+ -c  chromosome AGP file (required)
+ -l  Tab-delimited file containing BAC names and start and end coordinates from align_BACends_group_coords.pl or group_coords.pl(required) 
  -h  Help
 
 =head1 TODO
@@ -39,7 +39,7 @@ if ($opt_h) {
 }
 if ( !$opt_t || !$opt_l || !$opt_s || !$opt_c ) {
 	print STDERR
-	  "\nTPF, AGP and BAC name/coordinates filenames are required.\n\n\n";
+	  "\nTPF, AGP and group_coords BAC name/coordinates filenames are required.\n\n\n";
 	help();
 }
 
@@ -53,14 +53,14 @@ my $chromosome_agp_input_file = $opt_c;
 my $chromosome_input_agp      = read_file($chromosome_agp_input_file)
   or die
   "Could not open chromosome AGP input file: $chromosome_agp_input_file\n";
-my $bac_input_file = $opt_l;
-my $input_bacs     = read_file($bac_input_file)
-  or die "Could not open BAC name and coordinates file: $bac_input_file\n";
+my $group_coords_input_file = $opt_l;
+my $input_group_coords     = read_file($group_coords_input_file)
+  or die "Could not open BAC name and coordinates file: $group_coords_input_file\n";
 my $tpf            = Bio::GenomeUpdate::TPF->new();
 my $scaffold_agp   = Bio::GenomeUpdate::AGP->new();
 my $chromosome_agp = Bio::GenomeUpdate::AGP->new();
 my $out_tpf;
-my @bac_lines;
+my @group_coords_lines;
 my @bacs;
 
 #my @sorted_bacs;
@@ -89,8 +89,7 @@ if ( $chromosome_agp->has_agp_lines() ) {
 foreach my $agp_line_key ( keys %chromosome_agp_lines ) {
 	if ( $chromosome_agp_lines{$agp_line_key}->get_line_type() eq 'sequence' ) {
 		my $offset = $chromosome_agp_lines{$agp_line_key}->get_object_begin();
-		my $agp_accession =
-		  $chromosome_agp_lines{$agp_line_key}->get_component_id();
+		my $agp_accession = $chromosome_agp_lines{$agp_line_key}->get_component_id();
 		$chromosome_agp_offset{$agp_accession} = $offset;
 	}
 }
@@ -98,39 +97,78 @@ foreach my $agp_line_key ( keys %chromosome_agp_lines ) {
 foreach my $agp_line_key ( keys %scaffold_agp_lines ) {
 	my %coords;
 	if ( $scaffold_agp_lines{$agp_line_key}->get_line_type() eq 'sequence' ) {
-		my $scaffold_name =
-		  $scaffold_agp_lines{$agp_line_key}->get_object_being_assembled();
+		my $scaffold_name = $scaffold_agp_lines{$agp_line_key}->get_object_being_assembled();
 		my $offset = $chromosome_agp_offset{$scaffold_name};
-		$coords{'start'} =
-		  $scaffold_agp_lines{$agp_line_key}->get_object_begin() + $offset;
-		$coords{'end'} =
-		  $scaffold_agp_lines{$agp_line_key}->get_object_end() + $offset;
-		$coords{'orientation'} =
-		  $scaffold_agp_lines{$agp_line_key}->get_orientation();
-		my $agp_accession =
-		  $scaffold_agp_lines{$agp_line_key}->get_component_id();
+		#offset for the start position of the scaffold
+		$coords{'start'} = $scaffold_agp_lines{$agp_line_key}->get_object_begin() + $offset;
+		$coords{'end'} =  $scaffold_agp_lines{$agp_line_key}->get_object_end() + $offset;
+		$coords{'orientation'} = $scaffold_agp_lines{$agp_line_key}->get_orientation();
+		my $agp_accession = $scaffold_agp_lines{$agp_line_key}->get_component_id();
 		$agp_accession =~ s/\.\d+//;
 		$scaffold_agp_coords{$agp_accession} = \%coords;
 	}
 }
 
-@bac_lines = split( /\n/, $input_bacs );
-foreach my $line (@bac_lines) {
+my $startline   = 2;
+my $currentline = 0;
+
+@group_coords_lines = split( /\n/, $input_group_coords );
+foreach my $line (@group_coords_lines) {
+	$currentline++;
+	if ( $currentline < $startline ) {
+		next;
+	}
 	chomp($line);
 	my @bac_and_coordinates = split( /\t/, $line );
-	my $bac_name            = $bac_and_coordinates[0];
-	my $bac_start           = $bac_and_coordinates[1];
-	my $bac_end             = $bac_and_coordinates[2];
+	my $bac_name            = $bac_and_coordinates[0]; #query
+	if ( is_ncbi_format($bac_name) ){ $bac_name = get_accession($bac_name);}
+	my $bac_start           = $bac_and_coordinates[2]; #ref_start
+	my $bac_end             = $bac_and_coordinates[3]; #ref_end
 	my @bac_array           = ( $bac_name, $bac_start, $bac_end );
 	push( @bacs, \@bac_array );
 }
 
 #sort @bacs
 
-$ordered_tpf =
-  $tpf->get_tpf_with_bacs_inserted( \@bacs, \%scaffold_agp_coords );
+$ordered_tpf = $tpf->get_tpf_with_bacs_inserted_in_gaps( \@bacs, \%scaffold_agp_coords );
 my $out_str_from_tpf_ordered = $ordered_tpf->get_formatted_tpf();
 print $out_str_from_tpf_ordered. "\n";
+
+=item C<is_ncbi_format ( $bac_name )>
+
+Checks if BAC name is in NCBI format, i.e. gi|118344469|gb|AC193777.1|
+
+=cut
+
+sub is_ncbi_format{
+	my $name = shift;
+	my @name_arr = split (/\|/, $name);
+	if (( $name_arr[0] eq 'gi' ) && ( $name_arr[2] eq 'gb' )){
+		return 1;
+	}
+	else{
+		return 0;
+	}
+	
+}
+
+=item C<get_gap_methods>
+
+Returns the accession number from a BAC name after trimming off the version number.
+
+=cut
+
+sub get_accession{
+	my $name = shift;
+	my @name_arr = split (/\|/, $name);
+	if ($name_arr[3] =~ /\./){
+		my @accession_arr = split (/\./, $name_arr[3]);
+		return $accession_arr[0]; # return without version number, NCBI GRC will get latest version
+	}
+	else{
+		return $name_arr[3];
+	}
+}
 
 sub help {
 	print STDERR <<EOF;
