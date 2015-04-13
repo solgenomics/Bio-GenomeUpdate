@@ -766,13 +766,13 @@ sub get_tpf_in_new_scaffold_order {
 	return $self;
 }
 
-=item C<get_tpf_with_bacs_inserted ( @bacs, %scaffold_agp_coords )>
+=item C<get_tpf_with_bacs_inserted_in_gaps ( @bacs, %scaffold_agp_coords )>
 
-Returns a full TPF with the BAC accessions inserted in order.
+Returns a full TPF with the BAC accessions inserted in order that replace gaps. Components are now CONTAINED in BACs that encompass them.
 
 =cut
 
-sub get_tpf_with_bacs_inserted {
+sub get_tpf_with_bacs_inserted_in_gaps {
 	my $self           = shift;
 	my $bacs_ref       = shift;
 	my $agp_coords_ref = shift;
@@ -790,16 +790,15 @@ sub get_tpf_with_bacs_inserted {
 		if ( $self->has_tpf_lines() ) {
 			%tpf_lines = %{ $self->get_tpf_lines() };
 		}
-		my @sorted_tpf_line_numbers =
-		  sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
+		my @sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
 		$bac_to_insert->set_accession($bac_name);
 		if ( $bac[1] < $bac[2] ) {
-			$bac_to_insert->set_orientation('PLUS');
+			$bac_to_insert->set_orientation('PLUS'); #records the orientation of ref region that aligned to bac
 			$bac_start = $bac[1];
 			$bac_end   = $bac[2];
 		}
 		elsif ( $bac[1] > $bac[2] ) {
-			$bac_to_insert->set_orientation('MINUS');
+			$bac_to_insert->set_orientation('MINUS'); #records the orientation of ref region that aligned to bac
 			$bac_start = $bac[2];
 			$bac_end   = $bac[1];
 		}
@@ -838,8 +837,14 @@ sub get_tpf_with_bacs_inserted {
 			die "No orientation specified for BAC: $bac_name\n";
 		}
 		$agp_coords{$bac_name} = \%add_agp_coords;
+		
+		#print STDERR "* sorted_tpf_line_numbers: ",@sorted_tpf_line_numbers + 1,"\n";
 
-		while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers + 1 ) {
+		# the +1 breaks the code
+		#while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers + 1 ) {
+		while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers ) {
+			#print STDERR "** processing line $line_key\n";
+			if (!exists $tpf_lines{$line_key}){print STDERR "No TPF line for $line_key\n";}
 			if ( $tpf_lines{$line_key}->get_line_type() eq 'sequence' ) {
 				my $accession = $tpf_lines{$line_key}->get_accession();
 				my $agp_line_coords_ref = $agp_coords{$accession};
@@ -906,8 +911,7 @@ sub get_tpf_with_bacs_inserted {
 		@rev_sorted_gaps_to_remove = sort { $b <=> $a } keys %gaps_to_remove;
 
 		foreach my $line_number (@sorted_gaps_to_resize) {
-			$tpf_lines{$line_number}
-			  ->set_gap_size( $gaps_to_resize{$line_number} );
+			$tpf_lines{$line_number}->set_gap_size( $gaps_to_resize{$line_number} );
 		}
 		$self->set_tpf_lines( \%tpf_lines );
 		foreach my $line_number (@rev_sorted_gaps_to_remove) {
@@ -931,8 +935,7 @@ sub get_tpf_with_bacs_inserted {
 					if ( $bac_start <= 0 ) {
 						$insert_before_or_after = 'before';
 						$insert_line_number     = $line_key;
-						$bac_to_insert->set_local_contig_identifier(
-							$tpf_lines{$line_key}->get_local_contig_identifier()
+						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
 						);
 						$bac_is_inserted = 1;
 					}
@@ -955,15 +958,13 @@ sub get_tpf_with_bacs_inserted {
 						$insert_before_or_after = 'after';
 						$insert_line_number     = $prev_line_key;
 						$bac_to_insert->set_local_contig_identifier(
-							$tpf_lines{$prev_line_key}
-							  ->get_local_contig_identifier() );
+							$tpf_lines{$prev_line_key}->get_local_contig_identifier() );
 						$bac_is_inserted = 1;
 					}
 					elsif ( $bac_start > $prev_agp_end ) {
 						$insert_before_or_after = 'before';
 						$insert_line_number     = $line_key;
-						$bac_to_insert->set_local_contig_identifier(
-							$tpf_lines{$line_key}->get_local_contig_identifier()
+						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
 						);
 						$bac_is_inserted = 1;
 					}
