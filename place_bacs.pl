@@ -134,6 +134,10 @@ $ordered_tpf = $tpf->get_tpf_with_bacs_inserted_in_gaps( \@bacs, \%scaffold_agp_
 my $out_str_from_tpf_ordered = $ordered_tpf->get_formatted_tpf();
 print $out_str_from_tpf_ordered. "\n";
 
+#$ordered_tpf = $tpf->get_tpf_with_bacs_inserted( \@bacs, \%scaffold_agp_coords );
+#my $out_str_from_tpf_ordered = $ordered_tpf->get_formatted_tpf();
+#print $out_str_from_tpf_ordered. "\n";
+
 =item C<is_ncbi_format ( $bac_name )>
 
 Checks if BAC name is in NCBI format, i.e. gi|118344469|gb|AC193777.1|
@@ -154,7 +158,7 @@ sub is_ncbi_format{
 
 =item C<get_gap_methods>
 
-Returns the accession number from a BAC name after trimming off the version number.
+Returns the accession number from a BAC name after trimming off the version number. NCBI will automatically use the latest version.
 
 =cut
 
