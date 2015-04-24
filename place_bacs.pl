@@ -64,7 +64,9 @@ my @group_coords_lines;
 my @bacs;
 
 #my @sorted_bacs;
+#my $ordered_tpf_with_bacs_inserted_in_gaps;
 my $ordered_tpf;
+my $ordered_tpf_with_bacs_inserted_in_sequences_and_gaps;
 my %chromosome_agp_offset;
 my %scaffold_agp_coords;
 
@@ -130,13 +132,14 @@ foreach my $line (@group_coords_lines) {
 
 #sort @bacs
 
-$ordered_tpf = $tpf->get_tpf_with_bacs_inserted_in_gaps( \@bacs, \%scaffold_agp_coords );
-my $out_str_from_tpf_ordered = $ordered_tpf->get_formatted_tpf();
-print $out_str_from_tpf_ordered. "\n";
-
-#$ordered_tpf = $tpf->get_tpf_with_bacs_inserted( \@bacs, \%scaffold_agp_coords );
+#$ordered_tpf_with_bacs_inserted_in_gaps = $tpf->get_tpf_with_bacs_inserted_in_gaps( \@bacs, \%scaffold_agp_coords );
 #my $out_str_from_tpf_ordered = $ordered_tpf->get_formatted_tpf();
 #print $out_str_from_tpf_ordered. "\n";
+
+#$ordered_tpf_with_bacs_inserted_in_gaps_and_sequences = $ordered_tpf_with_bacs_inserted_in_gaps->get_tpf_with_bacs_inserted_in_sequences( \@bacs, \%scaffold_agp_coords );
+$ordered_tpf_with_bacs_inserted_in_sequences_and_gaps = $tpf->get_tpf_with_bacs_inserted_in_sequences_and_gaps( \@bacs, \%scaffold_agp_coords );
+my $out_str_from_ordered_tpf_with_bacs_inserted_in_sequences_and_gaps = $ordered_tpf_with_bacs_inserted_in_sequences_and_gaps->get_formatted_tpf();
+print $out_str_from_ordered_tpf_with_bacs_inserted_in_sequences_and_gaps. "\n";
 
 =item C<is_ncbi_format ( $bac_name )>
 
