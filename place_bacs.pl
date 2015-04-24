@@ -124,19 +124,19 @@ foreach my $line (@group_coords_lines) {
 	my @bac_and_coordinates = split( /\t/, $line );
 	my $bac_name            = $bac_and_coordinates[0]; #query
 	if ( is_ncbi_format($bac_name) ){ $bac_name = get_accession($bac_name);}
-	my $bac_start           = $bac_and_coordinates[2]; #ref_start
-	my $bac_end             = $bac_and_coordinates[3]; #ref_end
-	my @bac_array           = ( $bac_name, $bac_start, $bac_end );
+	my $bac_ref_start           = $bac_and_coordinates[2]; #ref_start
+	my $bac_ref_end             = $bac_and_coordinates[3]; #ref_end
+	my $bac_query_start         = $bac_and_coordinates[5]; #ref_start
+	my $bac_query_end           = $bac_and_coordinates[6]; #ref_end
+	my $bac_query_length        = $bac_and_coordinates[7]; #ref_end
+	my @bac_array           = ( $bac_name, $bac_ref_start, $bac_ref_end, $bac_query_start, $bac_query_end, $bac_query_length );
 	push( @bacs, \@bac_array );
 }
-
-#sort @bacs
 
 #$ordered_tpf_with_bacs_inserted_in_gaps = $tpf->get_tpf_with_bacs_inserted_in_gaps( \@bacs, \%scaffold_agp_coords );
 #my $out_str_from_tpf_ordered = $ordered_tpf->get_formatted_tpf();
 #print $out_str_from_tpf_ordered. "\n";
 
-#$ordered_tpf_with_bacs_inserted_in_gaps_and_sequences = $ordered_tpf_with_bacs_inserted_in_gaps->get_tpf_with_bacs_inserted_in_sequences( \@bacs, \%scaffold_agp_coords );
 $ordered_tpf_with_bacs_inserted_in_sequences_and_gaps = $tpf->get_tpf_with_bacs_inserted_in_sequences_and_gaps( \@bacs, \%scaffold_agp_coords );
 my $out_str_from_ordered_tpf_with_bacs_inserted_in_sequences_and_gaps = $ordered_tpf_with_bacs_inserted_in_sequences_and_gaps->get_formatted_tpf();
 print $out_str_from_ordered_tpf_with_bacs_inserted_in_sequences_and_gaps. "\n";

@@ -768,7 +768,7 @@ sub get_tpf_in_new_scaffold_order {
 
 =item C<get_tpf_with_bacs_inserted_in_gaps ( @bacs, %scaffold_agp_coords )>
 
-Returns a full TPF with the BAC accessions inserted in order that replace gaps. Components are now CONTAINED in BACs that encompass them.
+Does not account for BAC regions that start or end within gaps when resizing gaps. See issue #32. Returns a full TPF with the BAC accessions inserted in order that replace gaps. Components are now CONTAINED in BACs that encompass them.
 
 =cut
 
@@ -1008,28 +1008,47 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 	foreach my $bac_ref (@bacs) {
 		my @bac      = @$bac_ref;
 		my $bac_name = $bac[0];
-		my $bac_start;
-		my $bac_end;
+		my $bac_ref_start;
+		my $bac_ref_end;
+		my $bac_query_start;
+		my $bac_query_end;
+		my $bac_query_length;
+		
 		my $bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
 		my %tpf_lines;
 		if ( $self->has_tpf_lines() ) {
 			%tpf_lines = %{ $self->get_tpf_lines() };
 		}
 		my @sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
+
+		#set BAC variables
 		$bac_to_insert->set_accession($bac_name);
 		if ( $bac[1] < $bac[2] ) {
 			$bac_to_insert->set_orientation('PLUS'); #records the orientation of ref region that aligned to bac
-			$bac_start = $bac[1];
-			$bac_end   = $bac[2];
+			$bac_ref_start = $bac[1];
+			$bac_ref_end   = $bac[2];
 		}
-		elsif ( $bac[1] > $bac[2] ) {
+		elsif ( $bac[1] > $bac[2] ) {#as mummer flips coords for alignments on MINUS strand
 			$bac_to_insert->set_orientation('MINUS'); #records the orientation of ref region that aligned to bac
-			$bac_start = $bac[2];
-			$bac_end   = $bac[1];
+			$bac_ref_start = $bac[2];
+			$bac_ref_end   = $bac[1];
 		}
 		else {
-			die	"Error in BAC coordinates for BAC $bac_start Start: $bac_start End: $bac_end\n";
+			die	"Error in BAC ref coordinates for BAC $bac_name Start: $bac_ref_start End: $bac_ref_end\n";
 		}
+		if ( $bac[3] < $bac[4] ) {
+			$bac_query_start = $bac[3];
+			$bac_query_end   = $bac[4];
+		}
+		elsif ( $bac[3] > $bac[4] ) {
+			$bac_query_start = $bac[4];
+			$bac_query_end   = $bac[3];
+		}
+		else {
+			die	"Error in BAC query coordinates for BAC $bac_name Start: $bac_query_start End: $bac_query_end\n";
+		}
+		$bac_query_length = $bac[5];
+		
 		my $prev_agp_sequence_start = 0;
 		my $prev_agp_sequence_end   = 0;
 		my $prev_accession = 'none';
@@ -1052,8 +1071,8 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 
 		#add BAC coordinates to AGP info (NOT saved or output to STDOUT or file, maybe write to inserted.scaffolds.agp)
 		my %add_agp_coords;
-		$add_agp_coords{'start'} = $bac_start;
-		$add_agp_coords{'end'}   = $bac_end;
+		$add_agp_coords{'start'} = $bac_ref_start;
+		$add_agp_coords{'end'}   = $bac_ref_end;
 		if ( $bac_to_insert->get_orientation() eq 'PLUS' ) {
 			$add_agp_coords{'orientation'} = '+';
 		}
@@ -1081,12 +1100,12 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 				$agp_sequence_end   = $line_coords{'end'};
 
 				#check if past the BAC
-				if ( $bac_end < $prev_agp_sequence_start ) {
+				if ( $bac_ref_end < $prev_agp_sequence_start ) {
 					$past_bac = 1;
 				}
 
 				#check if current contig is contained in the BAC
-				if ( $agp_sequence_start >= $bac_start && $agp_sequence_end <= $bac_end ) {
+				if ( $agp_sequence_start >= $bac_ref_start && $agp_sequence_end <= $bac_ref_end ) {
 					#$tpf_lines{$line_key}->set_contains('CONTAINED');
 					#$tpf_lines{$line_key}->set_containing_accession($bac_name);
 					#$self->set_tpf_lines( \%tpf_lines );
@@ -1100,15 +1119,15 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 				}
 
 				#check if current BAC is contained in the contig, will probably never happen for SL2.50->SL3.0
-				if ( $bac_start >= $agp_sequence_start && $bac_end <= $agp_sequence_end ) {
+				if ( $bac_ref_start >= $agp_sequence_start && $bac_ref_end <= $agp_sequence_end ) {
 					$bac_to_insert->set_contains('CONTAINED');
 					$bac_to_insert->set_containing_accession($accession);
 				}
 
 				#check if gap is spanned by the BAC
 				if (   $prev_line_key
-					&& $bac_start <= $prev_agp_sequence_end
-					&& $bac_end >= $agp_sequence_start
+					&& $bac_ref_start <= $prev_agp_sequence_end
+					&& $bac_ref_end >= $agp_sequence_start
 					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
 				{
 					#$gaps_to_remove{ $line_key - 1 } = 'delete'; # subtract one as we want to remove the prev TPF line
@@ -1119,26 +1138,59 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 
 				#shrink gaps when partially spanned by a BAC
 				#if BAC start is in the middle of a gap
+				# $bac_ref_start < $agp_sequence_start works as there is a offset of 1 even if mummer does not align at N 
 				if (   $prev_line_key
-					&& $bac_start < $agp_sequence_start
-					&& $bac_start > $prev_agp_sequence_end
+					&& $bac_ref_start < $agp_sequence_start
+					&& $bac_ref_start > $prev_agp_sequence_end
 					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
 				{
-					$gaps_to_resize{ $line_key - 1 } = $bac_start - $prev_agp_sequence_end;
-					my $gap_location = $line_key - 1;
-					print STDERR "BAC start within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
-						$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
+					if ( ($bac_query_end - $bac_query_start + 1) == $bac_query_length ){ #whole BAC aligned to ref
+						$gaps_to_resize{ $line_key - 1 } = $bac_ref_start - $prev_agp_sequence_end;
+						my $gap_location = $line_key - 1;
+						print STDERR "BAC $bac_name starts within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
+							$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
+					}
+					elsif( ($bac_query_end - $bac_query_start + 1) < $bac_query_length ){ #partial BAC aligned to ref
+						print STDERR "Partial alignment for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
+						if ( $bac_query_start > 1 ){#fix overhang at begininng
+							my $bac_start_overhang =  $bac_query_start - 1;
+							
+							$gaps_to_resize{ $line_key - 1 } = $bac_ref_start - $bac_start_overhang - $prev_agp_sequence_end;
+							my $gap_location = $line_key - 1;
+							print STDERR "BAC $bac_name starts within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
+								$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
+						}
+					}
+					else{
+						print STDERR "Error for aligned region calculation for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
+					}
 				}
+				
 				#if BAC end is in the middle of a gap
+				#$bac_ref_end < $agp_sequence_end works as there is a offset of 1 even if mummer does not align at N
 				if (   $prev_line_key
-					&& $bac_end < $agp_sequence_start
-					&& $bac_end > $prev_agp_sequence_end
+					&& $bac_ref_end < $agp_sequence_start
+					&& $bac_ref_end > $prev_agp_sequence_end
 					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
 				{
-					$gaps_to_resize{ $line_key - 1 } = $agp_sequence_start - $bac_end;
-					my $gap_location = $line_key - 1;
-					print STDERR "BAC end within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
-						$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
+					if ( ($bac_query_end - $bac_query_start + 1) == $bac_query_length ){ #whole BAC aligned to ref
+						$gaps_to_resize{ $line_key - 1 } = $agp_sequence_start - $bac_ref_end;
+						my $gap_location = $line_key - 1;
+						print STDERR "BAC $bac_name ends within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
+							$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
+					}
+					elsif( ($bac_query_end - $bac_query_start + 1) < $bac_query_length ){ #partial BAC aligned to ref
+						print STDERR "Partial alignment for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
+						my $bac_end_overhang = $bac_query_length - $bac_query_end + 1;
+						
+						$gaps_to_resize{ $line_key - 1 } = $agp_sequence_start - $bac_ref_end - $bac_end_overhang ;
+						my $gap_location = $line_key - 1;
+						print STDERR "BAC $bac_name ends within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
+							$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
+					}
+					else{
+						print STDERR "Error for aligned region calculation for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
+					}
 				}
 				$prev_line_key  = $line_key;
 				$prev_accession = $accession;
@@ -1177,7 +1229,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 				$agp_sequence_start = $line_coords{'start'};
 				$agp_sequence_end   = $line_coords{'end'};
 				if ( $line_key == 1 ) {          #deal with first one
-					if ( $bac_start <= 0 ) {
+					if ( $bac_ref_start <= 0 ) {
 						$insert_before_or_after = 'before';
 						$insert_line_number     = $line_key;
 						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier());
@@ -1186,7 +1238,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 				}
 				elsif ( $line_key == @sorted_tpf_line_numbers + 1 ) #deal with last one
 				{
-					if ( $bac_start >= $agp_sequence_start ) {
+					if ( $bac_ref_start >= $agp_sequence_start ) {
 						$insert_before_or_after = 'after';
 						$insert_line_number     = $line_key;
 						$bac_to_insert->set_local_contig_identifier(
@@ -1195,17 +1247,17 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 						$bac_is_inserted = 1;
 					}
 				}
-				elsif ($bac_start >= $prev_agp_sequence_start
-					&& $bac_start < $agp_sequence_start )
+				elsif ($bac_ref_start >= $prev_agp_sequence_start
+					&& $bac_ref_start < $agp_sequence_start )
 				{
-					if ( $bac_start <= $prev_agp_sequence_end ) {
+					if ( $bac_ref_start <= $prev_agp_sequence_end ) {
 						$insert_before_or_after = 'after';
 						$insert_line_number     = $prev_line_key;
 						$bac_to_insert->set_local_contig_identifier(
 							$tpf_lines{$prev_line_key}->get_local_contig_identifier() );
 						$bac_is_inserted = 1;
 					}
-					elsif ( $bac_start > $prev_agp_sequence_end ) {
+					elsif ( $bac_ref_start > $prev_agp_sequence_end ) {
 						$insert_before_or_after = 'before';
 						$insert_line_number     = $line_key;
 						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
