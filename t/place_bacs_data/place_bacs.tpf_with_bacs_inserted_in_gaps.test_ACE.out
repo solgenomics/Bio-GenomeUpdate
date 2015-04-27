@@ -1,0 +1,60 @@
+ perl -I../../lib/ ../../place_bacs.pl -t original.tpf -s scaffold.agp -c chr.agp -a assembly.ace -l group_coords.out
+Scaffold or Assembly name: NoName
+Number of BACs in scaffold: 3
+Number of Contigs: 1
+Number of BACs in Contigs: 2
+Number of Singlets: 1
+
+1 contigs processed from assembly.ace
+$VAR1 = {
+          'Contig2' => [
+                         'gi|448826174|gb|AC247241.6|',
+                         'gi|448826169|gb|AC247069.6|'
+                       ]
+        };
+$VAR1 = {
+          'Contig2' => [
+                         1,
+                         1
+                       ]
+        };
+Parsing TPF line 31 of 31
+Parsed 31 TPF lines
+Parsing AGP line 22 of 22
+Parsed 22 AGP lines
+Parsing AGP line 3 of 3
+Parsed 3 AGP lines
+Removing gap at line 4 between AEKE02013045 and AEKE02013046 w.r.t. original TPF
+Removing sequence at line 15 for AEKE02013591
+Partial alignment for Contig2 query start: 20001 query end: 40000
+BAC Contig2 starts within a gap. Resizing gap at line 14 between AEKE02013591 and AEKE02013041 to 2260001 bp w.r.t. original TPF
+Removing gap at line 16 between AEKE02013592 and AEKE02013591 w.r.t. original TPF
+Removing gap at line 19 between AEKE02013594 and AEKE02013593 w.r.t. original TPF
+##Organism: Solanum lycopersicum
+
+##=== Beginning of TPF Data ===
+
+AEKE02013047    ?       SL2.50sc04133   MINUS
+GAP     TYPE-2  253     PAIRED ENDS
+AEKE02013046    ?       SL2.50sc04133   MINUS
+Contig1 ?       SL2.50sc04133   PLUS
+AEKE02013045    ?       SL2.50sc04133   MINUS
+GAP     TYPE-2  576     PAIRED ENDS
+AEKE02013044    ?       SL2.50sc04133   MINUS
+GAP     TYPE-2  642     PAIRED ENDS
+AEKE02013043    ?       SL2.50sc04133   MINUS
+GAP     TYPE-2  20      PAIRED ENDS
+AEKE02013042    ?       SL2.50sc04133   MINUS
+GAP     TYPE-2  963     PAIRED ENDS
+AEKE02013041    ?       SL2.50sc04133   MINUS
+GAP     TYPE-3  2260001 FISH
+Contig2 ?       SL2.50sc04191   PLUS
+AEKE02013592    ?       SL2.50sc04191   PLUS
+GAP     TYPE-2  20      PAIRED ENDS
+AEKE02013593    ?       SL2.50sc04191   PLUS
+AC193777        ?       SL2.50sc04191   PLUS
+AEKE02013594    ?       SL2.50sc04191   PLUS
+GAP     TYPE-2  450     PAIRED ENDS
+AEKE02013595    ?       SL2.50sc04191   PLUS
+##=== End of TPF Data ===
+
