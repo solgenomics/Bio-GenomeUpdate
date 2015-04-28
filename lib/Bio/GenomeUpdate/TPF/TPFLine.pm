@@ -9,15 +9,15 @@ use Moose::Util::TypeConstraints;
 
 =head1 NAME
 
-    TPFGapLine - A gap line in a Tiling Path File (TPF)
+    TPFLine - A line in a Tiling Path File (TPF)
 
 =head1 SYNOPSIS
 
-    my $variable = TPFGapLine->new();
+    my $variable = TPFLine->new();
 
 =head1 DESCRIPTION
 
-    This class stores information for a gap line in a Tiling Path File (TPF).
+    This class stores information for a line in a Tiling Path File (TPF).
 
 =head2 Methods
 
@@ -76,7 +76,6 @@ subtype 'PositiveInt',
   where { $_ > 0 },
   message { "Int is not larger than 0" };
 has 'gap_size' => (isa => 'PositiveInt', is => 'rw', predicate => 'has_gap_size');
-
 
 
 =item C<get_gap_methods>

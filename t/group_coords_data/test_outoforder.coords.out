@@ -1,4 +1,4 @@
-surya@caffeine temp$ perl -I ~/work/Eclipse/Bio-GenomeUpdate/lib/ ~/work/Eclipse/Bio-GenomeUpdate/group_coords.pl  -r ref.fas -q query.fas -c contig.agp -s chr.agp -i test_outoforder.coords -g 5000 > /dev/null
+perl -I ../../lib/ ../../group_coords.pl  -r ref.fas -q query.fas -c contig.agp -s chr.agp -i test_outoforder.coords -g 5000
 Parsing AGP line 11 of 11
 Parsed 11 AGP lines
 Parsing AGP line 5 of 5
@@ -7,7 +7,9 @@ G0: 5000
 Number of reference sequences: 1
 Number of query sequences: 5
 
+query   reference       ref_start       ref_end length  q_start q_end   q_length        seq_in_clusters direction       ref_count       includes_0   full_length      from_start      from_end        internal_gap    is_overlapping  size_of_alt     alternates
 Query start error for BAC1
+
 Total queries:                                                  1
 Total queries with alignments smaller than 20,000 on ref:       1
 Total queries with mixed orientation:                           0
@@ -19,9 +21,16 @@ Total queries with alignment to at least one end:               0
 Total reference extended by valid BAC hits:                     0
 Total reference covered by valid BAC hits:                      0
 Total N's within reference covered by valid BAC hits:           0
+Total N's within queries covered by valid reference hits:       0
 
 Statistics from AGPs
-Contig or component AGP (contigs and scaffold gaps)
-Total gaps completely covered from contig AGP:                  0
-Total length of gaps completely covered from contig AGP:                        0
-Illegal division by zero at /home/surya/work/Eclipse/Bio-GenomeUpdate/group_coords.pl line 469.
+Contig or component AGP (contigs and contig gaps)
+        Total gaps completely covered from contig AGP:                  0
+        Total length of gaps completely covered from contig AGP:        0
+        Total gaps partially covered from contig AGP:                   0
+        Total length of gaps partially covered from contig AGP:         0
+Chromosome AGP (scaffolds and scaffold gaps)
+        Total gaps completely covered from chr AGP:                     0
+        Total length of gaps completely covered from chr AGP:           0
+        Total gaps partially covered from chr AGP:                      0
+        Total length of gaps partial covered from chr AGP:              0

@@ -17,7 +17,8 @@ group_coords.pl
  -g  Gap size allowed between aligned clusters in the reference sequence, typically the mean/median scaffold gap (required)
  -c  Contig or component AGP file for reference (includes scaffold gaps)
  -s  Chromosome AGP file for reference (with only scaffolds and gaps) 
- -t  Print header
+ -t  Print header (T/F)
+ -d  Debug messages (T/F)
  -h  Help
 
 =head1 TODO
@@ -36,10 +37,10 @@ use Bio::GenomeUpdate::AlignmentCoordsGroup;
 use Bio::GenomeUpdate::AGP;
 use Bio::DB::Fasta;
 
-our ( $opt_i, $opt_g, $opt_r, $opt_q, $opt_u, $opt_t, $opt_h, $opt_c, $opt_s );
-getopts("i:g:r:q:u:c:s:t:h");
+our ( $opt_i, $opt_g, $opt_r, $opt_q, $opt_u, $opt_t, $opt_h, $opt_c, $opt_s, $opt_d );
+getopts("i:g:r:q:u:c:s:t:h:d");
 if ( !$opt_i || !$opt_g || !$opt_r || !$opt_q ) {
-	print STDERR "Required files or gap parameter missing!! exiting..\n";
+	print STDERR "\nRequired files or gap parameter missing!! exiting..\n\n";
 	help();
 }
 if ($opt_h) {
@@ -74,7 +75,7 @@ if ( defined $opt_s ) {
 my $input_file;
 my $gap_size_allowed;
 my $unmapped_ID;
-my $print_header;
+my ($debug,$print_header);
 $input_file = $opt_i || die("-i input_file required\n");
 if ($opt_g) {
 	$gap_size_allowed = $opt_g;
@@ -97,6 +98,24 @@ if ($opt_t) {
 		die("-t must be T or F\n");
 	}
 }
+else{
+	$print_header = "T";
+}
+
+if ($opt_d) {
+	if ( $opt_d eq "T" ) {
+		$debug = 1 ;
+	}
+	elsif ( $opt_d eq "F" ) {
+		$debug = 0 ;
+	}
+	else {
+		die("-d must be T or F\n");
+	}
+}
+else{
+	$debug = 0 ; #false by default
+}
 
 open( MIXED, ">mixed_${opt_i}_group_coords.out" )
   or die
@@ -105,16 +124,21 @@ open( NONCOLINEAR, ">noncolinear_${opt_i}_group_coords.out" )
   or die
 "Could not create noncolinear_${opt_i} for writing out BACs aligned non co-linearly to ref chr, i.e. different order of aligned tiles on BAC and ref chr. Shows miassembly on ref chr or BAC";
 
-my $contig_agp_input_file = $opt_c;
-my $contig_input_agp      = read_file($contig_agp_input_file)
-  or die "Could not open contig AGP input file: $contig_agp_input_file\n";
-my $contig_agp = Bio::GenomeUpdate::AGP->new();
-$contig_agp->parse_agp($contig_input_agp);
-my $chr_agp_input_file = $opt_s;
-my $chr_input_agp      = read_file($chr_agp_input_file)
-  or die "Could not open chr AGP input file: $chr_agp_input_file\n";
-my $chr_agp = Bio::GenomeUpdate::AGP->new();
-$chr_agp->parse_agp($chr_input_agp);
+my ($contig_agp,$chr_agp);
+
+if ($opt_c && $opt_s){
+	my $contig_agp_input_file = $opt_c;
+	my $contig_input_agp      = read_file($contig_agp_input_file)
+	  or die "Could not open contig AGP input file: $contig_agp_input_file\n";
+	$contig_agp = Bio::GenomeUpdate::AGP->new();
+	$contig_agp->parse_agp($contig_input_agp);
+	my $chr_agp_input_file = $opt_s;
+	my $chr_input_agp      = read_file($chr_agp_input_file)
+	  or die "Could not open chr AGP input file: $chr_agp_input_file\n";
+	$chr_agp = Bio::GenomeUpdate::AGP->new();
+	$chr_agp->parse_agp($chr_input_agp);
+}
+
 
 my $total                  = 0;
 my $total_smaller_than_20k = 0;    #for alignments covering < 20k on ref
@@ -127,6 +151,7 @@ my $total_to_end           = 0;
 my $total_extend           = 0;
 my $total_ref_covered      = 0;
 my $total_ref_Ns_covered   = 0;
+my $total_query_Ns_covered   = 0;
 my $total_complete_contig_gaps_covered       = 0;
 my $total_complete_contig_gap_length_covered = 0;
 my $total_partial_contig_gaps_covered        = 0;
@@ -154,12 +179,16 @@ my @query_invalid_hits;
 my $last_line_query_id;
 my $last_query_id;
 my $last_query_length;
-print
+
+if ($print_header eq 'T'){
+	print
 "query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
-print MIXED
-"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
-print NONCOLINEAR
-"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+	print MIXED
+	"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+	print NONCOLINEAR
+	"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+		
+}
 
 #parse coords file
 #[S1]	[E1]	[S2]	[E2]	[LEN 1]	[LEN 2]	[% IDY]	[LEN R]	[LEN Q]	[COV R]	[COV Q]	[FRM]	[TAGS]
@@ -176,7 +205,7 @@ foreach my $line (@lines) {
 		$last_line_query_id = $current_query_id;
 	}
 
-#exec if query ID changes, i.e., coords for next assembled or singleton BAC aligned to chr
+	#exec if query ID changes, i.e., coords for next assembled or singleton BAC aligned to chr
 	if ( !( $current_query_id eq $last_line_query_id ) ) {
 
 		#print info for prev query (assembled or singleton BAC ) to STDOUT
@@ -189,14 +218,16 @@ foreach my $line (@lines) {
 	$aln_coords->set_query_id( $row[14] );
 	$aln_coords->set_reference_start_coord( $row[0] );
 	$aln_coords->set_reference_end_coord( $row[1] );
+	$aln_coords->set_reference_strand( $row[11] );
 	$aln_coords->set_query_start_coord( $row[2] );
 	$aln_coords->set_query_end_coord( $row[3] );
+	$aln_coords->set_query_strand( $row[12] );
 	push( @alignment_coords_array, $aln_coords );
 
 	#deal with last row since no more alignments for query after this
 	if ( $currentline == scalar(@lines) ) {
 
-#calc_and_print_info(\@alignment_coords_array, $current_query_id, $current_query_length,$gap_size_allowed);
+	#calc_and_print_info(\@alignment_coords_array, $current_query_id, $current_query_length,$gap_size_allowed);
 		calc_and_print_info( \@alignment_coords_array, $current_query_id,
 							 $current_query_length );
 		@alignment_coords_array = ();
@@ -220,10 +251,10 @@ sub calc_and_print_info {
 	$align_group->set_array_of_alignment_coords($aref);
 	my $zero_chromosome_id = $unmapped_ID;
 
-#Returns IDs, start and end coordinates, total aligned sequence length, and direction for the longest proximity-grouped
-#alignment clusters sorted by longest to shortest length of non-overlapping sequence covered by alignment clusters.
-#The proximity grouping is done using the specified length of an allowed gap between aligned clusters in the reference sequence ($gap allowed).
-#$sequence_aligned_in_clusters is the total length of ref covered by alignment grp
+	#Returns IDs, start and end coordinates, total aligned sequence length, and direction for the longest proximity-grouped
+	#alignment clusters sorted by longest to shortest length of non-overlapping sequence covered by alignment clusters.
+	#The proximity grouping is done using the specified length of an allowed gap between aligned clusters in the reference sequence ($gap allowed).
+	#$sequence_aligned_in_clusters is the total length of ref covered by alignment grp
 	my (
 		 $ref_id,                       $query_id,
 		 $ref_start,                    $ref_end,
@@ -254,34 +285,6 @@ sub calc_and_print_info {
 	else {
 		$is_full_length = "Partial";
 	}
-#	print $q_id. "\t";
-#	print $ref_id. "\t";
-#	print $ref_start. "\t";
-#	print $ref_end. "\t";
-#	print $ref_end - $ref_start . "\t";
-#	print $query_start. "\t";
-#	print $query_end. "\t";
-#	print $q_length. "\t";
-#	print $sequence_aligned_in_clusters. "\t";
-#	print $direction. "\t";    #strand
-#	print $align_group->get_count_of_reference_sequence_ids() . "\t";
-#	print $align_group->includes_reference_id($zero_chromosome_id) . "\t";
-#	print $is_full_length. "\t";
-#	print $start_gap_length. "\t";
-#	print $end_gap_length. "\t";
-#	print $internal_gap_length. "\t";
-#	print $is_overlapping. "\t";
-#	print $size_of_next_largest_match. "\t";
-#	print $alternates. "\t";
-#
-#	#if (defined($second_id)){
-#	#print $second_id."\t";
-#	#print $second_size."\t"
-#	#}
-#	#else {
-#	#print "None\tNone\t";
-#	#}
-#	print "\n";
 
 	my $flagged = 0;    #flag 1 for potential problem
 
@@ -353,7 +356,7 @@ sub calc_and_print_info {
 	if ( $ref_end - $ref_start < 20000 ) {
 		$total_smaller_than_20k++;
 
-	  #$flagged=1;#short alignment may be for a BAC end so not always a negative
+		#$flagged=1;#short alignment may be for a BAC end so not always a negative
 	}
 
 	#good alignments
@@ -367,8 +370,10 @@ sub calc_and_print_info {
 	}
 	if ( $flagged == 0 ) {
 
-#print STDERR "**",join(' ',$query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters, $start_gap_length,
-#	$end_gap_length, $internal_gap_length, $start_gap_length + $end_gap_length + $internal_gap_length),"\n\n";
+		if($debug){
+			print STDERR "**",join(' ',$query_id, $ref_start, $ref_end, $query_start, $query_end, $sequence_aligned_in_clusters, $start_gap_length,
+			$end_gap_length, $internal_gap_length, $start_gap_length + $end_gap_length + $internal_gap_length),"\n\n";
+		}
 
 		$total_extend +=
 		  $start_gap_length + $end_gap_length + $internal_gap_length;
@@ -376,24 +381,39 @@ sub calc_and_print_info {
 		$total_ref_covered += $sequence_aligned_in_clusters;
 
 		my $ref_aligned_seq = $ref_db->seq( $ref_id, $ref_start, $ref_end );
+		
+		if($debug){
+			print STDERR "** ref_id: ",$ref_id,"\n";
+			print STDERR "** ref_start: ",$ref_start,"\n";
+			print STDERR "** ref_end: ",$ref_end,"\n";
+			print STDERR "** ref_aligned_seq: ",$ref_aligned_seq,"\n";
+			print STDERR "** total_ref_Ns_covered: ",$total_ref_Ns_covered,"\n"; 
+		}
+		
 		$total_ref_Ns_covered += ( $ref_aligned_seq =~ tr/N// );
 		$total_ref_Ns_covered += ( $ref_aligned_seq =~ tr/n// );
-
+		
+		my $query_aligned_seq = $query_db->seq( $query_id, $query_start, $query_end );
+		$total_query_Ns_covered += ( $query_aligned_seq =~ tr/N// );
+		$total_query_Ns_covered += ( $query_aligned_seq =~ tr/n// );
+		
+		if ($opt_c && $opt_s){
 		my ($cov_gap_count,     $cov_gap_length,
 			 $par_cov_gap_count, $par_cov_gap_length
-		  ) = $contig_agp->get_gap_overlap( $ref_start, $ref_end );
-		$total_complete_contig_gaps_covered       += $cov_gap_count;
-		$total_complete_contig_gap_length_covered += $cov_gap_length;
-		$total_partial_contig_gaps_covered        += $par_cov_gap_count;
-		$total_partial_contig_gap_length_covered  += $par_cov_gap_length;
-
-		($cov_gap_count,     $cov_gap_length,
-		   $par_cov_gap_count, $par_cov_gap_length
-		  ) = $chr_agp->get_gap_overlap( $ref_start, $ref_end );
-		$total_complete_chr_gaps_covered       += $cov_gap_count;
-		$total_complete_chr_gap_length_covered += $cov_gap_length;
-		$total_partial_chr_gaps_covered        += $par_cov_gap_count;
-		$total_partial_chr_gap_length_covered  += $par_cov_gap_length;
+			  ) = $contig_agp->get_gap_overlap( $ref_start, $ref_end );
+			$total_complete_contig_gaps_covered       += $cov_gap_count;
+			$total_complete_contig_gap_length_covered += $cov_gap_length;
+			$total_partial_contig_gaps_covered        += $par_cov_gap_count;
+			$total_partial_contig_gap_length_covered  += $par_cov_gap_length;
+	
+			($cov_gap_count,     $cov_gap_length,
+			   $par_cov_gap_count, $par_cov_gap_length
+			  ) = $chr_agp->get_gap_overlap( $ref_start, $ref_end );
+			$total_complete_chr_gaps_covered       += $cov_gap_count;
+			$total_complete_chr_gap_length_covered += $cov_gap_length;
+			$total_partial_chr_gaps_covered        += $par_cov_gap_count;
+			$total_partial_chr_gap_length_covered  += $par_cov_gap_length;
+		}
 		
 		print $q_id. "\t";
 		print $ref_id. "\t";
@@ -415,15 +435,7 @@ sub calc_and_print_info {
 		print $size_of_next_largest_match. "\t";
 		print $alternates. "\t";
 	
-		#if (defined($second_id)){
-		#print $second_id."\t";
-		#print $second_size."\t"
-		#}
-		#else {
-		#print "None\tNone\t";
-		#}
 		print "\n";
-			
 	}
 }
 
@@ -456,40 +468,46 @@ print STDERR
 print STDERR
 "Total N's within reference covered by valid BAC hits:\t\t$total_ref_Ns_covered\n"
   ;    #includes gaps ($gap_size_allowed) between alignment clusters
+print STDERR
+"Total N's within queries covered by valid reference hits:\t$total_query_Ns_covered\n"
+  ;    #includes gaps ($gap_size_allowed) between alignment clusters
 
 #if ( $total_extend > $total_ref_Ns_covered ){ #new sequence beyond ends of chromosome
 #	print STDERR "Total novel sequence beyond chr ends from valid BAC hits:\t",$total_extend - $total_ref_Ns_covered,"\n";
 #}
-print STDERR "\nStatistics from AGPs\n";
-print STDERR "Contig or component AGP (contigs and contig gaps)\n";
-print STDERR
-"\tTotal gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gaps_covered\n";
-print STDERR
-"\tTotal length of gaps completely covered from contig AGP:\t$total_complete_contig_gap_length_covered\n";
-if ( $total_complete_contig_gaps_covered > 0){
-	print STDERR "\tAvg length of gaps completely covered from contig AGP:\t\t"
-  . $total_complete_contig_gap_length_covered /
-  $total_complete_contig_gaps_covered . "\n";
-}
-print STDERR
-"\tTotal gaps partially covered from contig AGP:\t\t\t$total_partial_contig_gaps_covered\n";
-print STDERR
-"\tTotal length of gaps partially covered from contig AGP:\t\t$total_partial_contig_gap_length_covered\n";
 
-print STDERR "Chromosome AGP (scaffolds and scaffold gaps)\n";
-print STDERR
-"\tTotal gaps completely covered from chr AGP:\t\t\t$total_complete_chr_gaps_covered\n";
-print STDERR
-"\tTotal length of gaps completely covered from chr AGP:\t\t$total_complete_chr_gap_length_covered\n";
-if ($total_complete_chr_gaps_covered > 0){
-	print STDERR "Avg length of gaps completely covered from chr AGP:\t\t\t"
-  . $total_complete_chr_gap_length_covered / $total_complete_chr_gaps_covered
-  . "\n";
+if ($opt_c && $opt_s){
+	print STDERR "\nStatistics from AGPs\n";
+	print STDERR "Contig or component AGP (contigs and contig gaps)\n";
+	print STDERR
+	"\tTotal gaps completely covered from contig AGP:\t\t\t$total_complete_contig_gaps_covered\n";
+	print STDERR
+	"\tTotal length of gaps completely covered from contig AGP:\t$total_complete_contig_gap_length_covered\n";
+	if ( $total_complete_contig_gaps_covered > 0){
+		print STDERR "\tAvg length of gaps completely covered from contig AGP:\t\t"
+	  . $total_complete_contig_gap_length_covered /
+	  $total_complete_contig_gaps_covered . "\n";
+	}
+	print STDERR
+	"\tTotal gaps partially covered from contig AGP:\t\t\t$total_partial_contig_gaps_covered\n";
+	print STDERR
+	"\tTotal length of gaps partially covered from contig AGP:\t\t$total_partial_contig_gap_length_covered\n";
+	
+	print STDERR "Chromosome AGP (scaffolds and scaffold gaps)\n";
+	print STDERR
+	"\tTotal gaps completely covered from chr AGP:\t\t\t$total_complete_chr_gaps_covered\n";
+	print STDERR
+	"\tTotal length of gaps completely covered from chr AGP:\t\t$total_complete_chr_gap_length_covered\n";
+	if ($total_complete_chr_gaps_covered > 0){
+		print STDERR "\tAvg length of gaps completely covered from chr AGP:\t\t\t"
+	  . $total_complete_chr_gap_length_covered / $total_complete_chr_gaps_covered
+	  . "\n";
+	}
+	print STDERR
+	"\tTotal gaps partially covered from chr AGP:\t\t\t$total_partial_chr_gaps_covered\n";
+	print STDERR
+	"\tTotal length of gaps partial covered from chr AGP:\t\t$total_partial_chr_gap_length_covered\n";
 }
-print STDERR
-"\tTotal gaps partially covered from chr AGP:\t\t\t$total_partial_chr_gaps_covered\n";
-print STDERR
-"\tTotal length of gaps partial covered from chr AGP:\t\t$total_partial_chr_gap_length_covered\n";
 
 sub help {
 	print STDERR <<EOF;
@@ -497,7 +515,7 @@ sub help {
 
     Description:
 
-     This script groups aligned clusters and creates a tab delimited file with BAC alignment details.
+     This script groups aligned clusters and creates a tab delimited file with BAC alignment details. Mixed and out of order alignments are written to separate files.
 
     Usage:
       group_coords.pl -i [coords file] -g [gap size] -r [fasta] -q [fasta] -c [agp] -s [agp]
@@ -511,7 +529,8 @@ sub help {
     -g  Gap size allowed between aligned clusters in the reference sequence, typically the mean/median scaffold gap (required)
     -c  Contig or component AGP file for reference (includes scaffold gaps)
     -s  Chromosome AGP file for reference (with only scaffolds and gaps) 
-    -t  Print header
+    -t  Print header (T/F)
+    -d  Debug messages (T/F)
     -h  Help
  
 EOF

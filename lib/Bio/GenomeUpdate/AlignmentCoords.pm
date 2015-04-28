@@ -14,7 +14,6 @@ use MooseX::FollowPBP;
     my $variable = AlignmentCoords->new();
 
 =head1 DESCRIPTION
-
     This class stores alignment coordinates (e.g., from Nucmer/delta-filter/show-coords output) for a query sequence (e.g., from a BAC) relative to reference sequences (e.g., chromosome pseudomolecules).
 
 =head2 Methods
@@ -23,12 +22,22 @@ use MooseX::FollowPBP;
 
 =cut
 
-has 'reference_start_coord' => (isa => 'Num', is => 'rw', predicate => 'has_reference_start_coord');
-has 'reference_end_coord' => (isa => 'Num', is => 'rw', predicate => 'has_reference_end_coord');
-has 'query_start_coord' => (isa => 'Num', is => 'rw', predicate => 'has_query_start_coord');
-has 'query_end_coord' => (isa => 'Num', is => 'rw', predicate => 'has_query_end_coord');
-has 'reference_id' => (isa => 'Str', is => 'rw', predicate => 'has_reference_id');
-has 'query_id' => (isa => 'Str', is => 'rw',  predicate => 'has_query_id');
+has 'reference_id' =>
+  ( isa => 'Str', is => 'rw', predicate => 'has_reference_id' );
+has 'reference_start_coord' =>
+  ( isa => 'Num', is => 'rw', predicate => 'has_reference_start_coord' );
+has 'reference_end_coord' =>
+  ( isa => 'Num', is => 'rw', predicate => 'has_reference_end_coord' );
+has 'reference_strand' =>
+  ( isa => 'Str', is => 'rw', predicate => 'has_reference_strand' );
+  
+has 'query_id' => ( isa => 'Str', is => 'rw', predicate => 'has_query_id' );
+has 'query_start_coord' =>
+  ( isa => 'Num', is => 'rw', predicate => 'has_query_start_coord' );
+has 'query_end_coord' =>
+  ( isa => 'Num', is => 'rw', predicate => 'has_query_end_coord' );
+has 'query_strand' =>
+  ( isa => 'Str', is => 'rw', predicate => 'has_query_strand' );
 
 =item C<get_direction>
 
@@ -37,19 +46,60 @@ Returns 1 if the reference and query sequences are aligned in the same direction
 =cut
 
 sub get_direction {
-  my $self = shift;
-  if (!($self->has_reference_start_coord() && $self->has_reference_end_coord() && $self->has_query_start_coord() && $self->has_query_end_coord())) {
-    return undef;
-  }
-  if ((($self->get_reference_start_coord() < $self->get_reference_end_coord()) && ($self->get_query_start_coord < $self->get_query_end_coord))
-      || (($self->get_reference_start_coord > $self->get_reference_end_coord) && ($self->get_query_start_coord > $self->get_query_end_coord))) {
-    return 1;
-  } elsif ((($self->get_reference_start_coord < $self->get_reference_end_coord) && ($self->get_query_start_coord > $self->get_query_end_coord))
-	   || (($self->get_reference_start_coord > $self->get_reference_end_coord) && ($self->get_query_start_coord < $self->get_query_end_coord))) {
-    return -1;
-  } else {
-    return undef;
-  }
+	my $self = shift;
+	
+#	print STDERR "\t******** ref id: ",$self->get_reference_id(),"\tref start: ",$self->get_reference_start_coord(),"\tref end: ",$self->get_reference_end_coord(),"\n";
+#	print STDERR "\t******** qry id: ",$self->get_query_id(),"\tqry start: ",$self->get_query_start_coord(),"\tqry end: ",$self->get_query_end_coord(),"\n";
+	
+	if (
+		 !(
+			   $self->has_reference_start_coord()
+			&& $self->has_reference_end_coord()
+			&& $self->has_query_start_coord()
+			&& $self->has_query_end_coord()
+		 )
+	  )
+	{
+		return undef;
+	}
+	if (
+		(
+		   (
+			  $self->get_reference_start_coord() <
+			  $self->get_reference_end_coord()
+		   )
+		   && ( $self->get_query_start_coord < $self->get_query_end_coord )
+		)
+		|| (
+			(
+			   $self->get_reference_start_coord > $self->get_reference_end_coord
+			)
+			&& ( $self->get_query_start_coord > $self->get_query_end_coord )
+		)
+	  )
+	{
+		return 1;
+	}
+	elsif (
+		(
+		   (
+			  $self->get_reference_start_coord < $self->get_reference_end_coord
+		   )
+		   && ( $self->get_query_start_coord > $self->get_query_end_coord )
+		)
+		|| (
+			(
+			   $self->get_reference_start_coord > $self->get_reference_end_coord
+			)
+			&& ( $self->get_query_start_coord < $self->get_query_end_coord )
+		)
+	  )
+	{
+		return -1;
+	}
+	else {
+		return undef;
+	}
 }
 
 =item C<get_reference_length>
@@ -59,12 +109,20 @@ Returns the length of the aligned reference sequence.
 =cut
 
 sub get_reference_length {
-  my $self = shift;
-  if (!($self->has_reference_start_coord() && $self->has_reference_end_coord())) {
-    return undef;
-  } else {
-    return (($self->has_reference_end_coord() + 1) - $self->has_reference_start_coord());
-  }
+	my $self = shift;
+	if (
+		 !(
+			   $self->has_reference_start_coord()
+			&& $self->has_reference_end_coord()
+		 )
+	  )
+	{
+		return undef;
+	}
+	else {
+		return ( ( $self->has_reference_end_coord() + 1 ) -
+				 $self->has_reference_start_coord() );
+	}
 }
 
 =item C<get_query_length>
@@ -74,16 +132,18 @@ Returns the length of the aligned query sequence.
 =cut
 
 sub get_query_length {
-  my $self = shift;
-  if (!($self->has_query_start_coord() && $self->has_query_end_coord())) {
-    return undef;
-  } else {
-    return (($self->has_query_end_coord() + 1) - $self->has_query_start_coord());
-  }
+	my $self = shift;
+	if ( !( $self->has_query_start_coord() && $self->has_query_end_coord() ) ) {
+		return undef;
+	}
+	else {
+		return ( ( $self->has_query_end_coord() + 1 ) -
+				 $self->has_query_start_coord() );
+	}
 }
 
 ###
-1;				#do not remove
+1;    #do not remove
 ###
 
 =pod
@@ -99,3 +159,4 @@ sub get_query_length {
     Jeremy D. Edwards <jde22@cornell.edu>   
 
 =cut
+
