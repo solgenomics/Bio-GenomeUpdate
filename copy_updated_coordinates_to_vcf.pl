@@ -47,6 +47,12 @@ for (<OLDVCF>) {
     }
 }
 
+# sort new vcf file to ensure newly mapped coordinates are in order
+
+system ("grep '^#' $new_vcf > $new_vcf.sorted");
+system ("grep -v '^#' $new_vcf | sort -V >> $new_vcf.sorted");
+system ("mv $new_vcf.sorted $new_vcf");
+
 print "New vcf file $new_vcf with updated coordinates successfully created.\n";
    
 
