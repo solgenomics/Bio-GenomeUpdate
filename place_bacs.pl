@@ -41,8 +41,6 @@ use Bio::GenomeUpdate::TPF::TPFGapLine;
 use Bio::GenomeUpdate::TPF;
 use Bio::GenomeUpdate::AGP;
 
-
-
 use Data::Dumper;#for debugging
 
 our ( $opt_t, $opt_l, $opt_s, $opt_c, $opt_h, $opt_a );
