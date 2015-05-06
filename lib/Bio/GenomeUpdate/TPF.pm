@@ -922,8 +922,7 @@ sub get_tpf_with_bacs_inserted_in_gaps {
 		  sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
 
 		$line_key = 1;
-		while ($bac_is_inserted == 0
-			&& $line_key <= @sorted_tpf_line_numbers + 1 )
+		while ($bac_is_inserted == 0 && $line_key <= @sorted_tpf_line_numbers + 1 )
 		{
 			if ( $tpf_lines{$line_key}->get_line_type() eq 'sequence' ) {
 				my $accession = $tpf_lines{$line_key}->get_accession();
@@ -945,20 +944,17 @@ sub get_tpf_with_bacs_inserted_in_gaps {
 					if ( $bac_start >= $agp_start ) {
 						$insert_before_or_after = 'after';
 						$insert_line_number     = $line_key;
-						$bac_to_insert->set_local_contig_identifier(
-							$tpf_lines{$line_key}->get_local_contig_identifier()
+						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
 						);
 						$bac_is_inserted = 1;
 					}
 				}
-				elsif ($bac_start >= $prev_agp_start
-					&& $bac_start < $agp_start )
+				elsif ($bac_start >= $prev_agp_start && $bac_start < $agp_start )
 				{
 					if ( $bac_start <= $prev_agp_end ) {
 						$insert_before_or_after = 'after';
 						$insert_line_number     = $prev_line_key;
-						$bac_to_insert->set_local_contig_identifier(
-							$tpf_lines{$prev_line_key}->get_local_contig_identifier() );
+						$bac_to_insert->set_local_contig_identifier($tpf_lines{$prev_line_key}->get_local_contig_identifier() );
 						$bac_is_inserted = 1;
 					}
 					elsif ( $bac_start > $prev_agp_end ) {
@@ -991,9 +987,9 @@ sub get_tpf_with_bacs_inserted_in_gaps {
 	return $self;
 }
 
-=item C<get_tpf_with_bacs_inserted_in_sequences_and_gaps ( @bacs, %scaffold_agp_coords )>
+=item C<get_tpf_with_bacs_inserted_in_sequences_and_gaps ( @bacs, %scaffold_agp_coords, %scaffold_component_contigs, %scaffold_component_contig_directions )>
 
-Returns a full TPF with the BAC accessions inserted in order that replace gaps AND sequences. The sequence and gap components that are encompassed by a BAC are now deleted from the TPF.
+Returns a full TPF with the BAC accessions inserted in order that replace gaps AND sequences. The sequence and gap components that are encompassed by a BAC are now deleted from the TPF. The assembled BACs start with ContigX in the group_coords.out file. These are substituted with the BACs as they are ordered in the ACE file. Each member BAC will have its own TPF line.
 
 =cut
 
@@ -1001,8 +997,13 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 	my $self           = shift;
 	my $bacs_ref       = shift;
 	my $agp_coords_ref = shift;
+	my $scaffold_component_contigs_ref = shift;
+	my $scaffold_component_contig_directions_ref = shift;
 	my @bacs           = @$bacs_ref; # ref to array of arrays with bac names and coordinates
 	my %agp_coords     = %$agp_coords_ref;
+	my %scaffold_component_contigs = %$scaffold_component_contigs_ref;
+	my %scaffold_component_contig_directions = %$scaffold_component_contig_directions_ref;
+	my %bac_inserted_accessions; 
 
 	#make sure BACs are sorted by position
 	foreach my $bac_ref (@bacs) {
@@ -1067,9 +1068,9 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 		my $insert_line_number     = undef;
 		my %contained_contigs;    #key will be line number and value will be the contig accession
 		my $past_bac = 0;
-		my $line_key = 1;
+		my $line_key = 1; # starting from line 1 of TPF
 
-		#add BAC coordinates to AGP info (NOT saved or output to STDOUT or file, maybe write to inserted.scaffolds.agp)
+		#add BAC coordinates to AGP info (NOT saved or output to STDOUT or file, maybe write to inserted.scaffolds.agp??)
 		my %add_agp_coords;
 		$add_agp_coords{'start'} = $bac_ref_start;
 		$add_agp_coords{'end'}   = $bac_ref_end;
@@ -1085,14 +1086,18 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 		$agp_coords{$bac_name} = \%add_agp_coords;
 		
 		#print STDERR "* sorted_tpf_line_numbers: ",@sorted_tpf_line_numbers + 1,"\n";
-
-		# the +1 breaks the code
-		#while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers + 1 ) {
+		
+		#Parse through the TPF line by line and modify as required 
+		#while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers + 1 ) { # the +1 breaks the code
 		while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers ) {
 			#print STDERR "** processing line $line_key\n";
-			if (!exists $tpf_lines{$line_key}){print STDERR "No TPF line for $line_key\n";}
+			if ( !exists $tpf_lines{$line_key} ){print STDERR "No TPF line for $line_key\n";}
 			if ( $tpf_lines{$line_key}->get_line_type() eq 'sequence' ) {
 				my $accession = $tpf_lines{$line_key}->get_accession();
+				
+				#skip BACs/accessions already inserted in TPF with no scaffold AGP records
+				if ( exists $bac_inserted_accessions{$accession} ){ $line_key++; next; }  
+				
 				#print STDERR "** processing accession $accession\n";
 				my $agp_line_coords_ref = $agp_coords{$accession};
 				my %line_coords         = %$agp_line_coords_ref;
@@ -1114,8 +1119,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 					$sequences_and_gaps_to_remove{ $line_key } = 'delete';
 					my $sequence_location = $line_key;
 					
-					if ($line_key != 1) {print STDERR "Removing sequence at line $sequence_location for $accession\n";} 
-					else {print STDERR "Removing sequence at line $sequence_location for $accession\n";} 
+					print STDERR "Removing sequence at line $sequence_location for $accession\n"; 
 				}
 
 				#check if current BAC is contained in the contig, will probably never happen for SL2.50->SL3.0
@@ -1137,6 +1141,8 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 				}
 
 				#shrink gaps when partially spanned by a BAC
+				#no need to shrink sequence line as GRC aligner will figure out the switch over points
+				
 				#if BAC start is in the middle of a gap
 				# $bac_ref_start < $agp_sequence_start works as there is a offset of 1 even if mummer does not align at N 
 				if (   $prev_line_key
@@ -1213,17 +1219,20 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 		foreach my $line_number (@rev_sorted_sequences_and_gaps_to_remove) {
 			$self->delete_line($line_number);
 		}
-		%tpf_lines               = %{ $self->get_tpf_lines() };
+		%tpf_lines = %{ $self->get_tpf_lines() };
 
 		@sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
 		
-		#inserting the BAC TPF line
+		#set the containing scaffold for the BAC, i.e. the local contig identifier
 		$line_key = 1;
-		while ($bac_is_inserted == 0
-			&& $line_key <= @sorted_tpf_line_numbers + 1 )
+		while ($bac_is_inserted == 0 && $line_key <= @sorted_tpf_line_numbers + 1 )
 		{
 			if ( $tpf_lines{$line_key}->get_line_type() eq 'sequence' ) {
 				my $accession = $tpf_lines{$line_key}->get_accession();
+				
+				#skip BACs/accessions already inserted in TPF with no scaffold AGP records
+				if ( exists $bac_inserted_accessions{$accession} ){ $line_key++; next; }
+				 
 				my $agp_line_coords_ref = $agp_coords{$accession};
 				my %line_coords         = %$agp_line_coords_ref;
 				$agp_sequence_start = $line_coords{'start'};
@@ -1241,8 +1250,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 					if ( $bac_ref_start >= $agp_sequence_start ) {
 						$insert_before_or_after = 'after';
 						$insert_line_number     = $line_key;
-						$bac_to_insert->set_local_contig_identifier(
-							$tpf_lines{$line_key}->get_local_contig_identifier()
+						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
 						);
 						$bac_is_inserted = 1;
 					}
@@ -1253,8 +1261,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 					if ( $bac_ref_start <= $prev_agp_sequence_end ) {
 						$insert_before_or_after = 'after';
 						$insert_line_number     = $prev_line_key;
-						$bac_to_insert->set_local_contig_identifier(
-							$tpf_lines{$prev_line_key}->get_local_contig_identifier() );
+						$bac_to_insert->set_local_contig_identifier($tpf_lines{$prev_line_key}->get_local_contig_identifier() );
 						$bac_is_inserted = 1;
 					}
 					elsif ( $bac_ref_start > $prev_agp_sequence_end ) {
@@ -1272,17 +1279,100 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 			}
 			$line_key++;
 		}
-
-		if ( $insert_before_or_after eq 'before' ) {
-			$self->insert_line_before( $insert_line_number, $bac_to_insert );
+		
+		#finally inserting the BAC TPF line
+		if ($bac_name =~ /^Contig/ ){
+			print STDERR "Substituting in BACs for assembled contig $bac_name\n";
+			my $component_accessions_ref = $scaffold_component_contigs{$bac_name};
+			my @component_accessions_arr = @$component_accessions_ref;
+			my $component_accession_directions_ref = $scaffold_component_contig_directions{$bac_name};# orientation (+1,-1)
+			my @component_accession_directions_arr = @$component_accession_directions_ref; 
+			if (!(exists $scaffold_component_contigs{$bac_name}) || !(exists $scaffold_component_contig_directions{$bac_name})){
+				print STDERR "$bac_name not found in user supplied ACE file. Exiting ....\n\n"; exit 1;
+			}
+			
+			my $component_accessions_count = scalar @component_accessions_arr;
+			my $contig_bac_loop_counter;
+			
+			if ( $bac_to_insert->get_orientation() eq 'PLUS' ){
+				#simple order, same orientation
+				$contig_bac_loop_counter = 0;
+				while ($contig_bac_loop_counter < $component_accessions_count){
+					my $contig_bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
+					print STDERR "******** inserting ";
+					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
+					print STDERR "\n";
+					#print Dumper $component_accessions_arr[$contig_bac_loop_counter];
+					$contig_bac_to_insert->set_accession($component_accessions_arr[$contig_bac_loop_counter]);
+					$bac_inserted_accessions{$component_accessions_arr[$contig_bac_loop_counter]} = 'inserted'; #recording accession name
+					$contig_bac_to_insert->set_local_contig_identifier($bac_to_insert->get_local_contig_identifier() );
+					
+					if ($component_accession_directions_arr[$contig_bac_loop_counter] == 1){
+						$contig_bac_to_insert->set_orientation('PLUS');
+					}
+					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){
+						$contig_bac_to_insert->set_orientation('MINUS');	
+					}
+					
+					if ( $insert_before_or_after eq 'before' ){
+						$self->insert_line_before( $insert_line_number, $contig_bac_to_insert );	
+					}
+					elsif( $insert_before_or_after eq 'after' ){
+						$self->insert_line_after( $insert_line_number, $contig_bac_to_insert );	
+					}
+					print STDERR "Inserted BAC: ";
+					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
+					print STDERR " for assembled contig $bac_name\n";
+					$contig_bac_loop_counter++;
+				}
+			}
+			elsif ( $bac_to_insert->get_orientation() eq 'MINUS' ){
+				#reverse order, flip orientation
+				$contig_bac_loop_counter = $component_accessions_count - 1 ;
+				while ($contig_bac_loop_counter >= 0 ){
+					my $contig_bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
+					$contig_bac_to_insert->set_accession($component_accessions_arr[$contig_bac_loop_counter]);
+					$bac_inserted_accessions{$component_accessions_arr[$contig_bac_loop_counter]} = 'inserted'; #recording accession name
+					$contig_bac_to_insert->set_local_contig_identifier($bac_to_insert->get_local_contig_identifier() );
+					
+					if ($component_accession_directions_arr[$contig_bac_loop_counter] == 1){
+						$contig_bac_to_insert->set_orientation('MINUS');#flip
+					}
+					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){
+						$contig_bac_to_insert->set_orientation('PLUS');#flip	
+					}
+					
+					if ( $insert_before_or_after eq 'before' ){
+						$self->insert_line_before( $insert_line_number, $contig_bac_to_insert );	
+					}
+					elsif( $insert_before_or_after eq 'after' ){
+						$self->insert_line_after( $insert_line_number, $contig_bac_to_insert );	
+					} 
+					print STDERR "Inserted BAC: ";
+					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
+					print STDERR " for assembled contig $bac_name\n";
+					$contig_bac_loop_counter--;
+				}				
+			}
+			else{
+				die "BAC $bac_name not inserted. Exiting ....\n";
+			}
 		}
-		elsif ( $insert_before_or_after eq 'after' ) {
-			$self->insert_line_after( $insert_line_number, $bac_to_insert );
-		}
-		else {
-			die "BAC $bac_name not inserted\n";
+		else{#if its a singleton
+			$bac_inserted_accessions{$bac_to_insert->get_accession()} = 'inserted'; #recording accession name
+			if ( $insert_before_or_after eq 'before' ) {
+				$self->insert_line_before( $insert_line_number, $bac_to_insert );
+			}
+			elsif ( $insert_before_or_after eq 'after' ) {
+				$self->insert_line_after( $insert_line_number, $bac_to_insert );
+			}
+			else {
+				die "BAC $bac_name not inserted\n";
+			}
+			print STDERR "Inserted BAC: $bac_name\n";
 		}
 		%tpf_lines = %{ $self->get_tpf_lines() };
+		#print STDERR $self->get_formatted_tpf();
 	}
 	return $self;
 }
