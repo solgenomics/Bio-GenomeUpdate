@@ -311,18 +311,12 @@ if ( !$opt_f ) {
 	help();
 }
 
-#if ( (!$opt_f) || (!$opt_m) ) {
-#	print "\nACE file and mismatch % are required. See help below\n\n\n";
-#	help();
-#}
-
 #prep input data
 my $assembly = Bio::Assembly::IO->new( -file => $opt_f, -format => 'ace'); 
 my $scaffold = $assembly->next_assembly();
 
 #process assembly
 scaffold_summary($scaffold);
-
 
 #prep dirs
 my $cwd = getcwd();
