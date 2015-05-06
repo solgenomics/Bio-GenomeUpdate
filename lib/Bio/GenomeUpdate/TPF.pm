@@ -389,7 +389,7 @@ sub parse_tpf {
 						$tpf_sequence_line->set_contains( $tab_parsed_line[3] );
 						if ( defined( $tab_parsed_line[4] ) ) {
 							$tab_parsed_line[4] =~ s/^\s+|\s+$//g;
-							$tpf_sequence_line->set_containing_accesion(
+							$tpf_sequence_line->set_containing_accession(
 								$tab_parsed_line[4] );
 						}
 						if ( defined( $tab_parsed_line[5] ) ) {
