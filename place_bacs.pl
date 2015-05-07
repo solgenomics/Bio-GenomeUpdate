@@ -41,8 +41,6 @@ use Bio::GenomeUpdate::TPF::TPFGapLine;
 use Bio::GenomeUpdate::TPF;
 use Bio::GenomeUpdate::AGP;
 
-
-
 use Data::Dumper;#for debugging
 
 our ( $opt_t, $opt_l, $opt_s, $opt_c, $opt_h, $opt_a );
@@ -248,7 +246,7 @@ sub contig_component_id_direction {
 			my $locatableleq = $contig->get_seq_by_pos($sequence_counter); #returns Bio::LocatableSeq
 			my $contig_bac_name;
 			if ( is_ncbi_format($locatableleq->id()) ){ $contig_bac_name = get_accession($locatableleq->id());}
-			print STDERR "** pushing $contig_bac_name\n";
+
 			push @contig_component_sequence_arr, $contig_bac_name ;
 			push @contig_component_directions_arr, $locatableleq->strand(); # returns the value of the strandedness (-1, 0 or 1)
 			$sequences_processed++;

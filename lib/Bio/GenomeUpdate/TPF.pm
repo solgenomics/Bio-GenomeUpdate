@@ -9,6 +9,8 @@ use Bio::GenomeUpdate::TPF::TPFSequenceLine;
 use Bio::GenomeUpdate::TPF::TPFGapLine;
 use File::Slurp;
 
+use Data::Dumper;#for debugging
+
 =head1 NAME
 
     TPF - Tiling path information used to generate a Tiling Path File (TPF)
@@ -389,7 +391,7 @@ sub parse_tpf {
 						$tpf_sequence_line->set_contains( $tab_parsed_line[3] );
 						if ( defined( $tab_parsed_line[4] ) ) {
 							$tab_parsed_line[4] =~ s/^\s+|\s+$//g;
-							$tpf_sequence_line->set_containing_accesion(
+							$tpf_sequence_line->set_containing_accession(
 								$tab_parsed_line[4] );
 						}
 						if ( defined( $tab_parsed_line[5] ) ) {
@@ -1004,6 +1006,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 	my %scaffold_component_contigs = %$scaffold_component_contigs_ref;
 	my %scaffold_component_contig_directions = %$scaffold_component_contig_directions_ref;
 	my %bac_inserted_accessions; 
+	my %sequence_accessions_to_remove; #key is accession and value is delete, can be undef
 
 	#make sure BACs are sorted by position
 	foreach my $bac_ref (@bacs) {
@@ -1060,9 +1063,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 		my $bac_is_inserted = 0;
 		my %gaps_to_resize;  #key will be line number and value will be new size
 		my @sorted_gaps_to_resize;
-#		my %gaps_to_remove;    #key is line number value is undef
-#		my @rev_sorted_gaps_to_remove;
-		my %sequences_and_gaps_to_remove; #key is line number value is undef
+		my %sequences_and_gaps_to_remove; #key is line number and value is delete, can be undef
 		my @rev_sorted_sequences_and_gaps_to_remove;
 		my $insert_before_or_after = undef;
 		my $insert_line_number     = undef;
@@ -1117,15 +1118,19 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 					#$contained_contigs{$line_key}=$bac_name;
 					
 					$sequences_and_gaps_to_remove{ $line_key } = 'delete';
+					$sequence_accessions_to_remove{ $accession } = 'delete' ; # remember so that accession is not used in contained clause
+					#print STDERR "Added $accession to \%sequence_accessions_to_remove\n";
 					my $sequence_location = $line_key;
 					
 					print STDERR "Removing sequence at line $sequence_location for $accession\n"; 
 				}
 
-				#check if current BAC is contained in the contig, will probably never happen for SL2.50->SL3.0
-				if ( $bac_ref_start >= $agp_sequence_start && $bac_ref_end <= $agp_sequence_end ) {
+				#check if current BAC is contained in the contig
+				#happens a lot in SL2.50->SL3.0, final sequence will come from BAC but leads to conflicts in GRC alignment
+				if ( ($bac_ref_start >= $agp_sequence_start) && ($bac_ref_end <= $agp_sequence_end) ){
 					$bac_to_insert->set_contains('CONTAINED');
 					$bac_to_insert->set_containing_accession($accession);
+					print STDERR "Setting $bac_name contained in $accession\n";
 				}
 
 				#check if gap is spanned by the BAC
@@ -1214,7 +1219,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 		}
 		$self->set_tpf_lines( \%tpf_lines );
 
-		#deleting sequence lines AND gaps
+		#DELETING sequence lines AND gaps
 		@rev_sorted_sequences_and_gaps_to_remove = sort { $b <=> $a } keys %sequences_and_gaps_to_remove;
 		foreach my $line_number (@rev_sorted_sequences_and_gaps_to_remove) {
 			$self->delete_line($line_number);
@@ -1280,7 +1285,9 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 			$line_key++;
 		}
 		
-		#finally inserting the BAC TPF line
+		#finally INSERTING the BAC TPF line
+		print STDERR Dumper \%sequence_accessions_to_remove;
+		
 		if ($bac_name =~ /^Contig/ ){
 			print STDERR "Substituting in BACs for assembled contig $bac_name\n";
 			my $component_accessions_ref = $scaffold_component_contigs{$bac_name};
@@ -1306,6 +1313,18 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 					$contig_bac_to_insert->set_accession($component_accessions_arr[$contig_bac_loop_counter]);
 					$bac_inserted_accessions{$component_accessions_arr[$contig_bac_loop_counter]} = 'inserted'; #recording accession name
 					$contig_bac_to_insert->set_local_contig_identifier($bac_to_insert->get_local_contig_identifier() );
+					
+					#set contained, do NOT set contained if the accession was already deleted from TPF
+					if (($bac_to_insert->has_contains()) &&
+						(!exists $sequence_accessions_to_remove{$bac_to_insert->get_containing_accession()})){
+						$contig_bac_to_insert->set_contains('CONTAINED');
+						$contig_bac_to_insert->set_containing_accession($bac_to_insert->get_containing_accession());
+						print STDERR "Added containing clause for BAC ";
+						print STDERR $contig_bac_to_insert->get_accession();
+						print STDERR " with containing accession ";
+						print STDERR $contig_bac_to_insert->get_containing_accession();
+						print STDERR "\n";
+					}
 					
 					if ($component_accession_directions_arr[$contig_bac_loop_counter] == 1){
 						$contig_bac_to_insert->set_orientation('PLUS');
@@ -1334,6 +1353,19 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 					$contig_bac_to_insert->set_accession($component_accessions_arr[$contig_bac_loop_counter]);
 					$bac_inserted_accessions{$component_accessions_arr[$contig_bac_loop_counter]} = 'inserted'; #recording accession name
 					$contig_bac_to_insert->set_local_contig_identifier($bac_to_insert->get_local_contig_identifier() );
+					
+					#set contained, do NOT set contained if the accession was already deleted from TPF
+					if (($bac_to_insert->has_contains()) &&
+						(!exists $sequence_accessions_to_remove{$bac_to_insert->get_containing_accession()})){
+						$contig_bac_to_insert->set_contains('CONTAINED');
+						$contig_bac_to_insert->set_containing_accession($bac_to_insert->get_containing_accession());
+						
+						print STDERR "Added containing clause for BAC ";
+						print STDERR $contig_bac_to_insert->get_accession();
+						print STDERR " with containing accession ";
+						print STDERR $contig_bac_to_insert->get_containing_accession();
+						print STDERR "\n";
+					}
 					
 					if ($component_accession_directions_arr[$contig_bac_loop_counter] == 1){
 						$contig_bac_to_insert->set_orientation('MINUS');#flip
@@ -1374,6 +1406,28 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 		%tpf_lines = %{ $self->get_tpf_lines() };
 		#print STDERR $self->get_formatted_tpf();
 	}
+	
+	#remove contained if the accession (typically WGS from prev assembly) was deleted from TPF
+	my %lines = %{ $self->get_tpf_lines() };
+	my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+	foreach my $line_key (@sorted_line_numbers) {
+		if ( $lines{$line_key}->get_line_type() eq "sequence" ) {
+			if (($lines{$line_key}->has_contains()) &&
+				(exists $sequence_accessions_to_remove{$lines{$line_key}->get_containing_accession()})){
+				my $accession_to_delete = $lines{$line_key}->get_containing_accession();
+				$lines{$line_key}->clear_contains();
+				$lines{$line_key}->clear_containing_accession();
+				print STDERR "Removed containing accession $accession_to_delete for BAC ";
+				print STDERR $lines{$line_key}->get_accession();
+				print STDERR "\n";
+			}
+		}
+	}
+	
+	
+	
+	
+	
 	return $self;
 }
 
