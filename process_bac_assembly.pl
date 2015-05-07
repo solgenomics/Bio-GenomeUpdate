@@ -11,7 +11,7 @@ process_bac_assembly.pl -f [ACE file] -m [mismatch %] -o [output directory]
 =head1 COMMAND-LINE OPTIONS
 
  -f  ACE file from Phrap assembly (required)
- -m  Mismatch percentage (recommended 0.5, currently not implemented)
+ -m  Mismatch percentage (recommended 0.5, currently not implemented. Manually check the ACE file in Tablet and leave out contigs with high error % when conposing fasta)
  -t  Do a test run (e.g. -t 1, no ACE file required in this case)
  -d  Print extra status messages (e.g. -d 1)
  -o  Output directory
@@ -27,9 +27,7 @@ If the [mismatch %] is more than threshold then a new ACE file error_contigs.ace
 Many routines mentioned in Bio::Assembly::Contig documentation ARE NOT IMPLEMENTED. 
 
 TODO: 
- - Add test routine that processes a test ACE file from phrap
- - Fix contig_mismatch() to work with ACE files from phrap.
- - Fix add_contig_to_scaffold to work with test ACE object (wrong aligned coordinates reported) and ACE files from phrap.  
+ See github issues 
 
 =cut
 
@@ -113,7 +111,7 @@ sub singlet_to_fasta {
 
 =item C<contig_mismatch ( Bio::Assembly::Contig  )>
 
-Accepts a single contig object from an assembly. Returns floats containing the mismatch percentage and the gap percentage for the contig.
+Accepts a single contig object from an assembly. Returns floats containing the mismatch percentage and the gap percentage for the contig. Does not work????
 
 =cut
 sub contig_mismatch {
@@ -419,7 +417,7 @@ sub help {
     Flags:
 
          -f  ACE file from Phrap assembly (required)
-         -m  Mismatch percentage (recommended 0.5, currently not implemented)
+         -m  Mismatch percentage (recommended 0.5, currently not implemented. Manually check the ACE file in Tablet and leave out contigs with high error % when conposing fasta)
          -t  Do a test run (e.g. -t 1, no ACE file required)
          -d  Print extra status messages (e.g. -d 1)
          -o  Output directory 
