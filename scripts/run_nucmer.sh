@@ -17,10 +17,10 @@ fi
 
 printf "Query : %s \n" "$1"
 printf "Reference : %s \n" "$2"
-
+printf "Searching with word size of 100 and min cluster size of 500bp\n\n"
 nucmer -l 100 -c 500 --noextend -p 500bp_qry_"${1}"__ref_"${2}" "$2" "$1"
 #delta-filter -l 500 -u 99 500bp_qry_"${1}"__ref_"${2}".delta > 500bp_qry_"${1}"__ref_"${2}".delta.filtered
 delta-filter -l 500 500bp_qry_"${1}"__ref_"${2}".delta > 500bp_qry_"${1}"__ref_"${2}".delta.filtered
 show-coords -c -d -l -q -T -o 500bp_qry_"${1}"__ref_"${2}".delta.filtered > 500bp_qry_"${1}"__ref_"${2}".delta.filtered.coords
 
-
+printf "\n\nOutput in %s \n" 500bp_qry_"${1}"__ref_"${2}".delta.filtered.coords
