@@ -1424,10 +1424,6 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 		}
 	}
 	
-	
-	
-	
-	
 	return $self;
 }
 
