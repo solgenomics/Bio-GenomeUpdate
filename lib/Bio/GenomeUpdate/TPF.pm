@@ -1006,7 +1006,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 	my %scaffold_component_contigs = %$scaffold_component_contigs_ref;
 	my %scaffold_component_contig_directions = %$scaffold_component_contig_directions_ref;
 	my %bac_inserted_accessions; 
-#	my %sequence_accessions_to_remove; #key is accession and value is delete, can be undef
+	my %sequence_accessions_to_remove; #key is accession and value is delete, can be undef
 		
 
 	#make sure BACs are sorted by position
@@ -1119,8 +1119,8 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 					#$contained_contigs{$line_key}=$bac_name;
 					
 					$sequences_and_gaps_to_remove{ $line_key } = 'delete';
-					#$sequence_accessions_to_remove{ $accession } = 'delete' ; # remember so that accession is not used in contained clause
-					#print STDERR Dumper %sequence_accessions_to_remove;
+					$sequence_accessions_to_remove{ $accession } = 'delete' ; # remember so that accession is not used in contained clause
+					#print STDERR "Added $accession to \%sequence_accessions_to_remove\n";
 					my $sequence_location = $line_key;
 					
 					print STDERR "Removing sequence at line $sequence_location for $accession\n"; 
@@ -1128,9 +1128,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 
 				#check if current BAC is contained in the contig
 				#happens a lot in SL2.50->SL3.0, final sequence will come from BAC but leads to conflicts in GRC alignment
-				if ( ($bac_ref_start >= $agp_sequence_start) && ($bac_ref_end <= $agp_sequence_end)
-					#&& (!exists $sequence_accessions_to_remove{$accession}) ) {
-					){
+				if ( ($bac_ref_start >= $agp_sequence_start) && ($bac_ref_end <= $agp_sequence_end) ){
 					$bac_to_insert->set_contains('CONTAINED');
 					$bac_to_insert->set_containing_accession($accession);
 					print STDERR "Setting $bac_name contained in $accession\n";
@@ -1222,7 +1220,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 		}
 		$self->set_tpf_lines( \%tpf_lines );
 
-		#deleting sequence lines AND gaps
+		#DELETING sequence lines AND gaps
 		@rev_sorted_sequences_and_gaps_to_remove = sort { $b <=> $a } keys %sequences_and_gaps_to_remove;
 		foreach my $line_number (@rev_sorted_sequences_and_gaps_to_remove) {
 			$self->delete_line($line_number);
@@ -1288,7 +1286,9 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 			$line_key++;
 		}
 		
-		#finally inserting the BAC TPF line
+		#finally INSERTING the BAC TPF line
+		print STDERR Dumper \%sequence_accessions_to_remove;
+		
 		if ($bac_name =~ /^Contig/ ){
 			print STDERR "Substituting in BACs for assembled contig $bac_name\n";
 			my $component_accessions_ref = $scaffold_component_contigs{$bac_name};
@@ -1316,9 +1316,8 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 					$contig_bac_to_insert->set_local_contig_identifier($bac_to_insert->get_local_contig_identifier() );
 					
 					#set contained, do NOT set contained if the accession was already deleted from TPF
-					#if (($bac_to_insert->has_contains()) &&
-					#	(!exists $sequence_accessions_to_remove{$bac_to_insert->get_containing_accession()})){
-					if (($bac_to_insert->has_contains())){
+					if (($bac_to_insert->has_contains()) &&
+						(!exists $sequence_accessions_to_remove{$bac_to_insert->get_containing_accession()})){
 						$contig_bac_to_insert->set_contains('CONTAINED');
 						$contig_bac_to_insert->set_containing_accession($bac_to_insert->get_containing_accession());
 						print STDERR "Added containing clause for BAC ";
@@ -1357,9 +1356,8 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 					$contig_bac_to_insert->set_local_contig_identifier($bac_to_insert->get_local_contig_identifier() );
 					
 					#set contained, do NOT set contained if the accession was already deleted from TPF
-					#if (($bac_to_insert->has_contains()) &&
-					#	(!exists $sequence_accessions_to_remove{$bac_to_insert->get_containing_accession()})){
-					if (($bac_to_insert->has_contains())){
+					if (($bac_to_insert->has_contains()) &&
+						(!exists $sequence_accessions_to_remove{$bac_to_insert->get_containing_accession()})){
 						$contig_bac_to_insert->set_contains('CONTAINED');
 						$contig_bac_to_insert->set_containing_accession($bac_to_insert->get_containing_accession());
 						
@@ -1396,17 +1394,6 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 		else{#if its a singleton
 			$bac_inserted_accessions{$bac_to_insert->get_accession()} = 'inserted'; #recording accession name
 			
-#			#remove contained if the accession was already deleted from TPF
-#			if (($bac_to_insert->has_contains()) &&
-#				(exists $sequence_accessions_to_remove{$bac_to_insert->get_containing_accession()})){
-#				my $accession_to_delete = $bac_to_insert->get_containing_accession();
-#				$bac_to_insert->clear_contains();
-#				$bac_to_insert->clear_containing_accession();
-#				print STDERR ". Removed containing accession $accession_to_delete for BAC ";
-#				print STDERR $bac_to_insert->get_accession();
-#				print STDERR "\n";
-#			}
-			
 			if ( $insert_before_or_after eq 'before' ) {
 				$self->insert_line_before( $insert_line_number, $bac_to_insert );
 			}
@@ -1421,6 +1408,28 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 		%tpf_lines = %{ $self->get_tpf_lines() };
 		#print STDERR $self->get_formatted_tpf();
 	}
+	
+	#remove contained if the accession (typically WGS from prev assembly) was deleted from TPF
+	my %lines = %{ $self->get_tpf_lines() };
+	my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+	foreach my $line_key (@sorted_line_numbers) {
+		if ( $lines{$line_key}->get_line_type() eq "sequence" ) {
+			if (($lines{$line_key}->has_contains()) &&
+				(exists $sequence_accessions_to_remove{$lines{$line_key}->get_containing_accession()})){
+				my $accession_to_delete = $lines{$line_key}->get_containing_accession();
+				$lines{$line_key}->clear_contains();
+				$lines{$line_key}->clear_containing_accession();
+				print STDERR "Removed containing accession $accession_to_delete for BAC ";
+				print STDERR $lines{$line_key}->get_accession();
+				print STDERR "\n";
+			}
+		}
+	}
+	
+	
+	
+	
+	
 	return $self;
 }
 
