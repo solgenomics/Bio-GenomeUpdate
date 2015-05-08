@@ -1286,7 +1286,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 		}
 		
 		#finally INSERTING the BAC TPF line
-		print STDERR Dumper \%sequence_accessions_to_remove;
+		#print STDERR Dumper \%sequence_accessions_to_remove;
 		
 		if ($bac_name =~ /^Contig/ ){
 			print STDERR "Substituting in BACs for assembled contig $bac_name\n";
