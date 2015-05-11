@@ -6,21 +6,25 @@
 
 usage(){
 	echo "usage:
-	$0 <BAC fasta> <REF fasta>"
+	$0 <BAC fasta> <REF fasta> <word size> <min cluster size>
+	Recommend 100 bp word size and 500 bp min cluster size. Default word size is 20 amd default min cluster size is 65"
 	exit 1
 }
 
-if [ "$#" -ne 2 ]
+if [ "$#" -ne 4 ]
 then
 	usage
 fi
 
 printf "Query : %s \n" "$1"
 printf "Reference : %s \n" "$2"
-printf "Searching with word size of 100 and min cluster size of 500bp\n\n"
-nucmer -l 100 -c 500 --noextend -p 500bp_qry_"${1}"__ref_"${2}" "$2" "$1"
-#delta-filter -l 500 -u 99 500bp_qry_"${1}"__ref_"${2}".delta > 500bp_qry_"${1}"__ref_"${2}".delta.filtered
-delta-filter -l 500 500bp_qry_"${1}"__ref_"${2}".delta > 500bp_qry_"${1}"__ref_"${2}".delta.filtered
-show-coords -c -d -l -q -T -o 500bp_qry_"${1}"__ref_"${2}".delta.filtered > 500bp_qry_"${1}"__ref_"${2}".delta.filtered.coords
+printf "Word size : %s \n" "$3"
+printf "Min cluster size : %s \n" "$4"
+printf "Searching with word size of %i and min cluster size of %i\n\n" "$3" "$4"
 
-printf "\n\nOutput in %s \n" 500bp_qry_"${1}"__ref_"${2}".delta.filtered.coords
+nucmer -l "$3" -c "$4" --noextend -p "${3}"bp_qry_"${1}"__ref_"${2}" "$2" "$1"
+#delta-filter -l 500 -u 99 500bp_qry_"${1}"__ref_"${2}".delta > 500bp_qry_"${1}"__ref_"${2}".delta.filtered
+delta-filter -l "$3" "${3}"bp_qry_"${1}"__ref_"${2}".delta > "${3}"bp_qry_"${1}"__ref_"${2}".delta.filtered
+show-coords -c -d -l -q -T -o "${3}"bp_qry_"${1}"__ref_"${2}".delta.filtered > "${3}"bp_qry_"${1}"__ref_"${2}".delta.filtered.coords
+
+printf "\n\nOutput in %s \n" "${3}"bp_qry_"${1}"__ref_"${2}".delta.filtered.coords
