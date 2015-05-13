@@ -6,8 +6,6 @@ use Moose;
 use MooseX::FollowPBP;
 use Moose::Util::TypeConstraints;
 
-use Data::Dumper;#for debugging
-
 =head1 NAME
 
     SP - Switch point lines for NCBI GRC pipeline with instructions used to generate a Accessioned Golden Path (AGP) file
@@ -38,7 +36,7 @@ Gets the chromosome.
 
 subtype 'SPChromosome', #only works for genomes with 12 chrs or less.
   as 'Str',
-  where { $_ eq '1' || $_ eq '2' || $_ eq '3' || $_ eq '4' || $_ eq '5' || $_ eq '6' || $_ eq '7' || $_ eq '8' || $_ eq '9' || $_ eq '10' || $_ eq '11' || $_ eq '12' || $_ eq "Un" },#does NOT work. need to do -> if int check 1-12, if str check Un
+  where { $_ eq '1' || $_ eq '2' || $_ eq '3' || $_ eq '4' || $_ eq '5' || $_ eq '6' || $_ eq '7' || $_ eq '8' || $_ eq '9' || $_ eq '10' || $_ eq '11' || $_ eq '12' || $_ eq "Un" },
   message { "The string, $_, was not a valid chromosome number.  Valid values for Solanum lycopersicum are 1-12 and Un." };
 has 'chromosome' => ( isa => 'SPChromosome', is => 'rw', required => 1, clearer => 'clear_chromosome' );
 

@@ -25,7 +25,7 @@ use strict;
 use warnings;
 use autodie;
 
-use Test::More tests => 1;
+use Test::More;
 use Test::Exception;
 
 BEGIN {use_ok( 'Bio::GenomeUpdate::SP' ); }
@@ -64,7 +64,7 @@ is($sp_line1->get_accession_prefix_last_base(), 100, 'Got correct accession_pref
 is($sp_line1->get_accession_suffix_first_base(), 200, 'Got correct accession_suffix_first_base from $sp_line1');
 is($sp_line1->get_comment(), 'test line 1 comment some nonsense here and here too', 'Got correct comment from $sp_line1');
 
-#test for type checks
+#test for type checks for SP line
 throws_ok{$sp_line1->set_chromosome(13)} qr/not a valid chromosome number/, "invalid chr exception caught"; 
 throws_ok{$sp_line1->set_accession_prefix_orientation('3')} qr/not a valid orientation type/, "invalid orientation exception caught";
 throws_ok{$sp_line1->set_accession_prefix_last_base(-1)} qr/not a positive coordinate/, "negative coordinate exception caught";
@@ -81,9 +81,11 @@ ok(my $sp = Bio::GenomeUpdate::SP->new(
 ok ($sp->add_line_to_end($sp_line1), 'added $sp_line1');
 ok ($sp->add_line_to_end($sp_line2), 'added $sp_line2');
 
+#test for type checks for SP object
+throws_ok{$sp->set_tpf_type('blah blah')} qr/not a valid TPF type/, "invalid TPF type exception caught";
+
 #print out SP object and compare to string
 ok(my $sp_file_string = $sp->get_formatted_sp(), 'got switch point file content' );
-print $sp_file_string;
 my $expected_sp_file_string = q(001	TGP	Primary	Un	chromosome	accession1	accession2	+	-	100	200	test line 1 comment some nonsense here and here too
 001	TGP	Primary	1	chromosome	accession3	accession4	-	-	300	100	test line 2 comment some nonsense here and here too
 );
@@ -101,3 +103,6 @@ $expected_sp_file_string = q(001	TGP	Primary	Un	chromosome	accession1	accession2
 001	TGP	Primary	Un	chromosome	accession1	accession2	+	-	110	210	test line 1 comment some nonsense here and here too
 ); #$sp_line1 also changes as its a hashref
 ok( $sp_file_string eq $expected_sp_file_string, 'modified switch point file content looks good' );
+
+#no more tests
+done_testing();
