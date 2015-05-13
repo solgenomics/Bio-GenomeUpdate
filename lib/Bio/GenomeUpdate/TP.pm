@@ -9,11 +9,15 @@ use Bio::GenomeUpdate::TP::TPLine;
 
 =head1 NAME
 
-    SP - Trim point information for NCBI GRC pipeline with instructions used to generate a Accessioned Golden Path (AGP) file
+    TP - Trim point information for NCBI GRC pipeline with instructions used to generate a Accessioned Golden Path (AGP) file
 
 =head1 SYNOPSIS
 
-    my $variable = SwitchPoint->new();
+    my $tp = Bio::GenomeUpdate::TP->new(
+				taxid => '001',
+				assembly_group => 'TGP',
+				assembly_unit => 'Primary',
+				tpf_type => 'chromosome');
 
 =head1 DESCRIPTION
 
@@ -25,7 +29,7 @@ This class stores information for transitions between TPF components including T
 
 =item C<set_taxid ( $taxonomy_id )>
 
-Sets the taxonomy identifier for the SP file, e.g. 4081 for Solanum lycopersicum.
+Sets the taxonomy identifier for the SP file, e.g. 4081 for Solanum lycopersicum (required).
 
 =item C<get_taxid>
 

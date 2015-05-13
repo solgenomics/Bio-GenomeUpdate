@@ -12,7 +12,12 @@ use Moose::Util::TypeConstraints;
 
 =head1 SYNOPSIS
 
-    my $variable = TPLine->new();
+    my $tp_line = Bio::GenomeUpdate::TP::TPLine->new( 
+					chromosome => 'Un',
+					accession => 'accession1',
+					accession_prefix_first_or_last_base => 100,
+					trim_from_end => 'L',
+					comment => 'test line 1 comment some nonsense here and here too');
 
 =head1 DESCRIPTION
 
@@ -40,7 +45,27 @@ subtype 'TPChromosome',
   message { "The string, $_, was not a valid chromosome number.  Valid values for Solanum lycopersicum are 1-12 and Un." };
 has 'chromosome' => ( isa => 'TPChromosome', is => 'rw', required => 1, clearer => 'clear_chromosome' );
 
+=item C<set_accession ( $accession )>
+
+Sets the accession (required).
+
+=item C<get_accession >
+
+Gets the accession.
+
+=cut
+
 has 'accession' => ( isa => 'Str', is => 'rw', required => 1, clearer => 'clear_accession' );
+
+=item C<set_accession_prefix_first_or_last_base ( $accession_prefix_first_or_last_base )>
+
+Sets the accession_prefix_first_or_last_base. Needs to be a positive integer... duh (required).
+
+=item C<get_accession_prefix_first_or_last_base >
+
+Gets the accession_prefix_first_or_last_base.
+
+=cut
 
 subtype 'PositiveInt',
 	as 'Int',
@@ -48,11 +73,31 @@ subtype 'PositiveInt',
 	message { "The string, $_, was not a positive coordinate" };
 has 'accession_prefix_first_or_last_base' => ( isa => 'PositiveInt', is => 'rw', required => 1, clearer => 'clear_accession_prefix_first_or_last_base' );
 
+=item C<set_trim_from_end ( $trim_from_end )>
+
+Sets the trim_from_end. Valid values values are L and H where L: trim bases with values lt accession_prefix_first_or_last_base; H: trim bases with values gt accession_prefix_first_or_last_base. (required).
+
+=item C<get_trim_from_end >
+
+Gets the trim_from_end.
+
+=cut
+
 subtype 'TPTrimDirection',
   as 'Str',
   where { ( $_ eq 'L' ) || ( $_ eq "H" )},
   message { "The string, $_, was not a valid trim direction.  Valid values values are L and H where L: trim bases with values lt accession_prefix_first_or_last_base; H: trim bases with values gt accession_prefix_first_or_last_base." };
 has 'trim_from_end' => ( isa => 'TPTrimDirection', is => 'rw', required => 1, clearer => 'clear_trim_from_end' );
+
+=item C<set_comment ( $comment )>
+
+Sets the comment. Needs to be at least 25 chars (required).
+
+=item C<get_comment >
+
+Gets the comment.
+
+=cut
 
 subtype 'TPComment',
   as 'Str',
