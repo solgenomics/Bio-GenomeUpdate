@@ -33,12 +33,12 @@ Gets the taxonomy identifier for the SP file.
 
 =cut
 
-has 'tp_taxid' => (
+has 'taxid' => (
 	isa     => 'Str',
 	is      => 'rw',
 	default => '4081',
 	required => 1,
-	clearer => 'clear_tp_taxid'
+	clearer => 'clear_taxid'
 );
 
 =item C<set_assembly_group ( $organism_string )>
@@ -80,7 +80,7 @@ Gets the TPF type.
 subtype 'TPTPFType', as 'Str', where { $_ eq "chromosome" || $_ eq "contig" },
   message { "The string, $_, was not a valid TPF type. See http://www.ncbi.nlm.nih.gov/projects/genome/assembly/grc/overlap/ specification link" };
 
-has 'tp_tpf_type' => ( isa => 'TPTPFType', is => 'rw', default => 'chromosome', required => 1, clearer => 'clear_chromosome' );
+has 'tpf_type' => ( isa => 'TPTPFType', is => 'rw', default => 'chromosome', required => 1, clearer => 'clear_tpf_type' );
 
 subtype 'TPLine',
   as 'Bio::GenomeUpdate::TP::TPLine',
@@ -145,17 +145,14 @@ sub get_formatted_tp {
 		%lines = %{ $self->get_tp_lines() };
 		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
 		foreach my $line_key (@sorted_line_numbers) {
-			$out_str .= $self->get_tp_taxid() . "\t";
+			$out_str .= $self->get_taxid() . "\t";
 			$out_str .= $self->get_assembly_group() . "\t";
 			$out_str .= $self->get_assembly_unit() . "\t";
 			$out_str .= $lines{$line_key}->get_chromosome() . "\t";
-			$out_str .= $self->get_tp_tpf_type() . "\t";
-			$out_str .= $lines{$line_key}->get_accession_prefix() . "\t";
-			$out_str .= $lines{$line_key}->get_accession_suffix() . "\t";
-			$out_str .= $lines{$line_key}->get_accession_prefix_orientation() . "\t";
-			$out_str .= $lines{$line_key}->get_accession_suffix_orientation() . "\t";
-			$out_str .= $lines{$line_key}->get_accession_prefix_last_base() . "\t";
-			$out_str .= $lines{$line_key}->get_accession_suffix_first_base() . "\t";
+			$out_str .= $self->get_tpf_type() . "\t";
+			$out_str .= $lines{$line_key}->get_accession() . "\t";
+			$out_str .= $lines{$line_key}->get_accession_prefix_first_or_last_base() . "\t";
+			$out_str .= $lines{$line_key}->get_trim_from_end() . "\t";
 			$out_str .= $lines{$line_key}->get_comment() . "\n";
 		}
 	}
