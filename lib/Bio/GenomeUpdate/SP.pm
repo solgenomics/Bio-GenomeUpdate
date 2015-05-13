@@ -6,7 +6,6 @@ use Moose;
 use MooseX::FollowPBP;
 use Moose::Util::TypeConstraints;
 use Bio::GenomeUpdate::SP::SPLine;
-use File::Slurp;
 
 =head1 NAME
 
@@ -18,7 +17,7 @@ use File::Slurp;
 
 =head1 DESCRIPTION
 
-This class stores information for transitions between TPF components including TPF type, taxonomy and assembly and generates a switch point (SP) file. The switch point file specifies the exact point of transition between two consecutive components in the TPF file. 
+This class stores information for transitions between TPF components including TPF type, taxonomy and assembly and generates a switch point (SP) file. The switch point file specifies the exact point of transition between two consecutive components in the AGP file. 
 
 =head2 Methods
 
@@ -34,12 +33,12 @@ Gets the taxonomy identifier for the SP file.
 
 =cut
 
-has 'sp_taxid' => (
+has 'taxid' => (
 	isa     => 'Str',
 	is      => 'rw',
 	default => '4081',
 	required => 1,
-	clearer => 'clear_sp_taxid'
+	clearer => 'clear_taxid'
 );
 
 =item C<set_assembly_group ( $organism_string )>
@@ -81,7 +80,7 @@ Gets the TPF type.
 subtype 'SPTPFType', as 'Str', where { $_ eq "chromosome" || $_ eq "contig" },
   message { "The string, $_, was not a valid TPF type. See http://www.ncbi.nlm.nih.gov/projects/genome/assembly/grc/overlap/ specification link" };
 
-has 'sp_tpf_type' => ( isa => 'SPTPFType', is => 'rw', default => 'chromosome', required => 1, clearer => 'clear_chromosome' );
+has 'tpf_type' => ( isa => 'SPTPFType', is => 'rw', default => 'chromosome', required => 1, clearer => 'clear_chromosome' );
 
 subtype 'SPLine',
   as 'Bio::GenomeUpdate::SP::SPLine',
@@ -93,6 +92,75 @@ has 'sp_lines' => (
 	predicate => 'has_sp_lines',
 	clearer   => 'clear_sp_lines'
 );
+
+=item C<add_line_to_end >
+
+Add a SPLine object.
+
+=cut
+
+sub add_line_to_end {
+	my $self        = shift;
+	my $line_to_add = shift;
+	my %lines;
+	if ( $self->has_sp_lines() ) {
+		%lines = %{ $self->get_sp_lines() };
+	}
+	my $last_line = $self->get_number_of_lines();
+	$lines{ $last_line + 1 } = $line_to_add;#key is just the index or line number
+	$self->set_sp_lines( {%lines} );
+}
+
+=item C<get_number_of_lines >
+
+Return number of lines in the SPLine object.
+
+=cut
+
+sub get_number_of_lines {
+	my $self = shift;
+	my %lines;
+	if ( $self->has_sp_lines() ) {
+		%lines = %{ $self->get_sp_lines() };
+		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+		return $sorted_line_numbers[-1];
+	}
+	else {
+		return 0;
+	}
+}
+
+=item C<get_formatted_sp >
+
+Return string with all lines in the SPLine object.
+
+=cut
+
+sub get_formatted_sp {
+	my $self = shift;
+	my %lines;
+	my $out_str;
+
+	if ( $self->has_sp_lines() ) {
+		%lines = %{ $self->get_sp_lines() };
+		my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+		foreach my $line_key (@sorted_line_numbers) {
+			$out_str .= $self->get_taxid() . "\t";
+			$out_str .= $self->get_assembly_group() . "\t";
+			$out_str .= $self->get_assembly_unit() . "\t";
+			$out_str .= $lines{$line_key}->get_chromosome() . "\t";
+			$out_str .= $self->get_tpf_type() . "\t";
+			$out_str .= $lines{$line_key}->get_accession_prefix() . "\t";
+			$out_str .= $lines{$line_key}->get_accession_suffix() . "\t";
+			$out_str .= $lines{$line_key}->get_accession_prefix_orientation() . "\t";
+			$out_str .= $lines{$line_key}->get_accession_suffix_orientation() . "\t";
+			$out_str .= $lines{$line_key}->get_accession_prefix_last_base() . "\t";
+			$out_str .= $lines{$line_key}->get_accession_suffix_first_base() . "\t";
+			$out_str .= $lines{$line_key}->get_comment() . "\n";
+		}
+	}
+	return $out_str;
+}
 
 ###
 1;    #do not remove
