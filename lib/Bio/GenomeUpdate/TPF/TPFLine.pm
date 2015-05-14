@@ -71,11 +71,11 @@ Gets the estimated size of the gap.
 
 =cut
 
-subtype 'PositiveInt',
+subtype 'TPFPositiveInt',
   as 'Int',
   where { $_ > 0 },
   message { "Int is not larger than 0" };
-has 'gap_size' => (isa => 'PositiveInt', is => 'rw', predicate => 'has_gap_size');
+has 'gap_size' => (isa => 'TPFPositiveInt', is => 'rw', predicate => 'has_gap_size');
 
 
 =item C<get_gap_methods>

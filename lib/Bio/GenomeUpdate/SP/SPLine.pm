@@ -119,12 +119,12 @@ Gets the accession_suffix_first_base.
 
 =cut
 
-subtype 'PositiveInt',
+subtype 'SPPositiveInt',
 	as 'Int',
 	where { $_ > 0 },
 	message { "The string, $_, was not a positive coordinate" };
-has 'accession_prefix_last_base' => ( isa => 'PositiveInt', is => 'rw', required => 1, clearer => 'clear_accession_prefix_last_base' );
-has 'accession_suffix_first_base' => ( isa => 'PositiveInt', is => 'rw', required => 1, clearer => 'clear_accession_suffix_first_base' );
+has 'accession_prefix_last_base' => ( isa => 'SPPositiveInt', is => 'rw', required => 1, clearer => 'clear_accession_prefix_last_base' );
+has 'accession_suffix_first_base' => ( isa => 'SPPositiveInt', is => 'rw', required => 1, clearer => 'clear_accession_suffix_first_base' );
 
 =item C<set_comment ( $comment )>
 

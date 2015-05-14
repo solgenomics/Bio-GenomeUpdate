@@ -67,11 +67,11 @@ Gets the accession_prefix_first_or_last_base.
 
 =cut
 
-subtype 'PositiveInt',
+subtype 'TPPositiveInt',
 	as 'Int',
 	where { $_ > 0 },
 	message { "The string, $_, was not a positive coordinate" };
-has 'accession_prefix_first_or_last_base' => ( isa => 'PositiveInt', is => 'rw', required => 1, clearer => 'clear_accession_prefix_first_or_last_base' );
+has 'accession_prefix_first_or_last_base' => ( isa => 'TPPositiveInt', is => 'rw', required => 1, clearer => 'clear_accession_prefix_first_or_last_base' );
 
 =item C<set_trim_from_end ( $trim_from_end )>
 
