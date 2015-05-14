@@ -23,6 +23,10 @@ group_coords.pl
 
   See github issues.
 
+=head2 METHODS
+
+=over 
+
 =cut
 
 use strict;
@@ -683,6 +687,10 @@ sub help {
 EOF
 	exit(1);
 }
+
+=pod
+
+=back
 
 =head1 LICENSE
 
