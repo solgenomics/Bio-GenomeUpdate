@@ -15,6 +15,7 @@ Number of Singlets: 1
 
 
 2 contigs processed from assembly.ace
+
 %scaffold_component_contigs
 $VAR1 = {
           'Contig1' => [
@@ -43,6 +44,60 @@ Parsing AGP line 22 of 22
 Parsed 22 AGP lines
 Parsing AGP line 3 of 3
 Parsed 3 AGP lines
+
+%scaffold_agp_coords
+$VAR1 = {
+          'AEKE02013047' => {
+                              'orientation' => '-',
+                              'start' => 2,
+                              'end' => 3611
+                            },
+          'AEKE02013042' => {
+                              'orientation' => '-',   
+                              'end' => 89169,
+                              'start' => 85622
+                            },
+          'AEKE02013043' => {
+                              'orientation' => '-',   
+                              'start' => 77167,
+                              'end' => 85601
+                            },
+......
+          'AEKE02013044' => { 
+                              'orientation' => '-',
+                              'end' => 76524,
+                              'start' => 16488
+                            }
+        };
+        
+@bacs
+$VAR1 = [ 
+          [ 
+            'Contig1',
+            '12001',
+            '15910',
+            '1',
+            '4000',
+            '4000'
+          ],
+          [
+            'Contig2',
+            '2393256',
+            '2413256',
+            '20001',
+            '40000',
+            '40000'
+          ],
+          [
+            'AC193777',
+            '2433255',
+            '2473255',
+            '1',
+            '40000',
+            '40000'
+          ]
+        ];
+
 Removing gap at line 4 between AEKE02013045 and AEKE02013046 w.r.t. original TPF
 Substituting in BACs for assembled contig Contig1
 ******** inserting AC247241
@@ -60,6 +115,7 @@ Inserted BAC: AC247241 for assembled contig Contig2
 Inserted BAC: AC247069 for assembled contig Contig2   
 Removing gap at line 21 between AEKE02013594 and AEKE02013593 w.r.t. original TPF
 Inserted BAC: AC193777
+
 ##Organism: Solanum lycopersicum
 
 ##=== Beginning of TPF Data ===
