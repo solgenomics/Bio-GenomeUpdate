@@ -54,11 +54,11 @@ Gets the gap type
 
 =cut
 
-subtype 'GapType',
+subtype 'TPFGapType',
   as 'Str',
   where { $_ eq "TYPE-1" || $_ eq "TYPE-2" || $_ eq "TYPE-3" || $_ eq "CENTROMERE"|| $_ eq "TELOMERE" || $_ eq "HETEROCHROMATIN" || $_ eq "SHORT-ARM" },
   message { "The string, $_, was not a valid gap type" };
-has 'gap_type' => (isa => 'GapType', is => 'rw', predicate => 'has_gap_type');
+has 'gap_type' => (isa => 'TPFGapType', is => 'rw', predicate => 'has_gap_type');
 
 =item C<set_gap_size ( $type )>
 
@@ -84,11 +84,11 @@ Gets the method(s) used to determine the gap size as an array of strings;
 
 =cut
 
-subtype 'GapMethod',
+subtype 'TPFGapMethod',
   as 'Str',
   where {  $_ eq "FISH" ||  $_ eq "OPTICAL MAP" ||  $_ eq "RADIATION HYBRID" ||  $_ eq "PCR" ||  $_ eq "FINGERPRINT" ||  $_ eq "PAIRED ENDS" ||  $_ eq "ALIGN GENUS" ||  $_ eq "ALIGN XGENUS" ||  $_ eq "ALIGN TRNSCPT" },
   message { "The string, $_, was not a valid gap method" };
-has 'gap_methods' => (isa => 'ArrayRef[GapMethod]', is => 'rw', predicate => 'has_gap_methods');
+has 'gap_methods' => (isa => 'ArrayRef[TPFGapMethod]', is => 'rw', predicate => 'has_gap_methods');
 
 
 =item C<add_gap_method ( $method )>
