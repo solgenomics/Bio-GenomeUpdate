@@ -1,0 +1,4 @@
+4081	TGP	Primary	1	chromosome	AEKE02013046	Contig1	-	+	8136	1	BAC Contig1 aligns to the 3' end of WGS contig AEKE02013046 from previous version. Designates switch point from WGS contig to BAC.
+4081	TGP	Primary	1	chromosome	Contig2	AEKE02013592	+	+	40000	9293	BAC Contig2 aligns to the 5' end of WGS contig AEKE02013592 from previous version. Designates switch point from BAC to WGS contig.
+4081	TGP	Primary	1	chromosome	AEKE02013593	AC193777	+	+	7854	1	BAC AC193777 aligns to the 3' end of WGS contig AEKE02013593 from previous version. Designates switch point from WGS contig to BAC.
+4081	TGP	Primary	1	chromosome	AC193777	AEKE02013594	+	+	40000	32246	BAC AC193777 aligns to the 5' end of WGS contig AEKE02013594 from previous version. Designates switch point from BAC to WGS contig.
