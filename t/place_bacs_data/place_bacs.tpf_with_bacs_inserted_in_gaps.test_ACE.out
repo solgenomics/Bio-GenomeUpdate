@@ -1,0 +1,147 @@
+surya@caffeine place_bacs_data (switchpt_trim * u+1)$ perl -I../../lib/ ../../place_bacs.pl -t original.tpf -s scaffold.agp -c chr.agp -l group_coords.out -a assembly.ace
+
+--------------------- WARNING ---------------------
+MSG: Sequence gi|448826174|gb|AC247241.6| already assigned to object Contig1. Moving to contig Contig2
+---------------------------------------------------
+
+--------------------- WARNING ---------------------
+MSG: Sequence gi|448826169|gb|AC247069.6| already assigned to object Contig1. Moving to contig Contig2
+---------------------------------------------------
+Scaffold or Assembly name: NoName
+Number of BACs in scaffold: 3
+Number of Contigs: 2
+Number of BACs in Contigs: 4
+Number of Singlets: 1
+
+
+2 contigs processed from assembly.ace
+
+%scaffold_component_contigs
+$VAR1 = {
+          'Contig1' => [
+                         'AC247241',
+                         'AC247069'
+                       ],
+          'Contig2' => [
+                         'AC247241',
+                         'AC247069'
+                       ] 
+        };
+%scaffold_component_contig_directions
+$VAR1 = {
+          'Contig2' => [
+                         1,
+                         1
+                       ],
+          'Contig1' => [
+                         1,
+                         1
+                       ]
+        };
+Parsing TPF line 31 of 31
+Parsed 31 TPF lines
+Parsing AGP line 22 of 22
+Parsed 22 AGP lines
+Parsing AGP line 3 of 3
+Parsed 3 AGP lines
+
+%scaffold_agp_coords
+$VAR1 = {
+          'AEKE02013047' => {
+                              'orientation' => '-',
+                              'start' => 2,
+                              'end' => 3611
+                            },
+          'AEKE02013042' => {
+                              'orientation' => '-',   
+                              'end' => 89169,
+                              'start' => 85622
+                            },
+          'AEKE02013043' => {
+                              'orientation' => '-',   
+                              'start' => 77167,
+                              'end' => 85601
+                            },
+......
+          'AEKE02013044' => { 
+                              'orientation' => '-',
+                              'end' => 76524,
+                              'start' => 16488
+                            }
+        };
+@bacs
+$VAR1 = [ 
+          [ 
+            'Contig1',
+            '12001',
+            '15910',
+            '1',
+            '4000',
+            '4000'
+          ],
+          [
+            'Contig2',
+            '2393256',
+            '2413256',
+            '20001',
+            '40000',
+            '40000'
+          ],
+          [
+            'AC193777',
+            '2433255',
+            '2473255',
+            '1',
+            '40000',
+            '40000'
+          ]
+        ];
+
+Removing gap at line 4 between AEKE02013045 and AEKE02013046 w.r.t. original TPF
+Substituting in BACs for assembled contig Contig1
+******** inserting AC247241
+Inserted BAC: AC247241 for assembled contig Contig1   
+******** inserting AC247069
+Inserted BAC: AC247069 for assembled contig Contig1   
+Removing sequence at line 16 for AEKE02013591
+Partial alignment for Contig2 query start: 20001 query end: 40000
+BAC Contig2 starts within a gap. Resizing gap at line 15 between AEKE02013591 and AEKE02013041 to 2260001 bp w.r.t. original TPF
+Removing gap at line 17 between AEKE02013592 and AEKE02013591 w.r.t. original TPF
+Substituting in BACs for assembled contig Contig2
+******** inserting AC247241
+Inserted BAC: AC247241 for assembled contig Contig2   
+******** inserting AC247069
+Inserted BAC: AC247069 for assembled contig Contig2   
+Removing gap at line 21 between AEKE02013594 and AEKE02013593 w.r.t. original TPF
+Inserted BAC: AC193777
+##Organism: Solanum lycopersicum
+
+##=== Beginning of TPF Data ===
+
+AEKE02013047    ?       SL2.50sc04133   MINUS
+GAP     TYPE-2  253     PAIRED ENDS
+AEKE02013046    ?       SL2.50sc04133   MINUS
+AC247069        ?       SL2.50sc04133   PLUS
+AC247241        ?       SL2.50sc04133   PLUS
+AEKE02013045    ?       SL2.50sc04133   MINUS
+GAP     TYPE-2  576     PAIRED ENDS
+AEKE02013044    ?       SL2.50sc04133   MINUS
+GAP     TYPE-2  642     PAIRED ENDS
+AEKE02013043    ?       SL2.50sc04133   MINUS
+GAP     TYPE-2  20      PAIRED ENDS
+AEKE02013042    ?       SL2.50sc04133   MINUS
+GAP     TYPE-2  963     PAIRED ENDS
+AEKE02013041    ?       SL2.50sc04133   MINUS
+GAP     TYPE-3  2260001 FISH
+AC247069        ?       SL2.50sc04191   PLUS
+AC247241        ?       SL2.50sc04191   PLUS
+AEKE02013592    ?       SL2.50sc04191   PLUS
+GAP     TYPE-2  20      PAIRED ENDS
+AEKE02013593    ?       SL2.50sc04191   PLUS
+AC193777        ?       SL2.50sc04191   PLUS
+AEKE02013594    ?       SL2.50sc04191   PLUS
+GAP     TYPE-2  450     PAIRED ENDS
+AEKE02013595    ?       SL2.50sc04191   PLUS
+##=== End of TPF Data ===
+
+
