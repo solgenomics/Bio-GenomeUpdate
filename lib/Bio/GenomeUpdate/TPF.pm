@@ -1969,7 +1969,7 @@ Returns the local coordinate of the accession. Added for use in switchover and t
 					}
 					print STDERR "Inserted BAC: ";
 					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
-					print STDERR " for assembled contig $bac_name\n";
+					print STDERR " for assembled contig $bac_name in simple order\n";
 					$contig_bac_loop_counter++;
 				}
 			}
@@ -2010,7 +2010,7 @@ Returns the local coordinate of the accession. Added for use in switchover and t
 					} 
 					print STDERR "Inserted BAC: ";
 					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
-					print STDERR " for assembled contig $bac_name\n";
+					print STDERR " for assembled contig $bac_name in reversed order\n";
 					$contig_bac_loop_counter--;
 				}				
 			}
