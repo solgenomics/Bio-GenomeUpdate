@@ -1468,6 +1468,18 @@ Returns the local coordinate of the accession. Added for use in switchover and t
 		return $chromosome_coordinate - $accession_start;
 	};
 
+=item C<_get_accession_length ($accession)> 
+	
+Returns the length of the accession. Added for use in switchover and trim files
+	
+=cut
+	
+	local *_get_accession_length = sub {
+		my $accession = shift;
+		
+		return ( $scaffold_agp_coords{$accession}->{end} - $scaffold_agp_coords{$accession}->{start} + 1 );
+	};
+	
 	#make sure BACs are sorted by position
 	foreach my $bac_ref (@bacs) {
 		my @bac      = @$bac_ref;
@@ -1600,6 +1612,7 @@ Returns the local coordinate of the accession. Added for use in switchover and t
 					$bac_to_insert->set_containing_accession($accession);
 					print STDERR "Setting $bac_name contained in $accession\n";
 					
+					#if BAC is not flush with either end of the WGS contig then
 					#set switch point line for transition between BAC and WGS contig
 					my ($accession_prefix_orientation, $accession_suffix_orientation, $accession_prefix_last_base, $accession_suffix_first_base);
 					if ($tpf_lines{$line_key}->get_orientation() eq 'PLUS'){
@@ -1624,8 +1637,10 @@ Returns the local coordinate of the accession. Added for use in switchover and t
 					$accession_prefix_last_base = _get_accession_coordinate ($accession, $bac_ref_start - 1 );
 					print STDERR "$bac_name does not align from base 1 on accession $accession. Might be an error\n" if $bac_query_start != 1;
 					$accession_suffix_first_base = $bac_query_start;
-					
-					my $sp_prefix_line = Bio::GenomeUpdate::SP::SPLine->new( 
+
+					print STDERR "$bac_name aligns from base 1 on accession $accession. Not creating switch point\n" if $accession_prefix_last_base == -1;
+					if ($accession_prefix_last_base != -1){
+						my $sp_prefix_line = Bio::GenomeUpdate::SP::SPLine->new( 
 								chromosome => $chromosome,
 								accession_prefix => $accession,
 								accession_suffix => $bac_name,
@@ -1635,8 +1650,10 @@ Returns the local coordinate of the accession. Added for use in switchover and t
 								accession_suffix_first_base => $accession_suffix_first_base,
 								comment => "BAC $bac_name is contained within WGS contig $accession from previous version. Designates switch point from WGS contig to BAC."
 							);
-					print STDERR "Adding switch point for transition from $accession to contained $bac_name\n";
-					$switch_points->add_line_to_end($sp_prefix_line);
+						print STDERR "Adding switch point for transition from $accession to contained $bac_name\n";
+						$switch_points->add_line_to_end($sp_prefix_line);					
+					}
+					
 					
 					my $temp_orientation = $accession_prefix_orientation;
 					$accession_prefix_orientation = $accession_suffix_orientation;
@@ -1646,18 +1663,21 @@ Returns the local coordinate of the accession. Added for use in switchover and t
 					$accession_prefix_last_base = $bac_query_end;
 					$accession_suffix_first_base = _get_accession_coordinate ($accession, $bac_ref_end + 1 );
 					
-					my $sp_suffix_line = Bio::GenomeUpdate::SP::SPLine->new( 
-								chromosome => $chromosome,
-								accession_prefix => $bac_name,
-								accession_suffix => $accession,
-								accession_prefix_orientation => $accession_prefix_orientation,
-								accession_suffix_orientation => $accession_suffix_orientation,
-								accession_prefix_last_base => $accession_prefix_last_base,
-								accession_suffix_first_base => $accession_suffix_first_base,
-								comment => "BAC $bac_name is contained within WGS contig $accession from previous version. Designates switch point to from WGS contig to BAC."
-							);
-					print STDERR "Adding switch point for transition from contained $bac_name to $accession\n";
-					$switch_points->add_line_to_end($sp_suffix_line);
+					print STDERR "$bac_name aligns till end on accession $accession. Not creating a switch point\n" if $accession_suffix_first_base > _get_accession_length ($accession);
+					if ($accession_suffix_first_base > _get_accession_length ($accession)){
+						my $sp_suffix_line = Bio::GenomeUpdate::SP::SPLine->new( 
+									chromosome => $chromosome,
+									accession_prefix => $bac_name,
+									accession_suffix => $accession,
+									accession_prefix_orientation => $accession_prefix_orientation,
+									accession_suffix_orientation => $accession_suffix_orientation,
+									accession_prefix_last_base => $accession_prefix_last_base,
+									accession_suffix_first_base => $accession_suffix_first_base,
+									comment => "BAC $bac_name is contained within WGS contig $accession from previous version. Designates switch point to from BAC to WGS contig."
+								);
+						print STDERR "Adding switch point for transition from contained $bac_name to $accession\n";
+						$switch_points->add_line_to_end($sp_suffix_line);
+					}
 				}
 				
 				#no need to shrink sequence line as GRC aligner will figure out the switch over points
