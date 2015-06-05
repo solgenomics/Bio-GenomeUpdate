@@ -233,11 +233,11 @@ my $last_query_length;
 
 if ($print_header eq 'T'){
 	print
-"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection_check\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
 	print MIXED
-	"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+	"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection_check\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
 	print NONCOLINEAR
-	"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
+	"query\treference\tref_start\tref_end\tlength\tq_start\tq_end\tq_length\tseq_in_clusters\tdirection_check\tref_count\tincludes_0\tfull_length\tfrom_start\tfrom_end\tinternal_gap\tis_overlapping\tsize_of_alt\talternates\t\n";
 		
 }
 
@@ -482,7 +482,7 @@ sub calc_and_print_info {
 		 $ref_id,                       $query_id,
 		 $ref_start,                    $ref_end,
 		 $query_start,                  $query_end,
-		 $sequence_aligned_in_clusters, $direction,
+		 $sequence_aligned_in_clusters, $direction_check,
 		 $colinear_order_check,		
 		 $is_overlapping,               $size_of_next_largest_match,
 		 $alternates
@@ -508,7 +508,7 @@ sub calc_and_print_info {
 	$total++;
 
 	#problem alignments
-	if ( $direction == 0 ) {    #query aligns to both + and - strand of ref
+	if ( $direction_check == 0 ) {    #query aligns to both + and - strand of ref
 		$total_mixed++;
 		$flagged = 1;
 
@@ -521,7 +521,7 @@ sub calc_and_print_info {
 		print MIXED $query_end . "\t";
 		print MIXED $q_length . "\t";
 		print MIXED $sequence_aligned_in_clusters . "\t";
-		print MIXED $direction . "\t";    #strand
+		print MIXED $direction_check . "\t";    #both alignments on same strand? +1 if yes, else -1, 0 if mixed
 		print MIXED $align_group->get_count_of_reference_sequence_ids() . "\t";
 		print MIXED $align_group->includes_reference_id($zero_chromosome_id)
 		  . "\t";
@@ -548,7 +548,7 @@ sub calc_and_print_info {
 		print NONCOLINEAR $query_end . "\t";
 		print NONCOLINEAR $q_length . "\t";
 		print NONCOLINEAR $sequence_aligned_in_clusters . "\t";
-		print NONCOLINEAR $direction . "\t";    #strand
+		print NONCOLINEAR $direction_check . "\t";    #both alignments on same strand? +1 if yes, else -1, 0 if mixed
 		print NONCOLINEAR $align_group->get_count_of_reference_sequence_ids() . "\t";
 		print NONCOLINEAR $align_group->includes_reference_id($zero_chromosome_id)
 		  . "\t";
@@ -630,7 +630,7 @@ sub calc_and_print_info {
 		print $query_end. "\t";
 		print $q_length. "\t";
 		print $sequence_aligned_in_clusters. "\t";
-		print $direction. "\t";    #strand
+		print $direction_check. "\t";    #both alignments on same strand? +1 if yes, else -1, 0 if mixed
 		print $align_group->get_count_of_reference_sequence_ids() . "\t";
 		print $align_group->includes_reference_id($zero_chromosome_id) . "\t";
 		print $is_full_length. "\t";
