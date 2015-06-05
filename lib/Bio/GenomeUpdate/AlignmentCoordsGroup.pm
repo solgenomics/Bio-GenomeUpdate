@@ -253,9 +253,8 @@ sub get_id_coords_and_direction_of_longest_alignment_cluster_group {
 #proximity-grouped alignment clusters sorted by longest to shortest
 #length of non-overlapping sequence covered by alignment clusters.
 #aligned_coords are ordered acc to ref chr. see order_alignment_clusters_on_each_reference_sequence()
-	my @returnclusters =
-	  $self->get_cluster_groups_sorted_by_length($gap_allowed);
-	my $first_group = shift(@returnclusters);    #first is largest
+	my @returnclusters = $self->get_cluster_groups_sorted_by_length($gap_allowed);
+	my $first_group    = shift(@returnclusters);    #first is largest
 
 	#my @second_largest_cluster_group;
 	#if (defined(@{$returnclusters[1]})){
