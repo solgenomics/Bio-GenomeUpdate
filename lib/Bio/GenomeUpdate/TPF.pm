@@ -1905,17 +1905,17 @@ Returns the length of the accession. Added for use in switchover and trim files
 					}
 				}
 				elsif ($bac_ref_start >= $prev_agp_sequence_start
-					&& $bac_ref_start < $agp_sequence_start )
+					&& $bac_ref_start < $agp_sequence_start ) #for all other cases
 				{
 					if ( $bac_ref_start <= $prev_agp_sequence_end ) {
-						$insert_before_or_after = 'after';
-						$insert_line_number     = $prev_line_key;
+						$insert_before_or_after = 'after';        # insert after prev seq line if BAC starts before prev seq end coordinate
+						$insert_line_number     = $prev_line_key; # set line number to prev line
 						$bac_to_insert->set_local_contig_identifier($tpf_lines{$prev_line_key}->get_local_contig_identifier() );
 						$bac_is_inserted = 1;
 					}
 					elsif ( $bac_ref_start > $prev_agp_sequence_end ) {
-						$insert_before_or_after = 'before';
-						$insert_line_number     = $line_key;
+						$insert_before_or_after = 'before';  # insert before current seq line if BAC starts before current seq start coordinate
+						$insert_line_number     = $line_key; # set line number to current seq
 						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
 						);
 						$bac_is_inserted = 1;
@@ -1940,8 +1940,8 @@ Returns the length of the accession. Added for use in switchover and trim files
 			print STDERR "Substituting in BACs for assembled contig $bac_name\n";
 			my $component_accessions_ref = $scaffold_component_contigs{$bac_name};
 			my @component_accessions_arr = @$component_accessions_ref;
-			my $component_accession_directions_ref = $scaffold_component_contig_directions{$bac_name};# orientation (+1,-1)
-			my @component_accession_directions_arr = @$component_accession_directions_ref; 
+			my $component_accession_directions_ref = $scaffold_component_contig_directions{$bac_name};# orientation 
+			my @component_accession_directions_arr = @$component_accession_directions_ref;            # +1 for positive strand in contig alignment, -1 if on negativce strand
 			if (!(exists $scaffold_component_contigs{$bac_name}) || !(exists $scaffold_component_contig_directions{$bac_name})){
 				print STDERR "$bac_name not found in user supplied ACE file. Exiting ....\n\n"; exit 1;
 			}
@@ -1991,6 +1991,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
 					print STDERR " for assembled contig $bac_name in simple order\n";
 					$contig_bac_loop_counter++;
+					$insert_line_number++; #increment TPF line number for next insertion
 				}
 			}
 			elsif ( $bac_to_insert->get_orientation() eq 'MINUS' ){
@@ -2032,6 +2033,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
 					print STDERR " for assembled contig $bac_name in reversed order\n";
 					$contig_bac_loop_counter--;
+					$insert_line_number--; #deincrement TPF line number for next insertion
 				}				
 			}
 			else{
