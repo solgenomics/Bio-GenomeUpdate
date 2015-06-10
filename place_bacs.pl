@@ -205,6 +205,16 @@ my $tp = Bio::GenomeUpdate::TP->new(
 
 ($ordered_tpf_with_bacs_inserted_in_sequences_and_gaps, $sp_with_bacs_inserted_in_sequences_and_gaps, $tp_with_bacs_inserted_in_sequences_and_gaps) 
 	= $tpf->get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps( $chromosome, $sp, $tp, \@bacs, \%scaffold_agp_coords, \%scaffold_component_contigs, \%scaffold_component_contig_directions );
+
+#setting tomato genome values, change for other genomes
+$ordered_tpf_with_bacs_inserted_in_sequences_and_gaps->set_assembly_version('3.0');
+#$ordered_tpf_with_bacs_inserted_in_sequences_and_gaps->set_organism('Solanum lycopersicum');
+$ordered_tpf_with_bacs_inserted_in_sequences_and_gaps->set_assembly_name('SL3.0');
+$ordered_tpf_with_bacs_inserted_in_sequences_and_gaps->set_chromosome($chromosome);
+$ordered_tpf_with_bacs_inserted_in_sequences_and_gaps->set_strain_haplotype_cultivar('Heinz 1706');
+$ordered_tpf_with_bacs_inserted_in_sequences_and_gaps->set_type('Chromosome');
+$ordered_tpf_with_bacs_inserted_in_sequences_and_gaps->set_comment('Includes HTGS phase 3 BACs');
+
 my $out_str_from_ordered_tpf_with_bacs_inserted_in_sequences_and_gaps = $ordered_tpf_with_bacs_inserted_in_sequences_and_gaps->get_formatted_tpf();
 my $out_str_from_sp_with_bacs_inserted_in_sequences_and_gaps = $sp_with_bacs_inserted_in_sequences_and_gaps->get_formatted_sp();
 
