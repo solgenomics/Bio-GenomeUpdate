@@ -1995,8 +1995,8 @@ Returns the length of the accession. Added for use in switchover and trim files
 							print STDERR " and BAC Contig on PLUS strand\n";
 						}
 						else{
-							my $insert_line_number_with_offset = $insert_line_number - $before_insertion_counter{$insert_line_number};
-							$self->insert_line_before( $insert_line_number_with_offset, $contig_bac_to_insert );
+							my $insert_line_number_with_before_offset = $insert_line_number - $before_insertion_counter{$insert_line_number};
+							$self->insert_line_before( $insert_line_number_with_before_offset, $contig_bac_to_insert );
 							$before_insertion_counter{$insert_line_number}++;
 							print STDERR "Incremented before counter for TPF line $insert_line_number for inserting ";
 							print STDERR $contig_bac_to_insert->get_accession();
@@ -2018,8 +2018,8 @@ Returns the length of the accession. Added for use in switchover and trim files
 							print STDERR " and BAC Contig on PLUS strand\n";
 						}
 						else{
-							my $insert_line_number_with_offset = $insert_line_number + $after_insertion_counter{$insert_line_number};
-							$self->insert_line_after( $insert_line_number_with_offset, $contig_bac_to_insert );
+							my $insert_line_number_with_after_offset = $insert_line_number + $after_insertion_counter{$insert_line_number};
+							$self->insert_line_after( $insert_line_number_with_after_offset, $contig_bac_to_insert );
 							$after_insertion_counter{$insert_line_number}++;
 							print STDERR "Incremented *after* counter for TPF line $insert_line_number for inserting ";
 							print STDERR $contig_bac_to_insert->get_accession();
@@ -2079,8 +2079,8 @@ Returns the length of the accession. Added for use in switchover and trim files
 							print STDERR " and BAC Contig on MINUS strand\n";
 						}
 						else{
-							my $insert_line_number_with_offset = $insert_line_number - $before_insertion_counter{$insert_line_number};
-							$self->insert_line_before( $insert_line_number_with_offset, $contig_bac_to_insert );
+							my $insert_line_number_with_before_offset = $insert_line_number - $before_insertion_counter{$insert_line_number};
+							$self->insert_line_before( $insert_line_number_with_before_offset, $contig_bac_to_insert );
 							$before_insertion_counter{$insert_line_number}++;
 							print STDERR "Incremented before counter for TPF line $insert_line_number for inserting ";
 							print STDERR $contig_bac_to_insert->get_accession();
@@ -2102,8 +2102,8 @@ Returns the length of the accession. Added for use in switchover and trim files
 							print STDERR " and BAC Contig on MINUS strand\n";
 						}
 						else{
-							my $insert_line_number_with_offset = $insert_line_number + $after_insertion_counter{$insert_line_number};
-							$self->insert_line_after( $insert_line_number_with_offset, $contig_bac_to_insert );
+							my $insert_line_number_with_after_offset = $insert_line_number + $after_insertion_counter{$insert_line_number};
+							$self->insert_line_after( $insert_line_number_with_after_offset, $contig_bac_to_insert );
 							$after_insertion_counter{$insert_line_number}++;
 							print STDERR "Incremented *after* counter for TPF line $insert_line_number for inserting ";
 							print STDERR $contig_bac_to_insert->get_accession();
@@ -2138,8 +2138,8 @@ Returns the length of the accession. Added for use in switchover and trim files
 					print STDERR " for singleton BAC\n";
 				}
 				else{
-					my $insert_line_number_with_offset = $insert_line_number - $before_insertion_counter{$insert_line_number};
-					$self->insert_line_before( $insert_line_number_with_offset, $bac_to_insert );
+					my $insert_line_number_with_before_offset = $insert_line_number - $before_insertion_counter{$insert_line_number};
+					$self->insert_line_before( $insert_line_number_with_before_offset, $bac_to_insert );
 					$before_insertion_counter{$insert_line_number}++;
 					print STDERR "Incremented before counter for TPF line $insert_line_number for inserting ";
 					print STDERR $bac_to_insert->get_accession();
@@ -2161,8 +2161,8 @@ Returns the length of the accession. Added for use in switchover and trim files
 					print STDERR "\n";
 				}
 				else{
-					my $insert_line_number_with_offset = $insert_line_number + $after_insertion_counter{$insert_line_number};
-					$self->insert_line_after( $insert_line_number_with_offset, $bac_to_insert );
+					my $insert_line_number_with_after_offset = $insert_line_number + $after_insertion_counter{$insert_line_number};
+					$self->insert_line_after( $insert_line_number_with_after_offset, $bac_to_insert );
 					$after_insertion_counter{$insert_line_number}++;
 					print STDERR "Incremented *after* counter for TPF line $insert_line_number for inserting ";
 					print STDERR $bac_to_insert->get_accession();
