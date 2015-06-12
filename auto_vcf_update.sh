@@ -162,6 +162,7 @@ combine_by_chromosome $file ;
 #------------------------------------------------------------------------------------------------ 
 
 rm -r temp_update_files
+rm $file
 
 done
                                                                           
@@ -174,7 +175,6 @@ echo Removing temp files...
 function finish {
     rm *.agp.$OLD_CHROM_LABEL*
     rm *.agp.$NEW_CHROM_LABEL*
-    rm *.pseudo.gff*
 }
 trap finish EXIT
                                                                                                                                                                                   

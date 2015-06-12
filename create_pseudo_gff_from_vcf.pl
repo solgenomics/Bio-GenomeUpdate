@@ -18,7 +18,7 @@ $pseudo_gff =~ s/.vcf/.pseudo.gff/;
 
 open(my $G, ">", $pseudo_gff) || die "Can't open gff file $pseudo_gff";
 
-print $G "##gff-version 3 pseudo\n";
+#print $G "##gff-version 3 pseudo\n";
 
 my $INC = 00000;
 
@@ -26,6 +26,7 @@ for (<VCF>) {
     shift;
     if ($_ !~ m/^#/) {
         chomp;
+	$INC++;
         my ($CHROM, $POS, @extra) = split /\t/;
         print $G "$CHROM\t.\texon\t$POS\t$POS\t.\t+\t.\tID=ex$INC\n";
     } else {
