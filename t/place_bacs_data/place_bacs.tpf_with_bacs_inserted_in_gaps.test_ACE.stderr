@@ -23,21 +23,22 @@ Parsed 3 AGP lines
 Adding switch point for transition from AEKE02013046 to 3' aligned Contig1
 Removing sequence at line 5 for AEKE02013045
 Removing gap at line 4 between AEKE02013045 and AEKE02013046 w.r.t. original TPF
+Fetched TPF line 3 for AEKE02013046 for insertion
 Substituting in BACs for assembled contig Contig1
 ******** inserting AC247241
-Inserted BAC: AC247241 for assembled contig Contig1
+Inserted BAC: AC247241 for assembled contig Contig1 in simple order
 ******** inserting AC247069
-Inserted BAC: AC247069 for assembled contig Contig1
-Removing sequence at line 15 for AEKE02013591
+Inserted BAC: AC247069 for assembled contig Contig1 in simple order
+Removing sequence at line 13 for AEKE02013591
 Adding switch point for transition from 5' aligned Contig2 to AEKE02013592
-Removing gap at line 16 between AEKE02013592 and AEKE02013591 w.r.t. original TPF
+Removing gap at line 14 between AEKE02013592 and AEKE02013591 w.r.t. original TPF
+Fetched TPF line 13 for AEKE02013592 for insertion
 Substituting in BACs for assembled contig Contig2
-******** inserting AC247241
-Inserted BAC: AC247241 for assembled contig Contig2
-******** inserting AC247069
-Inserted BAC: AC247069 for assembled contig Contig2
+Inserted BAC: AC247069 for assembled contig Contig2 in reversed order
+Inserted BAC: AC247241 for assembled contig Contig2 in reversed order
 Adding switch point for transition from AEKE02013593 to 3' aligned AC193777
 Adding switch point for transition from 5' aligned AC193777 to AEKE02013594
-Removing gap at line 20 between AEKE02013594 and AEKE02013593 w.r.t. original TPF
-Inserted BAC: AC193777
+Removing gap at line 16 between AEKE02013594 and AEKE02013593 w.r.t. original TPF
+Fetched TPF line 15 for AEKE02013593 for insertion
+Inserted singleton BAC: AC193777
 
