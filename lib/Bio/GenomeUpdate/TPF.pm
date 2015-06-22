@@ -1491,6 +1491,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 		my $bac_query_start;
 		my $bac_query_end;
 		my $bac_query_length;
+		my $ref_orientation;
 		
 		my $bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
 		my %tpf_lines;
@@ -1502,25 +1503,39 @@ Returns the length of the accession. Added for use in switchover and trim files
 		#set BAC variables
 		$bac_to_insert->set_accession($bac_name);
 		if ( $bac[1] < $bac[2] ) {
-			$bac_to_insert->set_orientation('PLUS'); #records the orientation of ref region that aligned to bac
+			$ref_orientation = 'PLUS';  #records the orientation of ref region that aligned to bac
+			#$bac_to_insert->set_orientation('PLUS'); #records the orientation of ref region that aligned to bac
 			$bac_ref_start = $bac[1];
 			$bac_ref_end   = $bac[2];
 		}
 		elsif ( $bac[1] > $bac[2] ) {#as mummer flips coords for alignments on MINUS strand
-			$bac_to_insert->set_orientation('MINUS'); #records the orientation of ref region that aligned to bac
+			$ref_orientation = 'MINUS';  #records the orientation of ref region that aligned to bac
+			#$bac_to_insert->set_orientation('MINUS'); #records the orientation of ref region that aligned to bac
 			$bac_ref_start = $bac[2];
 			$bac_ref_end   = $bac[1];
 		}
 		else {
 			die	"Error in BAC ref coordinates for BAC $bac_name Start: $bac_ref_start End: $bac_ref_end\n";
 		}
-		if ( $bac[3] < $bac[4] ) {
+		if ( $bac[3] < $bac[4] ) {#query alignment on positive strand
 			$bac_query_start = $bac[3];
 			$bac_query_end   = $bac[4];
+			if ($ref_orientation eq 'PLUS'){
+				$bac_to_insert->set_orientation('PLUS');
+			}
+			elsif ($ref_orientation eq 'MINUS'){
+				$bac_to_insert->set_orientation('MINUS');#flip if qry aligned to opposite strand on ref
+			}
 		}
-		elsif ( $bac[3] > $bac[4] ) {
+		elsif ( $bac[3] > $bac[4] ) {#query alignment on negative strand
 			$bac_query_start = $bac[4];
 			$bac_query_end   = $bac[3];
+			if ($ref_orientation eq 'PLUS'){
+				$bac_to_insert->set_orientation('MINUS');
+			}
+			elsif ($ref_orientation eq 'MINUS'){
+				$bac_to_insert->set_orientation('PLUS');#flip if qry aligned to opposite strand on ref
+			}
 		}
 		else {
 			die	"Error in BAC query coordinates for BAC $bac_name Start: $bac_query_start End: $bac_query_end\n";
@@ -1551,14 +1566,14 @@ Returns the length of the accession. Added for use in switchover and trim files
 		my %add_scaffold_agp_coords;
 		$add_scaffold_agp_coords{'start'} = $bac_ref_start;
 		$add_scaffold_agp_coords{'end'}   = $bac_ref_end;
-		if ( $bac_to_insert->get_orientation() eq 'PLUS' ) {
+		if ( $ref_orientation eq 'PLUS' ) {
 			$add_scaffold_agp_coords{'orientation'} = '+';
 		}
-		elsif ( $bac_to_insert->get_orientation() eq 'MINUS' ) {
+		elsif ( $ref_orientation eq 'MINUS' ) {
 			$add_scaffold_agp_coords{'orientation'} = '-';
 		}
 		else {
-			die "No orientation specified for BAC: $bac_name\n";
+			die "No orientation specified for ref for BAC: $bac_name\n";
 		}
 		$scaffold_agp_coords{$bac_name} = \%add_scaffold_agp_coords;
 		
@@ -1626,10 +1641,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 					else{
 						die "No orientation for $accession. Exiting.. \n";
 					}
-					if ($bac_to_insert->get_orientation() eq 'PLUS'){
+					if ($ref_orientation eq 'PLUS'){
 						$accession_suffix_orientation = '+';
 					}
-					elsif($bac_to_insert->get_orientation() eq 'MINUS'){
+					elsif($ref_orientation eq 'MINUS'){
 						$accession_suffix_orientation = '-';
 					}
 					else{
@@ -1691,10 +1706,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 				
 					#set switch point line for transition between BAC and WGS contig
 					my ($accession_prefix_orientation, $accession_suffix_orientation, $accession_prefix_last_base, $accession_suffix_first_base);
-					if ($bac_to_insert->get_orientation() eq 'PLUS'){
+					if ($ref_orientation eq 'PLUS'){
 						$accession_prefix_orientation = '+';
 					}
-					elsif($bac_to_insert->get_orientation() eq 'MINUS'){
+					elsif($ref_orientation eq 'MINUS'){
 						$accession_prefix_orientation = '-';
 					}
 					else{
@@ -1746,10 +1761,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 					else{
 						die "No orientation for $accession. Exiting.. \n";
 					}
-					if ($bac_to_insert->get_orientation() eq 'PLUS'){
+					if ($ref_orientation eq 'PLUS'){
 						$accession_suffix_orientation = '+';
 					}
-					elsif($bac_to_insert->get_orientation() eq 'MINUS'){
+					elsif($ref_orientation eq 'MINUS'){
 						$accession_suffix_orientation = '-';
 					}
 					else{
@@ -1933,17 +1948,41 @@ Returns the length of the accession. Added for use in switchover and trim files
 		
 		
 		###############
-		#finally INSERTING the BAC TPF line
+		#finally INSERTING the BAC TPF line using the hash and array data structures constructed from $self->get_tpf_lines()
 		###############
+
+		#create line number to accession array and accesion to TPF hash for insertions later
+		#not using line number + offset logic as it breaks down in complicated cases
+		my %accession_tpflines; # accession key = TPF line value in array 
+		my @tpfline_accession; # [line number] = accession
+		$line_key = 1;
+		while ($line_key <= @sorted_tpf_line_numbers )
+		{
+			if ( $tpf_lines{$line_key}->get_line_type() eq 'sequence' ) {
+				my $accession = $tpf_lines{$line_key}->get_accession();
 		
+				#initialize data structures for insertions
+				$tpfline_accession[$line_key] = $accession;
+			
+				my @temp_arr;
+				push @temp_arr, $tpf_lines{$line_key}; #storing value instead of ref
+				$accession_tpflines{$accession} = \@temp_arr;
+			}
+			$line_key++;
+		}		
 		#print STDERR Dumper \%sequence_accessions_to_remove;
+		my $accession = $tpfline_accession[$insert_line_number];
+		my $tpf_line_arr_ref = $accession_tpflines{$accession};
+		my @temp_arr = @$tpf_line_arr_ref;
+		print STDERR "Fetched TPF line $insert_line_number for $accession for insertion\n";
+
 		
 		if ($bac_name =~ /^Contig/ ){
 			print STDERR "Substituting in BACs for assembled contig $bac_name\n";
 			my $component_accessions_ref = $scaffold_component_contigs{$bac_name};
 			my @component_accessions_arr = @$component_accessions_ref;
 			my $component_accession_directions_ref = $scaffold_component_contig_directions{$bac_name};# orientation 
-			my @component_accession_directions_arr = @$component_accession_directions_ref;            # +1 for positive strand in contig alignment, -1 if on negativce strand
+			my @component_accession_directions_arr = @$component_accession_directions_ref;            # +1 for positive strand in contig alignment, -1 if on negative strand
 			if (!(exists $scaffold_component_contigs{$bac_name}) || !(exists $scaffold_component_contig_directions{$bac_name})){
 				print STDERR "$bac_name not found in user supplied ACE file. Exiting ....\n\n"; exit 1;
 			}
@@ -1951,8 +1990,13 @@ Returns the length of the accession. Added for use in switchover and trim files
 			my $component_accessions_count = scalar @component_accessions_arr;
 			my $contig_bac_loop_counter;
 			
-			if ( $bac_to_insert->get_orientation() eq 'PLUS' ){
-				#simple order, same orientation
+			if ((($bac_to_insert->get_orientation() eq 'PLUS')
+				&& ($insert_before_or_after eq 'after'))
+				|| 
+				(($bac_to_insert->get_orientation() eq 'MINUS')
+				&& ($insert_before_or_after eq 'before'))
+				){
+				#simple order, flip orientation if MINUS
 				$contig_bac_loop_counter = 0;
 				while ($contig_bac_loop_counter < $component_accessions_count){
 					my $contig_bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
@@ -1977,76 +2021,45 @@ Returns the length of the accession. Added for use in switchover and trim files
 					}
 					
 					if ($component_accession_directions_arr[$contig_bac_loop_counter] == 1){
-						$contig_bac_to_insert->set_orientation('PLUS');
+						if ($bac_to_insert->get_orientation() eq 'PLUS'){
+							$contig_bac_to_insert->set_orientation('PLUS');
+						}
+						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
+							$contig_bac_to_insert->set_orientation('MINUS'); #flip
+						}
 					}
 					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){
-						$contig_bac_to_insert->set_orientation('MINUS');	
+						if ($bac_to_insert->get_orientation() eq 'PLUS'){
+							$contig_bac_to_insert->set_orientation('MINUS');
+						}
+						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
+							$contig_bac_to_insert->set_orientation('PLUS'); #flip
+						}
 					}
 					
-					#insert and record for offsetting future insetions
+					#insert 
 					if ( $insert_before_or_after eq 'before' ){
-						if (!exists $before_insertion_counter{$insert_line_number}){
-							$self->insert_line_before( $insert_line_number, $contig_bac_to_insert );
-							$before_insertion_counter{$insert_line_number} = 1;
-							print STDERR "Initialized *before* counter for TPF line $insert_line_number for inserting ";
-							print STDERR $contig_bac_to_insert->get_accession();
-							if ($bac_to_insert->has_contains()){
-								print STDERR " with containing accession ";
-								print STDERR $contig_bac_to_insert->get_containing_accession();							
-							}
-							print STDERR " with BAC Contig on PLUS strand\n";
-						}
-						else{
-							my $insert_line_number_with_before_offset = $insert_line_number - $before_insertion_counter{$insert_line_number};
-							$self->insert_line_before( $insert_line_number_with_before_offset, $contig_bac_to_insert );
-							$before_insertion_counter{$insert_line_number}++;
-							print STDERR "Incremented before counter for TPF line $insert_line_number for inserting ";
-							print STDERR $contig_bac_to_insert->get_accession();
-							if ($bac_to_insert->has_contains()){
-								print STDERR " with containing accession ";
-								print STDERR $contig_bac_to_insert->get_containing_accession();							
-							}							print STDERR ". New value is ";
-							print STDERR $before_insertion_counter{$insert_line_number};
-							print STDERR " and BAC Contig on PLUS strand\n";
-						}
+						unshift @temp_arr, $contig_bac_to_insert;
+						
 					}
-					elsif( $insert_before_or_after eq 'after' ){
-						if (!exists $after_insertion_counter{$insert_line_number}){
-							$self->insert_line_after( $insert_line_number, $contig_bac_to_insert );	
-							$after_insertion_counter{$insert_line_number} = 1;
-							print STDERR "Initialized *after* counter for TPF line $insert_line_number for inserting ";
-							print STDERR $contig_bac_to_insert->get_accession();
-							if ($bac_to_insert->has_contains()){
-								print STDERR " with containing accession ";
-								print STDERR $contig_bac_to_insert->get_containing_accession();							
-							}
-							print STDERR " and BAC Contig on PLUS strand\n";
-						}
-						else{
-							my $insert_line_number_with_after_offset = $insert_line_number + $after_insertion_counter{$insert_line_number};
-							$self->insert_line_after( $insert_line_number_with_after_offset, $contig_bac_to_insert );
-							$after_insertion_counter{$insert_line_number}++;
-							print STDERR "Incremented *after* counter for TPF line $insert_line_number for inserting ";
-							print STDERR $contig_bac_to_insert->get_accession();
-							if ($bac_to_insert->has_contains()){
-								print STDERR " with containing accession ";
-								print STDERR $contig_bac_to_insert->get_containing_accession();							
-							}
-							print STDERR ". New value is ";
-							print STDERR $after_insertion_counter{$insert_line_number};
-							print STDERR " and BAC Contig on PLUS strand\n";
-						}
+					elsif ( $insert_before_or_after eq 'after' ){
+						push @temp_arr, $contig_bac_to_insert;
 					}
 					
 					print STDERR "Inserted BAC: ";
 					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
 					print STDERR " for assembled contig $bac_name in simple order\n";
 					$contig_bac_loop_counter++;
-					$insert_line_number++; #increment TPF line number for next insertion
+					#$insert_line_number++; #increment TPF line number for next insertion
 				}
 			}
-			elsif ( $bac_to_insert->get_orientation() eq 'MINUS' ){
-				#reverse order, flip orientation
+			elsif ((($bac_to_insert->get_orientation() eq 'PLUS')
+				&& ($insert_before_or_after eq 'before'))
+				|| 
+				(($bac_to_insert->get_orientation() eq 'MINUS')
+				&& ($insert_before_or_after eq 'after'))
+				){
+				#reverse order, flip orientation if MINUS
 				$contig_bac_loop_counter = $component_accessions_count - 1 ;
 				while ($contig_bac_loop_counter >= 0 ){
 					my $contig_bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
@@ -2070,70 +2083,36 @@ Returns the length of the accession. Added for use in switchover and trim files
 					}
 					
 					if ($component_accession_directions_arr[$contig_bac_loop_counter] == 1){
-						$contig_bac_to_insert->set_orientation('MINUS');#flip
+						if ($bac_to_insert->get_orientation() eq 'PLUS'){
+							$contig_bac_to_insert->set_orientation('PLUS');
+						}
+						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
+							$contig_bac_to_insert->set_orientation('MINUS'); #flip
+						}
 					}
 					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){
-						$contig_bac_to_insert->set_orientation('PLUS');#flip	
+						if ($bac_to_insert->get_orientation() eq 'PLUS'){
+							$contig_bac_to_insert->set_orientation('MINUS');
+						}
+						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
+							$contig_bac_to_insert->set_orientation('PLUS'); #flip
+						}
 					}
 					
-					#insert and record for offsetting future insetions
+					#insert
 					if ( $insert_before_or_after eq 'before' ){
-						if (!exists $before_insertion_counter{$insert_line_number}){
-							$self->insert_line_before( $insert_line_number, $contig_bac_to_insert );
-							$before_insertion_counter{$insert_line_number} = 1;
-							print STDERR "Initialized *before* counter for TPF line $insert_line_number for inserting ";
-							print STDERR $contig_bac_to_insert->get_accession();
-							if ($bac_to_insert->has_contains()){
-								print STDERR " with containing accession ";
-								print STDERR $contig_bac_to_insert->get_containing_accession();							
-							}
-							print STDERR " and BAC Contig on MINUS strand\n";
-						}
-						else{
-							my $insert_line_number_with_before_offset = $insert_line_number - $before_insertion_counter{$insert_line_number};
-							$self->insert_line_before( $insert_line_number_with_before_offset, $contig_bac_to_insert );
-							$before_insertion_counter{$insert_line_number}++;
-							print STDERR "Incremented before counter for TPF line $insert_line_number for inserting ";
-							print STDERR $contig_bac_to_insert->get_accession();
-							if ($bac_to_insert->has_contains()){
-								print STDERR " with containing accession ";
-								print STDERR $contig_bac_to_insert->get_containing_accession();							
-							}
-							print STDERR ". New value is ";
-							print STDERR $before_insertion_counter{$insert_line_number};
-							print STDERR " and BAC Contig on MINUS strand\n";
-						}
+						unshift @temp_arr, $contig_bac_to_insert;
+						
 					}
-					elsif( $insert_before_or_after eq 'after' ){
-						if (!exists $after_insertion_counter{$insert_line_number}){
-							$self->insert_line_after( $insert_line_number, $contig_bac_to_insert );	
-							$after_insertion_counter{$insert_line_number} = 1;
-							print STDERR "Initialized *after* counter for TPF line $insert_line_number for inserting ";
-							print STDERR $contig_bac_to_insert->get_accession();
-							print STDERR " with containing accession ";
-							print STDERR $contig_bac_to_insert->get_containing_accession();
-							print STDERR " and BAC Contig on MINUS strand\n";
-						}
-						else{
-							my $insert_line_number_with_after_offset = $insert_line_number + $after_insertion_counter{$insert_line_number};
-							$self->insert_line_after( $insert_line_number_with_after_offset, $contig_bac_to_insert );
-							$after_insertion_counter{$insert_line_number}++;
-							print STDERR "Incremented *after* counter for TPF line $insert_line_number for inserting ";
-							print STDERR $contig_bac_to_insert->get_accession();
-							if ($bac_to_insert->has_contains()){
-								print STDERR " with containing accession ";
-								print STDERR $contig_bac_to_insert->get_containing_accession();							
-							}
-							print STDERR ". New value is ";
-							print STDERR $after_insertion_counter{$insert_line_number};
-							print STDERR " and BAC Contig on MINUS strand\n";
-						}					
+					elsif ( $insert_before_or_after eq 'after' ){
+						push @temp_arr, $contig_bac_to_insert;
 					}
+
 					print STDERR "Inserted BAC: ";
 					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
 					print STDERR " for assembled contig $bac_name in reversed order\n";
 					$contig_bac_loop_counter--;
-					$insert_line_number--; #deincrement TPF line number for next insertion
+					#$insert_line_number--; #deincrement TPF line number for next insertion
 				}
 			}
 			else{
@@ -2143,64 +2122,45 @@ Returns the length of the accession. Added for use in switchover and trim files
 		else{#if its a singleton
 			$bac_inserted_accessions{$bac_to_insert->get_accession()} = 'inserted'; #recording accession name
 			if ( $insert_before_or_after eq 'before' ) {
-				if (!exists $before_insertion_counter{$insert_line_number}){
-					$self->insert_line_before( $insert_line_number, $bac_to_insert );
-					$before_insertion_counter{$insert_line_number} = 1;
-					print STDERR "Initialized *before* counter for TPF line $insert_line_number for inserting ";
-					print STDERR $bac_to_insert->get_accession();
-					if ($bac_to_insert->has_contains()){
-						print STDERR " with containing accession ";
-						print STDERR $bac_to_insert->get_containing_accession();							
-					}
-					print STDERR " for singleton BAC\n";
-				}
-				else{
-					my $insert_line_number_with_before_offset = $insert_line_number - $before_insertion_counter{$insert_line_number};
-					$self->insert_line_before( $insert_line_number_with_before_offset, $bac_to_insert );
-					$before_insertion_counter{$insert_line_number}++;
-					print STDERR "Incremented before counter for TPF line $insert_line_number for inserting ";
-					print STDERR $bac_to_insert->get_accession();
-					if ($bac_to_insert->has_contains()){
-						print STDERR " with containing accession ";
-						print STDERR $bac_to_insert->get_containing_accession();							
-					}
-					print STDERR " for singleton BAC. New value is ";
-					print STDERR $before_insertion_counter{$insert_line_number};
-					print STDERR "\n";
-				}
+				unshift @temp_arr, $bac_to_insert;
 			}
 			elsif ( $insert_before_or_after eq 'after' ) {
-				if (!exists $after_insertion_counter{$insert_line_number}){
-					$self->insert_line_after( $insert_line_number, $bac_to_insert );	
-					$after_insertion_counter{$insert_line_number} = 1;
-					print STDERR "Initialized *after* counter for TPF line $insert_line_number for inserting ";
-					print STDERR $bac_to_insert->get_accession();
-					if ($bac_to_insert->has_contains()){
-						print STDERR " with containing accession ";
-						print STDERR $bac_to_insert->get_containing_accession();							
-					}
-					print STDERR "\n";
-				}
-				else{
-					my $insert_line_number_with_after_offset = $insert_line_number + $after_insertion_counter{$insert_line_number};
-					$self->insert_line_after( $insert_line_number_with_after_offset, $bac_to_insert );
-					$after_insertion_counter{$insert_line_number}++;
-					print STDERR "Incremented *after* counter for TPF line $insert_line_number for inserting ";
-					print STDERR $bac_to_insert->get_accession();
-					if ($bac_to_insert->has_contains()){
-						print STDERR " with containing accession ";
-						print STDERR $bac_to_insert->get_containing_accession();							
-					}
-					print STDERR " for singleton BAC. New value is ";
-					print STDERR $after_insertion_counter{$insert_line_number};
-					print STDERR "\n";
-				}
+				push @temp_arr, $bac_to_insert;
 			}
 			else {
 				die "BAC $bac_name not inserted\n";
 			}
-			print STDERR "Inserted BAC: $bac_name\n";
+			print STDERR "Inserted singleton BAC: $bac_name\n";
 		}
+		
+		$accession_tpflines{$accession} = \@temp_arr;
+		
+		#reconstruct tpf_lines and assign to module data structure
+		my %modified_tpf_lines;
+		%tpf_lines = %{ $self->get_tpf_lines() };
+		@sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
+		my $modified_line_key;
+		$modified_line_key = $line_key = 1;
+		#$self->clear_tpf_lines();#remove old values
+		while ($line_key <= @sorted_tpf_line_numbers )
+		{
+			if (defined $tpfline_accession[$line_key]){#sequence TPF lines
+				my $temp_arr_ref = $accession_tpflines{$tpfline_accession[$line_key]};
+				my @temp_arr = @$temp_arr_ref;
+				
+				foreach my $value (@temp_arr){
+					$modified_tpf_lines{$modified_line_key++} = $value;
+				}
+				
+			}
+			else{#gap TPF lines
+				$modified_tpf_lines{$modified_line_key++} = $tpf_lines{$line_key};
+			}
+			$line_key++;
+		}
+
+		$self->set_tpf_lines(\%modified_tpf_lines); #assign back to module data structure
+		
 		%tpf_lines = %{ $self->get_tpf_lines() };
 		#print STDERR $self->get_formatted_tpf();
 		
@@ -2232,6 +2192,8 @@ Returns the length of the accession. Added for use in switchover and trim files
 			}
 		}
 	}
+	$self->set_tpf_lines(\%lines); #assign back to module data structure
+	
 	return ($self,$switch_points,$trim_points);
 }
 
