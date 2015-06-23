@@ -770,7 +770,7 @@ sub get_tpf_in_new_scaffold_order {
 
 =item C<get_tpf_with_bacs_inserted_in_gaps ( @bacs, %scaffold_agp_coords )>
 
-Does not account for BAC regions that start or end within gaps when resizing gaps. See issue #32. Returns a full TPF with the BAC accessions inserted in order that replace gaps. Components are now CONTAINED in BACs that encompass them. Using get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps() but retaining for historical reasons.
+DEPRECATED. Does not account for BAC regions that start or end within gaps when resizing gaps. See issue #32. Returns a full TPF with the BAC accessions inserted in order that replace gaps. Components are now CONTAINED in BACs that encompass them. Using get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps() but retaining for historical reasons.
 
 =cut
 
@@ -993,7 +993,7 @@ sub get_tpf_with_bacs_inserted_in_gaps {
 
 =item C<get_tpf_with_bacs_inserted_in_sequences_and_gaps ( @bacs, %scaffold_agp_coords, %scaffold_component_contigs, %scaffold_component_contig_directions )>
 
-Returns a full TPF with the BAC accessions inserted in order that replace gaps AND sequences. The sequence and gap components that are encompassed by a BAC are now deleted from the TPF. The assembled BACs start with ContigX in the group_coords.out file. These are substituted with the BACs as they are ordered in the ACE file. Each member BAC will have its own TPF line. Using get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps() but retaining for historical reasons.
+DEPRECATED. Returns a full TPF with the BAC accessions inserted in order that replace gaps AND sequences. The sequence and gap components that are encompassed by a BAC are now deleted from the TPF. The assembled BACs start with ContigX in the group_coords.out file. These are substituted with the BACs as they are ordered in the ACE file. Each member BAC will have its own TPF line. Using get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps() but retaining for historical reasons.
 
 =cut
 
@@ -1491,7 +1491,8 @@ Returns the length of the accession. Added for use in switchover and trim files
 		my $bac_query_start;
 		my $bac_query_end;
 		my $bac_query_length;
-		my $ref_orientation;
+		my $ref_orientation_mummer;
+		my $qry_orientation_mummer;
 		
 		my $bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
 		my %tpf_lines;
@@ -1503,13 +1504,13 @@ Returns the length of the accession. Added for use in switchover and trim files
 		#set BAC variables
 		$bac_to_insert->set_accession($bac_name);
 		if ( $bac[1] < $bac[2] ) {
-			$ref_orientation = 'PLUS';  #records the orientation of ref region that aligned to bac
+			$ref_orientation_mummer = 'PLUS';  #records the orientation of ref region that aligned to bac
 			#$bac_to_insert->set_orientation('PLUS'); #records the orientation of ref region that aligned to bac
 			$bac_ref_start = $bac[1];
 			$bac_ref_end   = $bac[2];
 		}
 		elsif ( $bac[1] > $bac[2] ) {#as mummer flips coords for alignments on MINUS strand
-			$ref_orientation = 'MINUS';  #records the orientation of ref region that aligned to bac
+			$ref_orientation_mummer = 'MINUS';  #records the orientation of ref region that aligned to bac
 			#$bac_to_insert->set_orientation('MINUS'); #records the orientation of ref region that aligned to bac
 			$bac_ref_start = $bac[2];
 			$bac_ref_end   = $bac[1];
@@ -1518,24 +1519,26 @@ Returns the length of the accession. Added for use in switchover and trim files
 			die	"Error in BAC ref coordinates for BAC $bac_name Start: $bac_ref_start End: $bac_ref_end\n";
 		}
 		if ( $bac[3] < $bac[4] ) {#query alignment on positive strand
-			$bac_query_start = $bac[3];
-			$bac_query_end   = $bac[4];
-			if ($ref_orientation eq 'PLUS'){
-				$bac_to_insert->set_orientation('PLUS');
-			}
-			elsif ($ref_orientation eq 'MINUS'){
-				$bac_to_insert->set_orientation('MINUS');#flip if qry aligned to opposite strand on ref
-			}
+			$bac_query_start        = $bac[3];
+			$bac_query_end          = $bac[4];
+			$qry_orientation_mummer = 'PLUS';
+#			if ($ref_orientation_mummer eq 'PLUS'){
+#				$bac_to_insert->set_orientation('PLUS');
+#			}
+#			elsif ($ref_orientation_mummer eq 'MINUS'){
+#				$bac_to_insert->set_orientation('MINUS');#flip if qry aligned to opposite strand on ref
+#			}
 		}
 		elsif ( $bac[3] > $bac[4] ) {#query alignment on negative strand
 			$bac_query_start = $bac[4];
 			$bac_query_end   = $bac[3];
-			if ($ref_orientation eq 'PLUS'){
-				$bac_to_insert->set_orientation('MINUS');
-			}
-			elsif ($ref_orientation eq 'MINUS'){
-				$bac_to_insert->set_orientation('PLUS');#flip if qry aligned to opposite strand on ref
-			}
+			$qry_orientation_mummer = 'MINUS';
+#			if ($ref_orientation_mummer eq 'PLUS'){
+#				$bac_to_insert->set_orientation('MINUS');
+#			}
+#			elsif ($ref_orientation_mummer eq 'MINUS'){
+#				$bac_to_insert->set_orientation('PLUS');#flip if qry aligned to opposite strand on ref
+#			}
 		}
 		else {
 			die	"Error in BAC query coordinates for BAC $bac_name Start: $bac_query_start End: $bac_query_end\n";
@@ -1558,6 +1561,8 @@ Returns the length of the accession. Added for use in switchover and trim files
 		my @rev_sorted_sequences_and_gaps_to_remove;
 		my $insert_before_or_after = undef;
 		my $insert_line_number     = undef;
+		my $insert_line_accession  = undef;
+		my $insert_line_strand     = undef;
 		my %contained_contigs;    #key will be line number and value will be the contig accession
 		my $past_bac = 0;
 		my $line_key = 1; # starting from line 1 of TPF
@@ -1566,10 +1571,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 		my %add_scaffold_agp_coords;
 		$add_scaffold_agp_coords{'start'} = $bac_ref_start;
 		$add_scaffold_agp_coords{'end'}   = $bac_ref_end;
-		if ( $ref_orientation eq 'PLUS' ) {
+		if ( $ref_orientation_mummer eq 'PLUS' ) {
 			$add_scaffold_agp_coords{'orientation'} = '+';
 		}
-		elsif ( $ref_orientation eq 'MINUS' ) {
+		elsif ( $ref_orientation_mummer eq 'MINUS' ) {
 			$add_scaffold_agp_coords{'orientation'} = '-';
 		}
 		else {
@@ -1606,10 +1611,6 @@ Returns the length of the accession. Added for use in switchover and trim files
 
 				#check if current contig is contained in the BAC, delete if yes
 				if ( $agp_sequence_start >= $bac_ref_start && $agp_sequence_end <= $bac_ref_end ) {
-					#$tpf_lines{$line_key}->set_contains('CONTAINED');
-					#$tpf_lines{$line_key}->set_containing_accession($bac_name);
-					#$self->set_tpf_lines( \%tpf_lines );
-					#$contained_contigs{$line_key}=$bac_name;
 					
 					$sequences_and_gaps_to_remove{ $line_key } = 'delete';
 					$sequence_accessions_to_remove{ $accession } = 'delete' ; # remember so that accession is not used in contained clause
@@ -1641,10 +1642,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 					else{
 						die "No orientation for $accession. Exiting.. \n";
 					}
-					if ($ref_orientation eq 'PLUS'){
+					if ($ref_orientation_mummer eq 'PLUS'){
 						$accession_suffix_orientation = '+';
 					}
-					elsif($ref_orientation eq 'MINUS'){
+					elsif($ref_orientation_mummer eq 'MINUS'){
 						$accession_suffix_orientation = '-';
 					}
 					else{
@@ -1706,10 +1707,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 				
 					#set switch point line for transition between BAC and WGS contig
 					my ($accession_prefix_orientation, $accession_suffix_orientation, $accession_prefix_last_base, $accession_suffix_first_base);
-					if ($ref_orientation eq 'PLUS'){
+					if ($ref_orientation_mummer eq 'PLUS'){
 						$accession_prefix_orientation = '+';
 					}
-					elsif($ref_orientation eq 'MINUS'){
+					elsif($ref_orientation_mummer eq 'MINUS'){
 						$accession_prefix_orientation = '-';
 					}
 					else{
@@ -1761,10 +1762,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 					else{
 						die "No orientation for $accession. Exiting.. \n";
 					}
-					if ($ref_orientation eq 'PLUS'){
+					if ($ref_orientation_mummer eq 'PLUS'){
 						$accession_suffix_orientation = '+';
 					}
-					elsif($ref_orientation eq 'MINUS'){
+					elsif($ref_orientation_mummer eq 'MINUS'){
 						$accession_suffix_orientation = '-';
 					}
 					else{
@@ -1890,6 +1891,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 		@sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
 		
 		#set the containing scaffold for the BAC, i.e. the local contig identifier
+		#get the TPF line number for insertion before/after
 		$line_key = 1;
 		while ($bac_is_inserted == 0 && $line_key <= @sorted_tpf_line_numbers + 1 )
 		{
@@ -1916,8 +1918,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 					if ( $bac_ref_start >= $agp_sequence_start ) {
 						$insert_before_or_after = 'after';
 						$insert_line_number     = $line_key;
-						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
-						);
+						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier());
 						$bac_is_inserted = 1;
 					}
 				}
@@ -1927,14 +1928,13 @@ Returns the length of the accession. Added for use in switchover and trim files
 					if ( $bac_ref_start <= $prev_agp_sequence_end ) {
 						$insert_before_or_after = 'after';        # insert after prev seq line if BAC starts before prev seq end coordinate
 						$insert_line_number     = $prev_line_key; # set line number to prev line
-						$bac_to_insert->set_local_contig_identifier($tpf_lines{$prev_line_key}->get_local_contig_identifier() );
+						$bac_to_insert->set_local_contig_identifier($tpf_lines{$prev_line_key}->get_local_contig_identifier());
 						$bac_is_inserted = 1;
 					}
 					elsif ( $bac_ref_start > $prev_agp_sequence_end ) {
 						$insert_before_or_after = 'before';  # insert before current seq line if BAC starts before current seq start coordinate
 						$insert_line_number     = $line_key; # set line number to current seq
-						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
-						);
+						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier());
 						$bac_is_inserted = 1;
 					}
 				}
@@ -1950,8 +1950,30 @@ Returns the length of the accession. Added for use in switchover and trim files
 		###############
 		#finally INSERTING the BAC TPF line using the hash and array data structures constructed from $self->get_tpf_lines()
 		###############
+		
+		#set the orientation of the BAC/ contig BAC
+		#3 levels, BAC aligned to REF generated from TPF
+		#get the TPF line accession
+		$insert_line_accession = $tpf_lines{$insert_line_number}->get_accession();
+		$insert_line_strand    = $scaffold_agp_coords{$insert_line_accession}->{orientation}; # + or -
+		if ($insert_line_strand eq '+'){
+			if ($ref_orientation_mummer eq $qry_orientation_mummer){
+				$bac_to_insert->set_orientation('PLUS');
+			}
+			elsif ($ref_orientation_mummer ne $qry_orientation_mummer){
+				$bac_to_insert->set_orientation('MINUS');
+			}
+		}
+		elsif ($insert_line_strand eq '-'){
+			if ($ref_orientation_mummer eq $qry_orientation_mummer){
+				$bac_to_insert->set_orientation('MINUS');
+			}
+			elsif ($ref_orientation_mummer ne $qry_orientation_mummer){
+				$bac_to_insert->set_orientation('PLUS');
+			}
+		}
 
-		#create line number to accession array and accesion to TPF hash for insertions later
+		#create line number to accession array and accession to TPF hash for insertions later
 		#not using line number + offset logic as it breaks down in complicated cases
 		my %accession_tpflines; # accession key = TPF line value in array 
 		my @tpfline_accession; # [line number] = accession
@@ -2196,6 +2218,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 	
 	return ($self,$switch_points,$trim_points);
 }
+
 
 sub move_scaffold_before {
 	my $self                      = shift;
