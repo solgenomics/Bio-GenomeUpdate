@@ -314,10 +314,10 @@ sub help {
 
     Description:
 
-     This script inserts genome-aligned BACs into a Tiling Path File (TPF) for ONE chromosome. It also generates switch point and trim files for submission to NCBI GRC.
+     This script inserts genome-aligned BACs into a Tiling Path File (TPF) for ONE chromosome. It also generates switch point and trim files for submission to NCBI GRC. Use filter_group_coords_output.pl to sort group_coords output by ref start coordinate and remove redundant BACs (when >1 BAC covers tha same region) to avoid problems with NCBI TPF pipeline.
 
     Usage:
-      place_bacs.pl -t [TPF file] -s [scaffold AGP file] -c [chromosome AGP file] -n [chromosome number] -l [file with BAC names and coordinates] -a  ACE [file of assembled BACs]
+      place_bacs.pl -t [TPF file] -s [scaffold AGP file] -c [chromosome AGP file] -n [chromosome number] -l [file with BAC names and coordinates] -a  ACE [file of assembled BACs]      
 
     Flags:
 
