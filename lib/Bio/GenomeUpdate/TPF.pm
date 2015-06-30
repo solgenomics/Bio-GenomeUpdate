@@ -775,220 +775,220 @@ DEPRECATED. Does not account for BAC regions that start or end within gaps when 
 =cut
 
 sub get_tpf_with_bacs_inserted_in_gaps {
-	my $self           = shift;
-	my $bacs_ref       = shift;
-	my $agp_coords_ref = shift;
-	my @bacs           = @$bacs_ref; # ref to array of arrays with bac names and coordinates
-	my %agp_coords     = %$agp_coords_ref;
-	
-	print STDERR "Please note this method is deprecated now. Please use get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps().\n";
+#	my $self           = shift;
+#	my $bacs_ref       = shift;
+#	my $agp_coords_ref = shift;
+#	my @bacs           = @$bacs_ref; # ref to array of arrays with bac names and coordinates
+#	my %agp_coords     = %$agp_coords_ref;
+#	
+#	print STDERR "Please note this method is deprecated now. Please use get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps().\n";
 
-	#make sure BACs are sorted by position
-	foreach my $bac_ref (@bacs) {
-		my @bac      = @$bac_ref;
-		my $bac_name = $bac[0];
-		my $bac_start;
-		my $bac_end;
-		my $bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
-		my %tpf_lines;
-		if ( $self->has_tpf_lines() ) {
-			%tpf_lines = %{ $self->get_tpf_lines() };
-		}
-		my @sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
-		$bac_to_insert->set_accession($bac_name);
-		if ( $bac[1] < $bac[2] ) {
-			$bac_to_insert->set_orientation('PLUS'); #records the orientation of ref region that aligned to bac
-			$bac_start = $bac[1];
-			$bac_end   = $bac[2];
-		}
-		elsif ( $bac[1] > $bac[2] ) {
-			$bac_to_insert->set_orientation('MINUS'); #records the orientation of ref region that aligned to bac
-			$bac_start = $bac[2];
-			$bac_end   = $bac[1];
-		}
-		else {
-			die	"Error in BAC coordinates for BAC $bac_start Start: $bac_start End: $bac_end\n";
-		}
-		my $prev_agp_start = 0;
-		my $prev_agp_end   = 0;
-		my $prev_accession = 'none';
-		my $prev_line_key;
-		my $bac_is_contained = 0;
-		my $agp_start;
-		my $agp_end;
-		my $bac_is_inserted = 0;
-		my %gaps_to_resize;  #key will be line number and value will be new size
-		my @sorted_gaps_to_resize;
-		my %gaps_to_remove;    #key is line number value is undef
-		my @rev_sorted_gaps_to_remove;
-		my $insert_before_or_after = undef;
-		my $insert_line_number     = undef;
-		my %contained_contigs;    #key will be line number and value will be the contig accession
-		my $past_bac = 0;
-		my $line_key = 1;
+#	#make sure BACs are sorted by position
+#	foreach my $bac_ref (@bacs) {
+#		my @bac      = @$bac_ref;
+#		my $bac_name = $bac[0];
+#		my $bac_start;
+#		my $bac_end;
+#		my $bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
+#		my %tpf_lines;
+#		if ( $self->has_tpf_lines() ) {
+#			%tpf_lines = %{ $self->get_tpf_lines() };
+#		}
+#		my @sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
+#		$bac_to_insert->set_accession($bac_name);
+#		if ( $bac[1] < $bac[2] ) {
+#			$bac_to_insert->set_orientation('PLUS'); #records the orientation of ref region that aligned to bac
+#			$bac_start = $bac[1];
+#			$bac_end   = $bac[2];
+#		}
+#		elsif ( $bac[1] > $bac[2] ) {
+#			$bac_to_insert->set_orientation('MINUS'); #records the orientation of ref region that aligned to bac
+#			$bac_start = $bac[2];
+#			$bac_end   = $bac[1];
+#		}
+#		else {
+#			die	"Error in BAC coordinates for BAC $bac_start Start: $bac_start End: $bac_end\n";
+#		}
+#		my $prev_agp_start = 0;
+#		my $prev_agp_end   = 0;
+#		my $prev_accession = 'none';
+#		my $prev_line_key;
+#		my $bac_is_contained = 0;
+#		my $agp_start;
+#		my $agp_end;
+#		my $bac_is_inserted = 0;
+#		my %gaps_to_resize;  #key will be line number and value will be new size
+#		my @sorted_gaps_to_resize;
+#		my %gaps_to_remove;    #key is line number value is undef
+#		my @rev_sorted_gaps_to_remove;
+#		my $insert_before_or_after = undef;
+#		my $insert_line_number     = undef;
+#		my %contained_contigs;    #key will be line number and value will be the contig accession
+#		my $past_bac = 0;
+#		my $line_key = 1;
 
-		#add BAC coordinates to AGP info (not saved/ output to STDOUT or file)
-		my %add_agp_coords;
-		$add_agp_coords{'start'} = $bac_start;
-		$add_agp_coords{'end'}   = $bac_end;
-		if ( $bac_to_insert->get_orientation() eq 'PLUS' ) {
-			$add_agp_coords{'orientation'} = '+';
-		}
-		elsif ( $bac_to_insert->get_orientation() eq 'MINUS' ) {
-			$add_agp_coords{'orientation'} = '-';
-		}
-		else {
-			die "No orientation specified for BAC: $bac_name\n";
-		}
-		$agp_coords{$bac_name} = \%add_agp_coords;
-		
-		#print STDERR "* sorted_tpf_line_numbers: ",@sorted_tpf_line_numbers + 1,"\n";
+#		#add BAC coordinates to AGP info (not saved/ output to STDOUT or file)
+#		my %add_agp_coords;
+#		$add_agp_coords{'start'} = $bac_start;
+#		$add_agp_coords{'end'}   = $bac_end;
+#		if ( $bac_to_insert->get_orientation() eq 'PLUS' ) {
+#			$add_agp_coords{'orientation'} = '+';
+#		}
+#		elsif ( $bac_to_insert->get_orientation() eq 'MINUS' ) {
+#			$add_agp_coords{'orientation'} = '-';
+#		}
+#		else {
+#			die "No orientation specified for BAC: $bac_name\n";
+#		}
+#		$agp_coords{$bac_name} = \%add_agp_coords;
+#		
+#		#print STDERR "* sorted_tpf_line_numbers: ",@sorted_tpf_line_numbers + 1,"\n";
 
-		# the +1 breaks the code
-		#while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers + 1 ) {
-		while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers ) {
-			#print STDERR "** processing line $line_key\n";
-			if (!exists $tpf_lines{$line_key}){print STDERR "No TPF line for $line_key\n";}
-			if ( $tpf_lines{$line_key}->get_line_type() eq 'sequence' ) {
-				my $accession = $tpf_lines{$line_key}->get_accession();
-				my $agp_line_coords_ref = $agp_coords{$accession};
-				my %line_coords         = %$agp_line_coords_ref;
-				$agp_start = $line_coords{'start'};
-				$agp_end   = $line_coords{'end'};
+#		# the +1 breaks the code
+#		#while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers + 1 ) {
+#		while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers ) {
+#			#print STDERR "** processing line $line_key\n";
+#			if (!exists $tpf_lines{$line_key}){print STDERR "No TPF line for $line_key\n";}
+#			if ( $tpf_lines{$line_key}->get_line_type() eq 'sequence' ) {
+#				my $accession = $tpf_lines{$line_key}->get_accession();
+#				my $agp_line_coords_ref = $agp_coords{$accession};
+#				my %line_coords         = %$agp_line_coords_ref;
+#				$agp_start = $line_coords{'start'};
+#				$agp_end   = $line_coords{'end'};
 
-				#check if past the BAC
-				if ( $bac_end < $prev_agp_start ) {
-					$past_bac = 1;
-				}
+#				#check if past the BAC
+#				if ( $bac_end < $prev_agp_start ) {
+#					$past_bac = 1;
+#				}
 
-				#check if current contig is contained in the BAC
-				if ( $agp_start >= $bac_start && $agp_end <= $bac_end ) {
-					$tpf_lines{$line_key}->set_contains('CONTAINED');
-					$tpf_lines{$line_key}->set_containing_accession($bac_name);
-					$self->set_tpf_lines( \%tpf_lines );
+#				#check if current contig is contained in the BAC
+#				if ( $agp_start >= $bac_start && $agp_end <= $bac_end ) {
+#					$tpf_lines{$line_key}->set_contains('CONTAINED');
+#					$tpf_lines{$line_key}->set_containing_accession($bac_name);
+#					$self->set_tpf_lines( \%tpf_lines );
 
-					#$contained_contigs{$line_key}=$bac_name;
-				}
+#					#$contained_contigs{$line_key}=$bac_name;
+#				}
 
-				#check if current BAC is contained in the contig
-				if ( $bac_start >= $agp_start && $bac_end <= $agp_end ) {
-					$bac_to_insert->set_contains('CONTAINED');
-					$bac_to_insert->set_containing_accession($accession);
-				}
+#				#check if current BAC is contained in the contig
+#				if ( $bac_start >= $agp_start && $bac_end <= $agp_end ) {
+#					$bac_to_insert->set_contains('CONTAINED');
+#					$bac_to_insert->set_containing_accession($accession);
+#				}
 
-				#check if gap is spanned by the BAC
-				if (   $prev_line_key
-					&& $bac_start <= $prev_agp_end
-					&& $bac_end >= $agp_start
-					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
-				{
-					$gaps_to_remove{ $line_key - 1 } = 'delete';
-					my $gap_location = $line_key - 1;
-					print STDERR "Removing gap at line $gap_location between $accession and $prev_accession\n";
-				}
+#				#check if gap is spanned by the BAC
+#				if (   $prev_line_key
+#					&& $bac_start <= $prev_agp_end
+#					&& $bac_end >= $agp_start
+#					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
+#				{
+#					$gaps_to_remove{ $line_key - 1 } = 'delete';
+#					my $gap_location = $line_key - 1;
+#					print STDERR "Removing gap at line $gap_location between $accession and $prev_accession\n";
+#				}
 
-				#shrink gaps when partially spanned by a BAC
-				if (   $prev_line_key
-					&& $bac_start < $agp_start
-					&& $bac_start > $prev_agp_end
-					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
-				{
-					$gaps_to_resize{ $line_key - 1 } =
-					  $bac_start - $prev_agp_end;
-				}
-				if (   $prev_line_key
-					&& $bac_end < $agp_start
-					&& $bac_end > $prev_agp_end
-					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
-				{
-					$gaps_to_resize{ $line_key - 1 } = $agp_start - $bac_end;
-				}
-				$prev_line_key  = $line_key;
-				$prev_accession = $accession;
-				$prev_agp_start = $agp_start;
-				$prev_agp_end   = $agp_end;
-			}
-			$line_key++;
-		}
+#				#shrink gaps when partially spanned by a BAC
+#				if (   $prev_line_key
+#					&& $bac_start < $agp_start
+#					&& $bac_start > $prev_agp_end
+#					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
+#				{
+#					$gaps_to_resize{ $line_key - 1 } =
+#					  $bac_start - $prev_agp_end;
+#				}
+#				if (   $prev_line_key
+#					&& $bac_end < $agp_start
+#					&& $bac_end > $prev_agp_end
+#					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
+#				{
+#					$gaps_to_resize{ $line_key - 1 } = $agp_start - $bac_end;
+#				}
+#				$prev_line_key  = $line_key;
+#				$prev_accession = $accession;
+#				$prev_agp_start = $agp_start;
+#				$prev_agp_end   = $agp_end;
+#			}
+#			$line_key++;
+#		}
 
-		@sorted_gaps_to_resize     = sort { $a <=> $b } keys %gaps_to_resize;
-		@rev_sorted_gaps_to_remove = sort { $b <=> $a } keys %gaps_to_remove;
+#		@sorted_gaps_to_resize     = sort { $a <=> $b } keys %gaps_to_resize;
+#		@rev_sorted_gaps_to_remove = sort { $b <=> $a } keys %gaps_to_remove;
 
-		foreach my $line_number (@sorted_gaps_to_resize) {
-			$tpf_lines{$line_number}->set_gap_size( $gaps_to_resize{$line_number} );
-		}
-		$self->set_tpf_lines( \%tpf_lines );
-		foreach my $line_number (@rev_sorted_gaps_to_remove) {
-			$self->delete_line($line_number);
-		}
-		%tpf_lines               = %{ $self->get_tpf_lines() };
-		@sorted_tpf_line_numbers =
-		  sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
+#		foreach my $line_number (@sorted_gaps_to_resize) {
+#			$tpf_lines{$line_number}->set_gap_size( $gaps_to_resize{$line_number} );
+#		}
+#		$self->set_tpf_lines( \%tpf_lines );
+#		foreach my $line_number (@rev_sorted_gaps_to_remove) {
+#			$self->delete_line($line_number);
+#		}
+#		%tpf_lines               = %{ $self->get_tpf_lines() };
+#		@sorted_tpf_line_numbers =
+#		  sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
 
-		$line_key = 1;
-		while ($bac_is_inserted == 0 && $line_key <= @sorted_tpf_line_numbers + 1 )
-		{
-			if ( $tpf_lines{$line_key}->get_line_type() eq 'sequence' ) {
-				my $accession = $tpf_lines{$line_key}->get_accession();
-				my $agp_line_coords_ref = $agp_coords{$accession};
-				my %line_coords         = %$agp_line_coords_ref;
-				$agp_start = $line_coords{'start'};
-				$agp_end   = $line_coords{'end'};
-				if ( $line_key == 1 ) {          #deal with first one
-					if ( $bac_start <= 0 ) {
-						$insert_before_or_after = 'before';
-						$insert_line_number     = $line_key;
-						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
-						);
-						$bac_is_inserted = 1;
-					}
-				}
-				elsif ( $line_key == @sorted_tpf_line_numbers + 1 )
-				{                                #deal with last one
-					if ( $bac_start >= $agp_start ) {
-						$insert_before_or_after = 'after';
-						$insert_line_number     = $line_key;
-						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
-						);
-						$bac_is_inserted = 1;
-					}
-				}
-				elsif ($bac_start >= $prev_agp_start && $bac_start < $agp_start )
-				{
-					if ( $bac_start <= $prev_agp_end ) {
-						$insert_before_or_after = 'after';
-						$insert_line_number     = $prev_line_key;
-						$bac_to_insert->set_local_contig_identifier($tpf_lines{$prev_line_key}->get_local_contig_identifier() );
-						$bac_is_inserted = 1;
-					}
-					elsif ( $bac_start > $prev_agp_end ) {
-						$insert_before_or_after = 'before';
-						$insert_line_number     = $line_key;
-						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
-						);
-						$bac_is_inserted = 1;
-					}
-				}
-				$prev_line_key  = $line_key;
-				$prev_accession = $accession;
-				$prev_agp_start = $agp_start;
-				$prev_agp_end   = $agp_end;
-			}
-			$line_key++;
-		}
+#		$line_key = 1;
+#		while ($bac_is_inserted == 0 && $line_key <= @sorted_tpf_line_numbers + 1 )
+#		{
+#			if ( $tpf_lines{$line_key}->get_line_type() eq 'sequence' ) {
+#				my $accession = $tpf_lines{$line_key}->get_accession();
+#				my $agp_line_coords_ref = $agp_coords{$accession};
+#				my %line_coords         = %$agp_line_coords_ref;
+#				$agp_start = $line_coords{'start'};
+#				$agp_end   = $line_coords{'end'};
+#				if ( $line_key == 1 ) {          #deal with first one
+#					if ( $bac_start <= 0 ) {
+#						$insert_before_or_after = 'before';
+#						$insert_line_number     = $line_key;
+#						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
+#						);
+#						$bac_is_inserted = 1;
+#					}
+#				}
+#				elsif ( $line_key == @sorted_tpf_line_numbers + 1 )
+#				{                                #deal with last one
+#					if ( $bac_start >= $agp_start ) {
+#						$insert_before_or_after = 'after';
+#						$insert_line_number     = $line_key;
+#						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
+#						);
+#						$bac_is_inserted = 1;
+#					}
+#				}
+#				elsif ($bac_start >= $prev_agp_start && $bac_start < $agp_start )
+#				{
+#					if ( $bac_start <= $prev_agp_end ) {
+#						$insert_before_or_after = 'after';
+#						$insert_line_number     = $prev_line_key;
+#						$bac_to_insert->set_local_contig_identifier($tpf_lines{$prev_line_key}->get_local_contig_identifier() );
+#						$bac_is_inserted = 1;
+#					}
+#					elsif ( $bac_start > $prev_agp_end ) {
+#						$insert_before_or_after = 'before';
+#						$insert_line_number     = $line_key;
+#						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
+#						);
+#						$bac_is_inserted = 1;
+#					}
+#				}
+#				$prev_line_key  = $line_key;
+#				$prev_accession = $accession;
+#				$prev_agp_start = $agp_start;
+#				$prev_agp_end   = $agp_end;
+#			}
+#			$line_key++;
+#		}
 
-		if ( $insert_before_or_after eq 'before' ) {
-			$self->insert_line_before( $insert_line_number, $bac_to_insert );
-		}
-		elsif ( $insert_before_or_after eq 'after' ) {
-			$self->insert_line_after( $insert_line_number, $bac_to_insert );
-		}
-		else {
-			die "BAC $bac_name not inserted\n";
-		}
-		%tpf_lines = %{ $self->get_tpf_lines() };
-	}
-	return $self;
+#		if ( $insert_before_or_after eq 'before' ) {
+#			$self->insert_line_before( $insert_line_number, $bac_to_insert );
+#		}
+#		elsif ( $insert_before_or_after eq 'after' ) {
+#			$self->insert_line_after( $insert_line_number, $bac_to_insert );
+#		}
+#		else {
+#			die "BAC $bac_name not inserted\n";
+#		}
+#		%tpf_lines = %{ $self->get_tpf_lines() };
+#	}
+#	return $self;
 }
 
 =item C<get_tpf_with_bacs_inserted_in_sequences_and_gaps ( @bacs, %scaffold_agp_coords, %scaffold_component_contigs, %scaffold_component_contig_directions )>
@@ -998,436 +998,436 @@ DEPRECATED. Returns a full TPF with the BAC accessions inserted in order that re
 =cut
 
 sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
-	my $self           = shift;
-	my $bacs_ref       = shift;
-	my $agp_coords_ref = shift;
-	my $scaffold_component_contigs_ref = shift;
-	my $scaffold_component_contig_directions_ref = shift;
-	my @bacs           = @$bacs_ref; # ref to array of arrays with bac names and coordinates
-	my %agp_coords     = %$agp_coords_ref;
-	my %scaffold_component_contigs = %$scaffold_component_contigs_ref;
-	my %scaffold_component_contig_directions = %$scaffold_component_contig_directions_ref;
-	my %bac_inserted_accessions; 
-	my %sequence_accessions_to_remove; #key is accession and value is delete, can be undef
-	
-	print STDERR "Please note this method is deprecated now. Please use get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps().\n";
+#	my $self           = shift;
+#	my $bacs_ref       = shift;
+#	my $agp_coords_ref = shift;
+#	my $scaffold_component_contigs_ref = shift;
+#	my $scaffold_component_contig_directions_ref = shift;
+#	my @bacs           = @$bacs_ref; # ref to array of arrays with bac names and coordinates
+#	my %agp_coords     = %$agp_coords_ref;
+#	my %scaffold_component_contigs = %$scaffold_component_contigs_ref;
+#	my %scaffold_component_contig_directions = %$scaffold_component_contig_directions_ref;
+#	my %bac_inserted_accessions; 
+#	my %sequence_accessions_to_remove; #key is accession and value is delete, can be undef
+#	
+#	print STDERR "Please note this method is deprecated now. Please use get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps().\n";
 
-	#make sure BACs are sorted by position
-	foreach my $bac_ref (@bacs) {
-		my @bac      = @$bac_ref;
-		my $bac_name = $bac[0];
-		my $bac_ref_start;
-		my $bac_ref_end;
-		my $bac_query_start;
-		my $bac_query_end;
-		my $bac_query_length;
-		
-		my $bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
-		my %tpf_lines;
-		if ( $self->has_tpf_lines() ) {
-			%tpf_lines = %{ $self->get_tpf_lines() };
-		}
-		my @sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
+#	#make sure BACs are sorted by position
+#	foreach my $bac_ref (@bacs) {
+#		my @bac      = @$bac_ref;
+#		my $bac_name = $bac[0];
+#		my $bac_ref_start;
+#		my $bac_ref_end;
+#		my $bac_query_start;
+#		my $bac_query_end;
+#		my $bac_query_length;
+#		
+#		my $bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
+#		my %tpf_lines;
+#		if ( $self->has_tpf_lines() ) {
+#			%tpf_lines = %{ $self->get_tpf_lines() };
+#		}
+#		my @sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
 
-		#set BAC variables
-		$bac_to_insert->set_accession($bac_name);
-		if ( $bac[1] < $bac[2] ) {
-			$bac_to_insert->set_orientation('PLUS'); #records the orientation of ref region that aligned to bac
-			$bac_ref_start = $bac[1];
-			$bac_ref_end   = $bac[2];
-		}
-		elsif ( $bac[1] > $bac[2] ) {#as mummer flips coords for alignments on MINUS strand
-			$bac_to_insert->set_orientation('MINUS'); #records the orientation of ref region that aligned to bac
-			$bac_ref_start = $bac[2];
-			$bac_ref_end   = $bac[1];
-		}
-		else {
-			die	"Error in BAC ref coordinates for BAC $bac_name Start: $bac_ref_start End: $bac_ref_end\n";
-		}
-		if ( $bac[3] < $bac[4] ) {
-			$bac_query_start = $bac[3];
-			$bac_query_end   = $bac[4];
-		}
-		elsif ( $bac[3] > $bac[4] ) {
-			$bac_query_start = $bac[4];
-			$bac_query_end   = $bac[3];
-		}
-		else {
-			die	"Error in BAC query coordinates for BAC $bac_name Start: $bac_query_start End: $bac_query_end\n";
-		}
-		$bac_query_length = $bac[5];
-		
-		my $prev_agp_sequence_start = 0;
-		my $prev_agp_sequence_end   = 0;
-		my $prev_accession = 'none';
-		my $prev_line_key;
-		my $bac_is_contained = 0;
-		my $agp_sequence_start;
-		my $agp_sequence_end;
-		my $bac_is_inserted = 0;
-		my %gaps_to_resize;  #key will be line number and value will be new size
-		my @sorted_gaps_to_resize;
-		my %sequences_and_gaps_to_remove; #key is line number and value is delete, can be undef
-		my @rev_sorted_sequences_and_gaps_to_remove;
-		my $insert_before_or_after = undef;
-		my $insert_line_number     = undef;
-		my %contained_contigs;    #key will be line number and value will be the contig accession
-		my $past_bac = 0;
-		my $line_key = 1; # starting from line 1 of TPF
+#		#set BAC variables
+#		$bac_to_insert->set_accession($bac_name);
+#		if ( $bac[1] < $bac[2] ) {
+#			$bac_to_insert->set_orientation('PLUS'); #records the orientation of ref region that aligned to bac
+#			$bac_ref_start = $bac[1];
+#			$bac_ref_end   = $bac[2];
+#		}
+#		elsif ( $bac[1] > $bac[2] ) {#as mummer flips coords for alignments on MINUS strand
+#			$bac_to_insert->set_orientation('MINUS'); #records the orientation of ref region that aligned to bac
+#			$bac_ref_start = $bac[2];
+#			$bac_ref_end   = $bac[1];
+#		}
+#		else {
+#			die	"Error in BAC ref coordinates for BAC $bac_name Start: $bac_ref_start End: $bac_ref_end\n";
+#		}
+#		if ( $bac[3] < $bac[4] ) {
+#			$bac_query_start = $bac[3];
+#			$bac_query_end   = $bac[4];
+#		}
+#		elsif ( $bac[3] > $bac[4] ) {
+#			$bac_query_start = $bac[4];
+#			$bac_query_end   = $bac[3];
+#		}
+#		else {
+#			die	"Error in BAC query coordinates for BAC $bac_name Start: $bac_query_start End: $bac_query_end\n";
+#		}
+#		$bac_query_length = $bac[5];
+#		
+#		my $prev_agp_sequence_start = 0;
+#		my $prev_agp_sequence_end   = 0;
+#		my $prev_accession = 'none';
+#		my $prev_line_key;
+#		my $bac_is_contained = 0;
+#		my $agp_sequence_start;
+#		my $agp_sequence_end;
+#		my $bac_is_inserted = 0;
+#		my %gaps_to_resize;  #key will be line number and value will be new size
+#		my @sorted_gaps_to_resize;
+#		my %sequences_and_gaps_to_remove; #key is line number and value is delete, can be undef
+#		my @rev_sorted_sequences_and_gaps_to_remove;
+#		my $insert_before_or_after = undef;
+#		my $insert_line_number     = undef;
+#		my %contained_contigs;    #key will be line number and value will be the contig accession
+#		my $past_bac = 0;
+#		my $line_key = 1; # starting from line 1 of TPF
 
-		#add BAC coordinates to AGP info (NOT saved or output to STDOUT or file, maybe write to inserted.scaffolds.agp??)
-		my %add_agp_coords;
-		$add_agp_coords{'start'} = $bac_ref_start;
-		$add_agp_coords{'end'}   = $bac_ref_end;
-		if ( $bac_to_insert->get_orientation() eq 'PLUS' ) {
-			$add_agp_coords{'orientation'} = '+';
-		}
-		elsif ( $bac_to_insert->get_orientation() eq 'MINUS' ) {
-			$add_agp_coords{'orientation'} = '-';
-		}
-		else {
-			die "No orientation specified for BAC: $bac_name\n";
-		}
-		$agp_coords{$bac_name} = \%add_agp_coords;
-		
-		#print STDERR "* sorted_tpf_line_numbers: ",@sorted_tpf_line_numbers + 1,"\n";
-		
-		#Parse through the TPF line by line and modify as required 
-		#while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers + 1 ) { # the +1 breaks the code
-		while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers ) {
-			#print STDERR "** processing line $line_key\n";
-			if ( !exists $tpf_lines{$line_key} ){print STDERR "No TPF line for $line_key\n";}
-			if ( $tpf_lines{$line_key}->get_line_type() eq 'sequence' ) {
-				my $accession = $tpf_lines{$line_key}->get_accession();
-				
-				#skip BACs/accessions already inserted in TPF with no scaffold AGP records
-				if ( exists $bac_inserted_accessions{$accession} ){ $line_key++; next; }  
-				
-				#print STDERR "** processing accession $accession\n";
-				my $agp_line_coords_ref = $agp_coords{$accession};
-				my %line_coords         = %$agp_line_coords_ref;
-				$agp_sequence_start = $line_coords{'start'};
-				$agp_sequence_end   = $line_coords{'end'};
+#		#add BAC coordinates to AGP info (NOT saved or output to STDOUT or file, maybe write to inserted.scaffolds.agp??)
+#		my %add_agp_coords;
+#		$add_agp_coords{'start'} = $bac_ref_start;
+#		$add_agp_coords{'end'}   = $bac_ref_end;
+#		if ( $bac_to_insert->get_orientation() eq 'PLUS' ) {
+#			$add_agp_coords{'orientation'} = '+';
+#		}
+#		elsif ( $bac_to_insert->get_orientation() eq 'MINUS' ) {
+#			$add_agp_coords{'orientation'} = '-';
+#		}
+#		else {
+#			die "No orientation specified for BAC: $bac_name\n";
+#		}
+#		$agp_coords{$bac_name} = \%add_agp_coords;
+#		
+#		#print STDERR "* sorted_tpf_line_numbers: ",@sorted_tpf_line_numbers + 1,"\n";
+#		
+#		#Parse through the TPF line by line and modify as required 
+#		#while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers + 1 ) { # the +1 breaks the code
+#		while ( $past_bac == 0 && $line_key <= @sorted_tpf_line_numbers ) {
+#			#print STDERR "** processing line $line_key\n";
+#			if ( !exists $tpf_lines{$line_key} ){print STDERR "No TPF line for $line_key\n";}
+#			if ( $tpf_lines{$line_key}->get_line_type() eq 'sequence' ) {
+#				my $accession = $tpf_lines{$line_key}->get_accession();
+#				
+#				#skip BACs/accessions already inserted in TPF with no scaffold AGP records
+#				if ( exists $bac_inserted_accessions{$accession} ){ $line_key++; next; }  
+#				
+#				#print STDERR "** processing accession $accession\n";
+#				my $agp_line_coords_ref = $agp_coords{$accession};
+#				my %line_coords         = %$agp_line_coords_ref;
+#				$agp_sequence_start = $line_coords{'start'};
+#				$agp_sequence_end   = $line_coords{'end'};
 
-				#check if past the BAC
-				if ( $bac_ref_end < $prev_agp_sequence_start ) {
-					$past_bac = 1;
-				}
+#				#check if past the BAC
+#				if ( $bac_ref_end < $prev_agp_sequence_start ) {
+#					$past_bac = 1;
+#				}
 
-				#check if current contig is contained in the BAC
-				if ( $agp_sequence_start >= $bac_ref_start && $agp_sequence_end <= $bac_ref_end ) {
-					#$tpf_lines{$line_key}->set_contains('CONTAINED');
-					#$tpf_lines{$line_key}->set_containing_accession($bac_name);
-					#$self->set_tpf_lines( \%tpf_lines );
-					#$contained_contigs{$line_key}=$bac_name;
-					
-					$sequences_and_gaps_to_remove{ $line_key } = 'delete';
-					$sequence_accessions_to_remove{ $accession } = 'delete' ; # remember so that accession is not used in contained clause
-					#print STDERR "Added $accession to \%sequence_accessions_to_remove\n";
-					my $sequence_location = $line_key;
-					
-					print STDERR "Removing sequence at line $sequence_location for $accession\n"; 
-				}
+#				#check if current contig is contained in the BAC
+#				if ( $agp_sequence_start >= $bac_ref_start && $agp_sequence_end <= $bac_ref_end ) {
+#					#$tpf_lines{$line_key}->set_contains('CONTAINED');
+#					#$tpf_lines{$line_key}->set_containing_accession($bac_name);
+#					#$self->set_tpf_lines( \%tpf_lines );
+#					#$contained_contigs{$line_key}=$bac_name;
+#					
+#					$sequences_and_gaps_to_remove{ $line_key } = 'delete';
+#					$sequence_accessions_to_remove{ $accession } = 'delete' ; # remember so that accession is not used in contained clause
+#					#print STDERR "Added $accession to \%sequence_accessions_to_remove\n";
+#					my $sequence_location = $line_key;
+#					
+#					print STDERR "Removing sequence at line $sequence_location for $accession\n"; 
+#				}
 
-				#check if current BAC is contained in the contig
-				#happens a lot in SL2.50->SL3.0, final sequence will come from BAC but leads to conflicts in GRC alignment
-				if ( ($bac_ref_start >= $agp_sequence_start) && ($bac_ref_end <= $agp_sequence_end) ){
-					$bac_to_insert->set_contains('CONTAINED');
-					$bac_to_insert->set_containing_accession($accession);
-					print STDERR "Setting $bac_name contained in $accession\n";
-				}
+#				#check if current BAC is contained in the contig
+#				#happens a lot in SL2.50->SL3.0, final sequence will come from BAC but leads to conflicts in GRC alignment
+#				if ( ($bac_ref_start >= $agp_sequence_start) && ($bac_ref_end <= $agp_sequence_end) ){
+#					$bac_to_insert->set_contains('CONTAINED');
+#					$bac_to_insert->set_containing_accession($accession);
+#					print STDERR "Setting $bac_name contained in $accession\n";
+#				}
 
-				#check if gap is spanned by the BAC
-				if (   $prev_line_key
-					&& $bac_ref_start <= $prev_agp_sequence_end
-					&& $bac_ref_end >= $agp_sequence_start
-					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
-				{
-					#$gaps_to_remove{ $line_key - 1 } = 'delete'; # subtract one as we want to remove the prev TPF line
-					$sequences_and_gaps_to_remove{ $line_key - 1 } = 'delete'; # subtract one as we want to remove the prev TPF line  
-					my $gap_location = $line_key - 1;
-					print STDERR "Removing gap at line $gap_location between $accession and $prev_accession w.r.t. original TPF\n";
-				}
+#				#check if gap is spanned by the BAC
+#				if (   $prev_line_key
+#					&& $bac_ref_start <= $prev_agp_sequence_end
+#					&& $bac_ref_end >= $agp_sequence_start
+#					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
+#				{
+#					#$gaps_to_remove{ $line_key - 1 } = 'delete'; # subtract one as we want to remove the prev TPF line
+#					$sequences_and_gaps_to_remove{ $line_key - 1 } = 'delete'; # subtract one as we want to remove the prev TPF line  
+#					my $gap_location = $line_key - 1;
+#					print STDERR "Removing gap at line $gap_location between $accession and $prev_accession w.r.t. original TPF\n";
+#				}
 
-				#shrink gaps when partially spanned by a BAC
-				#no need to shrink sequence line as GRC aligner will figure out the switch over points
-				
-				#if BAC start is in the middle of a gap
-				# $bac_ref_start < $agp_sequence_start works as there is a offset of 1 even if mummer does not align at N 
-				if (   $prev_line_key
-					&& $bac_ref_start < $agp_sequence_start
-					&& $bac_ref_start > $prev_agp_sequence_end
-					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
-				{
-					if ( ($bac_query_end - $bac_query_start + 1) == $bac_query_length ){ #whole BAC aligned to ref
-						$gaps_to_resize{ $line_key - 1 } = $bac_ref_start - $prev_agp_sequence_end;
-						my $gap_location = $line_key - 1;
-						print STDERR "BAC $bac_name starts within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
-							$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
-					}
-					elsif( ($bac_query_end - $bac_query_start + 1) < $bac_query_length ){ #partial BAC aligned to ref
-						print STDERR "Partial alignment for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
-						if ( $bac_query_start > 1 ){#fix overhang at begininng
-							my $bac_start_overhang =  $bac_query_start - 1;
-							
-							$gaps_to_resize{ $line_key - 1 } = $bac_ref_start - $bac_start_overhang - $prev_agp_sequence_end;
-							my $gap_location = $line_key - 1;
-							print STDERR "BAC $bac_name starts within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
-								$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
-						}
-					}
-					else{
-						print STDERR "Error for aligned region calculation for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
-					}
-				}
-				
-				#if BAC end is in the middle of a gap
-				#$bac_ref_end < $agp_sequence_end works as there is a offset of 1 even if mummer does not align at N
-				if (   $prev_line_key
-					&& $bac_ref_end < $agp_sequence_start
-					&& $bac_ref_end > $prev_agp_sequence_end
-					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
-				{
-					if ( ($bac_query_end - $bac_query_start + 1) == $bac_query_length ){ #whole BAC aligned to ref
-						$gaps_to_resize{ $line_key - 1 } = $agp_sequence_start - $bac_ref_end;
-						my $gap_location = $line_key - 1;
-						print STDERR "BAC $bac_name ends within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
-							$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
-					}
-					elsif( ($bac_query_end - $bac_query_start + 1) < $bac_query_length ){ #partial BAC aligned to ref
-						print STDERR "Partial alignment for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
-						my $bac_end_overhang = $bac_query_length - $bac_query_end + 1;
-						
-						$gaps_to_resize{ $line_key - 1 } = $agp_sequence_start - $bac_ref_end - $bac_end_overhang ;
-						my $gap_location = $line_key - 1;
-						print STDERR "BAC $bac_name ends within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
-							$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
-					}
-					else{
-						print STDERR "Error for aligned region calculation for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
-					}
-				}
-				$prev_line_key  = $line_key;
-				$prev_accession = $accession;
-				$prev_agp_sequence_start = $agp_sequence_start;
-				$prev_agp_sequence_end   = $agp_sequence_end;
-			}
-			$line_key++;
-		}
-		
-		#editing lines already in TPF
-		#resizing gap lines first before order is distrupted
-		@sorted_gaps_to_resize     = sort { $a <=> $b } keys %gaps_to_resize;
-		foreach my $line_number (@sorted_gaps_to_resize) {
-			$tpf_lines{$line_number}->set_gap_size( $gaps_to_resize{$line_number} );
-		}
-		$self->set_tpf_lines( \%tpf_lines );
+#				#shrink gaps when partially spanned by a BAC
+#				#no need to shrink sequence line as GRC aligner will figure out the switch over points
+#				
+#				#if BAC start is in the middle of a gap
+#				# $bac_ref_start < $agp_sequence_start works as there is a offset of 1 even if mummer does not align at N 
+#				if (   $prev_line_key
+#					&& $bac_ref_start < $agp_sequence_start
+#					&& $bac_ref_start > $prev_agp_sequence_end
+#					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
+#				{
+#					if ( ($bac_query_end - $bac_query_start + 1) == $bac_query_length ){ #whole BAC aligned to ref
+#						$gaps_to_resize{ $line_key - 1 } = $bac_ref_start - $prev_agp_sequence_end;
+#						my $gap_location = $line_key - 1;
+#						print STDERR "BAC $bac_name starts within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
+#							$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
+#					}
+#					elsif( ($bac_query_end - $bac_query_start + 1) < $bac_query_length ){ #partial BAC aligned to ref
+#						print STDERR "Partial alignment for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
+#						if ( $bac_query_start > 1 ){#fix overhang at begininng
+#							my $bac_start_overhang =  $bac_query_start - 1;
+#							
+#							$gaps_to_resize{ $line_key - 1 } = $bac_ref_start - $bac_start_overhang - $prev_agp_sequence_end;
+#							my $gap_location = $line_key - 1;
+#							print STDERR "BAC $bac_name starts within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
+#								$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
+#						}
+#					}
+#					else{
+#						print STDERR "Error for aligned region calculation for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
+#					}
+#				}
+#				
+#				#if BAC end is in the middle of a gap
+#				#$bac_ref_end < $agp_sequence_end works as there is a offset of 1 even if mummer does not align at N
+#				if (   $prev_line_key
+#					&& $bac_ref_end < $agp_sequence_start
+#					&& $bac_ref_end > $prev_agp_sequence_end
+#					&& $tpf_lines{ $line_key - 1 }->get_line_type() eq 'gap' )
+#				{
+#					if ( ($bac_query_end - $bac_query_start + 1) == $bac_query_length ){ #whole BAC aligned to ref
+#						$gaps_to_resize{ $line_key - 1 } = $agp_sequence_start - $bac_ref_end;
+#						my $gap_location = $line_key - 1;
+#						print STDERR "BAC $bac_name ends within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
+#							$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
+#					}
+#					elsif( ($bac_query_end - $bac_query_start + 1) < $bac_query_length ){ #partial BAC aligned to ref
+#						print STDERR "Partial alignment for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
+#						my $bac_end_overhang = $bac_query_length - $bac_query_end + 1;
+#						
+#						$gaps_to_resize{ $line_key - 1 } = $agp_sequence_start - $bac_ref_end - $bac_end_overhang ;
+#						my $gap_location = $line_key - 1;
+#						print STDERR "BAC $bac_name ends within a gap. Resizing gap at line $gap_location between $accession and $prev_accession to ".
+#							$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
+#					}
+#					else{
+#						print STDERR "Error for aligned region calculation for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
+#					}
+#				}
+#				$prev_line_key  = $line_key;
+#				$prev_accession = $accession;
+#				$prev_agp_sequence_start = $agp_sequence_start;
+#				$prev_agp_sequence_end   = $agp_sequence_end;
+#			}
+#			$line_key++;
+#		}
+#		
+#		#editing lines already in TPF
+#		#resizing gap lines first before order is distrupted
+#		@sorted_gaps_to_resize     = sort { $a <=> $b } keys %gaps_to_resize;
+#		foreach my $line_number (@sorted_gaps_to_resize) {
+#			$tpf_lines{$line_number}->set_gap_size( $gaps_to_resize{$line_number} );
+#		}
+#		$self->set_tpf_lines( \%tpf_lines );
 
-		#DELETING sequence lines AND gaps
-		@rev_sorted_sequences_and_gaps_to_remove = sort { $b <=> $a } keys %sequences_and_gaps_to_remove;
-		foreach my $line_number (@rev_sorted_sequences_and_gaps_to_remove) {
-			$self->delete_line($line_number);
-		}
-		%tpf_lines = %{ $self->get_tpf_lines() };
+#		#DELETING sequence lines AND gaps
+#		@rev_sorted_sequences_and_gaps_to_remove = sort { $b <=> $a } keys %sequences_and_gaps_to_remove;
+#		foreach my $line_number (@rev_sorted_sequences_and_gaps_to_remove) {
+#			$self->delete_line($line_number);
+#		}
+#		%tpf_lines = %{ $self->get_tpf_lines() };
 
-		@sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
-		
-		#set the containing scaffold for the BAC, i.e. the local contig identifier
-		$line_key = 1;
-		while ($bac_is_inserted == 0 && $line_key <= @sorted_tpf_line_numbers + 1 )
-		{
-			if ( $tpf_lines{$line_key}->get_line_type() eq 'sequence' ) {
-				my $accession = $tpf_lines{$line_key}->get_accession();
-				
-				#skip BACs/accessions already inserted in TPF with no scaffold AGP records
-				if ( exists $bac_inserted_accessions{$accession} ){ $line_key++; next; }
-				 
-				my $agp_line_coords_ref = $agp_coords{$accession};
-				my %line_coords         = %$agp_line_coords_ref;
-				$agp_sequence_start = $line_coords{'start'};
-				$agp_sequence_end   = $line_coords{'end'};
-				if ( $line_key == 1 ) {          #deal with first one
-					if ( $bac_ref_start <= 0 ) {
-						$insert_before_or_after = 'before';
-						$insert_line_number     = $line_key;
-						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier());
-						$bac_is_inserted = 1;
-					}
-				}
-				elsif ( $line_key == @sorted_tpf_line_numbers + 1 ) #deal with last one
-				{
-					if ( $bac_ref_start >= $agp_sequence_start ) {
-						$insert_before_or_after = 'after';
-						$insert_line_number     = $line_key;
-						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
-						);
-						$bac_is_inserted = 1;
-					}
-				}
-				elsif ($bac_ref_start >= $prev_agp_sequence_start
-					&& $bac_ref_start < $agp_sequence_start )
-				{
-					if ( $bac_ref_start <= $prev_agp_sequence_end ) {
-						$insert_before_or_after = 'after';
-						$insert_line_number     = $prev_line_key;
-						$bac_to_insert->set_local_contig_identifier($tpf_lines{$prev_line_key}->get_local_contig_identifier() );
-						$bac_is_inserted = 1;
-					}
-					elsif ( $bac_ref_start > $prev_agp_sequence_end ) {
-						$insert_before_or_after = 'before';
-						$insert_line_number     = $line_key;
-						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
-						);
-						$bac_is_inserted = 1;
-					}
-				}
-				$prev_line_key  = $line_key;
-				$prev_accession = $accession;
-				$prev_agp_sequence_start = $agp_sequence_start;
-				$prev_agp_sequence_end   = $agp_sequence_end;
-			}
-			$line_key++;
-		}
-		
-		#finally INSERTING the BAC TPF line
-		#print STDERR Dumper \%sequence_accessions_to_remove;
-		
-		if ($bac_name =~ /^Contig/ ){
-			print STDERR "Substituting in BACs for assembled contig $bac_name\n";
-			my $component_accessions_ref = $scaffold_component_contigs{$bac_name};
-			my @component_accessions_arr = @$component_accessions_ref;
-			my $component_accession_directions_ref = $scaffold_component_contig_directions{$bac_name};# orientation (+1,-1)
-			my @component_accession_directions_arr = @$component_accession_directions_ref; 
-			if (!(exists $scaffold_component_contigs{$bac_name}) || !(exists $scaffold_component_contig_directions{$bac_name})){
-				print STDERR "$bac_name not found in user supplied ACE file. Exiting ....\n\n"; exit 1;
-			}
-			
-			my $component_accessions_count = scalar @component_accessions_arr;
-			my $contig_bac_loop_counter;
-			
-			if ( $bac_to_insert->get_orientation() eq 'PLUS' ){
-				#simple order, same orientation
-				$contig_bac_loop_counter = 0;
-				while ($contig_bac_loop_counter < $component_accessions_count){
-					my $contig_bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
-					print STDERR "******** inserting ";
-					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
-					print STDERR "\n";
-					#print Dumper $component_accessions_arr[$contig_bac_loop_counter];
-					$contig_bac_to_insert->set_accession($component_accessions_arr[$contig_bac_loop_counter]);
-					$bac_inserted_accessions{$component_accessions_arr[$contig_bac_loop_counter]} = 'inserted'; #recording accession name
-					$contig_bac_to_insert->set_local_contig_identifier($bac_to_insert->get_local_contig_identifier() );
-					
-					#set contained, do NOT set contained if the accession was already deleted from TPF
-					if (($bac_to_insert->has_contains()) &&
-						(!exists $sequence_accessions_to_remove{$bac_to_insert->get_containing_accession()})){
-						$contig_bac_to_insert->set_contains('CONTAINED');
-						$contig_bac_to_insert->set_containing_accession($bac_to_insert->get_containing_accession());
-						print STDERR "Added containing clause for BAC ";
-						print STDERR $contig_bac_to_insert->get_accession();
-						print STDERR " with containing accession ";
-						print STDERR $contig_bac_to_insert->get_containing_accession();
-						print STDERR "\n";
-					}
-					
-					if ($component_accession_directions_arr[$contig_bac_loop_counter] == 1){
-						$contig_bac_to_insert->set_orientation('PLUS');
-					}
-					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){
-						$contig_bac_to_insert->set_orientation('MINUS');	
-					}
-					
-					if ( $insert_before_or_after eq 'before' ){
-						$self->insert_line_before( $insert_line_number, $contig_bac_to_insert );	
-					}
-					elsif( $insert_before_or_after eq 'after' ){
-						$self->insert_line_after( $insert_line_number, $contig_bac_to_insert );	
-					}
-					print STDERR "Inserted BAC: ";
-					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
-					print STDERR " for assembled contig $bac_name\n";
-					$contig_bac_loop_counter++;
-				}
-			}
-			elsif ( $bac_to_insert->get_orientation() eq 'MINUS' ){
-				#reverse order, flip orientation
-				$contig_bac_loop_counter = $component_accessions_count - 1 ;
-				while ($contig_bac_loop_counter >= 0 ){
-					my $contig_bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
-					$contig_bac_to_insert->set_accession($component_accessions_arr[$contig_bac_loop_counter]);
-					$bac_inserted_accessions{$component_accessions_arr[$contig_bac_loop_counter]} = 'inserted'; #recording accession name
-					$contig_bac_to_insert->set_local_contig_identifier($bac_to_insert->get_local_contig_identifier() );
-					
-					#set contained, do NOT set contained if the accession was already deleted from TPF
-					if (($bac_to_insert->has_contains()) &&
-						(!exists $sequence_accessions_to_remove{$bac_to_insert->get_containing_accession()})){
-						$contig_bac_to_insert->set_contains('CONTAINED');
-						$contig_bac_to_insert->set_containing_accession($bac_to_insert->get_containing_accession());
-						
-						print STDERR "Added containing clause for BAC ";
-						print STDERR $contig_bac_to_insert->get_accession();
-						print STDERR " with containing accession ";
-						print STDERR $contig_bac_to_insert->get_containing_accession();
-						print STDERR "\n";
-					}
-					
-					if ($component_accession_directions_arr[$contig_bac_loop_counter] == 1){
-						$contig_bac_to_insert->set_orientation('MINUS');#flip
-					}
-					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){
-						$contig_bac_to_insert->set_orientation('PLUS');#flip	
-					}
-					
-					if ( $insert_before_or_after eq 'before' ){
-						$self->insert_line_before( $insert_line_number, $contig_bac_to_insert );	
-					}
-					elsif( $insert_before_or_after eq 'after' ){
-						$self->insert_line_after( $insert_line_number, $contig_bac_to_insert );	
-					} 
-					print STDERR "Inserted BAC: ";
-					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
-					print STDERR " for assembled contig $bac_name\n";
-					$contig_bac_loop_counter--;
-				}				
-			}
-			else{
-				die "BAC $bac_name not inserted. Exiting ....\n";
-			}
-		}
-		else{#if its a singleton
-			$bac_inserted_accessions{$bac_to_insert->get_accession()} = 'inserted'; #recording accession name
-			if ( $insert_before_or_after eq 'before' ) {
-				$self->insert_line_before( $insert_line_number, $bac_to_insert );
-			}
-			elsif ( $insert_before_or_after eq 'after' ) {
-				$self->insert_line_after( $insert_line_number, $bac_to_insert );
-			}
-			else {
-				die "BAC $bac_name not inserted\n";
-			}
-			print STDERR "Inserted BAC: $bac_name\n";
-		}
-		%tpf_lines = %{ $self->get_tpf_lines() };
-		#print STDERR $self->get_formatted_tpf();
-	}
-	
-	#remove contained if the accession (typically WGS from prev assembly) was deleted from TPF
-	my %lines = %{ $self->get_tpf_lines() };
-	my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
-	foreach my $line_key (@sorted_line_numbers) {
-		if ( $lines{$line_key}->get_line_type() eq "sequence" ) {
-			if (($lines{$line_key}->has_contains()) &&
-				(exists $sequence_accessions_to_remove{$lines{$line_key}->get_containing_accession()})){
-				my $accession_to_delete = $lines{$line_key}->get_containing_accession();
-				$lines{$line_key}->clear_contains();
-				$lines{$line_key}->clear_containing_accession();
-				print STDERR "Removed containing accession $accession_to_delete for BAC ";
-				print STDERR $lines{$line_key}->get_accession();
-				print STDERR "\n";
-			}
-		}
-	}
-	return $self;
+#		@sorted_tpf_line_numbers = sort { $a <=> $b } keys %tpf_lines;    #lines should be consecutive
+#		
+#		#set the containing scaffold for the BAC, i.e. the local contig identifier
+#		$line_key = 1;
+#		while ($bac_is_inserted == 0 && $line_key <= @sorted_tpf_line_numbers + 1 )
+#		{
+#			if ( $tpf_lines{$line_key}->get_line_type() eq 'sequence' ) {
+#				my $accession = $tpf_lines{$line_key}->get_accession();
+#				
+#				#skip BACs/accessions already inserted in TPF with no scaffold AGP records
+#				if ( exists $bac_inserted_accessions{$accession} ){ $line_key++; next; }
+#				 
+#				my $agp_line_coords_ref = $agp_coords{$accession};
+#				my %line_coords         = %$agp_line_coords_ref;
+#				$agp_sequence_start = $line_coords{'start'};
+#				$agp_sequence_end   = $line_coords{'end'};
+#				if ( $line_key == 1 ) {          #deal with first one
+#					if ( $bac_ref_start <= 0 ) {
+#						$insert_before_or_after = 'before';
+#						$insert_line_number     = $line_key;
+#						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier());
+#						$bac_is_inserted = 1;
+#					}
+#				}
+#				elsif ( $line_key == @sorted_tpf_line_numbers + 1 ) #deal with last one
+#				{
+#					if ( $bac_ref_start >= $agp_sequence_start ) {
+#						$insert_before_or_after = 'after';
+#						$insert_line_number     = $line_key;
+#						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
+#						);
+#						$bac_is_inserted = 1;
+#					}
+#				}
+#				elsif ($bac_ref_start >= $prev_agp_sequence_start
+#					&& $bac_ref_start < $agp_sequence_start )
+#				{
+#					if ( $bac_ref_start <= $prev_agp_sequence_end ) {
+#						$insert_before_or_after = 'after';
+#						$insert_line_number     = $prev_line_key;
+#						$bac_to_insert->set_local_contig_identifier($tpf_lines{$prev_line_key}->get_local_contig_identifier() );
+#						$bac_is_inserted = 1;
+#					}
+#					elsif ( $bac_ref_start > $prev_agp_sequence_end ) {
+#						$insert_before_or_after = 'before';
+#						$insert_line_number     = $line_key;
+#						$bac_to_insert->set_local_contig_identifier($tpf_lines{$line_key}->get_local_contig_identifier()
+#						);
+#						$bac_is_inserted = 1;
+#					}
+#				}
+#				$prev_line_key  = $line_key;
+#				$prev_accession = $accession;
+#				$prev_agp_sequence_start = $agp_sequence_start;
+#				$prev_agp_sequence_end   = $agp_sequence_end;
+#			}
+#			$line_key++;
+#		}
+#		
+#		#finally INSERTING the BAC TPF line
+#		#print STDERR Dumper \%sequence_accessions_to_remove;
+#		
+#		if ($bac_name =~ /^Contig/ ){
+#			print STDERR "Substituting in BACs for assembled contig $bac_name\n";
+#			my $component_accessions_ref = $scaffold_component_contigs{$bac_name};
+#			my @component_accessions_arr = @$component_accessions_ref;
+#			my $component_accession_directions_ref = $scaffold_component_contig_directions{$bac_name};# orientation (+1,-1)
+#			my @component_accession_directions_arr = @$component_accession_directions_ref; 
+#			if (!(exists $scaffold_component_contigs{$bac_name}) || !(exists $scaffold_component_contig_directions{$bac_name})){
+#				print STDERR "$bac_name not found in user supplied ACE file. Exiting ....\n\n"; exit 1;
+#			}
+#			
+#			my $component_accessions_count = scalar @component_accessions_arr;
+#			my $contig_bac_loop_counter;
+#			
+#			if ( $bac_to_insert->get_orientation() eq 'PLUS' ){
+#				#simple order, same orientation
+#				$contig_bac_loop_counter = 0;
+#				while ($contig_bac_loop_counter < $component_accessions_count){
+#					my $contig_bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
+#					print STDERR "******** inserting ";
+#					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
+#					print STDERR "\n";
+#					#print Dumper $component_accessions_arr[$contig_bac_loop_counter];
+#					$contig_bac_to_insert->set_accession($component_accessions_arr[$contig_bac_loop_counter]);
+#					$bac_inserted_accessions{$component_accessions_arr[$contig_bac_loop_counter]} = 'inserted'; #recording accession name
+#					$contig_bac_to_insert->set_local_contig_identifier($bac_to_insert->get_local_contig_identifier() );
+#					
+#					#set contained, do NOT set contained if the accession was already deleted from TPF
+#					if (($bac_to_insert->has_contains()) &&
+#						(!exists $sequence_accessions_to_remove{$bac_to_insert->get_containing_accession()})){
+#						$contig_bac_to_insert->set_contains('CONTAINED');
+#						$contig_bac_to_insert->set_containing_accession($bac_to_insert->get_containing_accession());
+#						print STDERR "Added containing clause for BAC ";
+#						print STDERR $contig_bac_to_insert->get_accession();
+#						print STDERR " with containing accession ";
+#						print STDERR $contig_bac_to_insert->get_containing_accession();
+#						print STDERR "\n";
+#					}
+#					
+#					if ($component_accession_directions_arr[$contig_bac_loop_counter] == 1){
+#						$contig_bac_to_insert->set_orientation('PLUS');
+#					}
+#					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){
+#						$contig_bac_to_insert->set_orientation('MINUS');	
+#					}
+#					
+#					if ( $insert_before_or_after eq 'before' ){
+#						$self->insert_line_before( $insert_line_number, $contig_bac_to_insert );	
+#					}
+#					elsif( $insert_before_or_after eq 'after' ){
+#						$self->insert_line_after( $insert_line_number, $contig_bac_to_insert );	
+#					}
+#					print STDERR "Inserted BAC: ";
+#					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
+#					print STDERR " for assembled contig $bac_name\n";
+#					$contig_bac_loop_counter++;
+#				}
+#			}
+#			elsif ( $bac_to_insert->get_orientation() eq 'MINUS' ){
+#				#reverse order, flip orientation
+#				$contig_bac_loop_counter = $component_accessions_count - 1 ;
+#				while ($contig_bac_loop_counter >= 0 ){
+#					my $contig_bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
+#					$contig_bac_to_insert->set_accession($component_accessions_arr[$contig_bac_loop_counter]);
+#					$bac_inserted_accessions{$component_accessions_arr[$contig_bac_loop_counter]} = 'inserted'; #recording accession name
+#					$contig_bac_to_insert->set_local_contig_identifier($bac_to_insert->get_local_contig_identifier() );
+#					
+#					#set contained, do NOT set contained if the accession was already deleted from TPF
+#					if (($bac_to_insert->has_contains()) &&
+#						(!exists $sequence_accessions_to_remove{$bac_to_insert->get_containing_accession()})){
+#						$contig_bac_to_insert->set_contains('CONTAINED');
+#						$contig_bac_to_insert->set_containing_accession($bac_to_insert->get_containing_accession());
+#						
+#						print STDERR "Added containing clause for BAC ";
+#						print STDERR $contig_bac_to_insert->get_accession();
+#						print STDERR " with containing accession ";
+#						print STDERR $contig_bac_to_insert->get_containing_accession();
+#						print STDERR "\n";
+#					}
+#					
+#					if ($component_accession_directions_arr[$contig_bac_loop_counter] == 1){
+#						$contig_bac_to_insert->set_orientation('MINUS');#flip
+#					}
+#					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){
+#						$contig_bac_to_insert->set_orientation('PLUS');#flip	
+#					}
+#					
+#					if ( $insert_before_or_after eq 'before' ){
+#						$self->insert_line_before( $insert_line_number, $contig_bac_to_insert );	
+#					}
+#					elsif( $insert_before_or_after eq 'after' ){
+#						$self->insert_line_after( $insert_line_number, $contig_bac_to_insert );	
+#					} 
+#					print STDERR "Inserted BAC: ";
+#					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
+#					print STDERR " for assembled contig $bac_name\n";
+#					$contig_bac_loop_counter--;
+#				}				
+#			}
+#			else{
+#				die "BAC $bac_name not inserted. Exiting ....\n";
+#			}
+#		}
+#		else{#if its a singleton
+#			$bac_inserted_accessions{$bac_to_insert->get_accession()} = 'inserted'; #recording accession name
+#			if ( $insert_before_or_after eq 'before' ) {
+#				$self->insert_line_before( $insert_line_number, $bac_to_insert );
+#			}
+#			elsif ( $insert_before_or_after eq 'after' ) {
+#				$self->insert_line_after( $insert_line_number, $bac_to_insert );
+#			}
+#			else {
+#				die "BAC $bac_name not inserted\n";
+#			}
+#			print STDERR "Inserted BAC: $bac_name\n";
+#		}
+#		%tpf_lines = %{ $self->get_tpf_lines() };
+#		#print STDERR $self->get_formatted_tpf();
+#	}
+#	
+#	#remove contained if the accession (typically WGS from prev assembly) was deleted from TPF
+#	my %lines = %{ $self->get_tpf_lines() };
+#	my @sorted_line_numbers = sort { $a <=> $b } keys %lines;
+#	foreach my $line_key (@sorted_line_numbers) {
+#		if ( $lines{$line_key}->get_line_type() eq "sequence" ) {
+#			if (($lines{$line_key}->has_contains()) &&
+#				(exists $sequence_accessions_to_remove{$lines{$line_key}->get_containing_accession()})){
+#				my $accession_to_delete = $lines{$line_key}->get_containing_accession();
+#				$lines{$line_key}->clear_contains();
+#				$lines{$line_key}->clear_containing_accession();
+#				print STDERR "Removed containing accession $accession_to_delete for BAC ";
+#				print STDERR $lines{$line_key}->get_accession();
+#				print STDERR "\n";
+#			}
+#		}
+#	}
+#	return $self;
 }
 
 =item C<get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps ( $chr, $switch_points, $trim_points, @bacs, %scaffold_agp_coords, %scaffold_component_contigs, %scaffold_component_contig_directions )>
