@@ -2089,6 +2089,9 @@ Returns the length of the accession. Added for use in switchover and trim files
 				$contig_bac_loop_counter = $component_accessions_count - 1 ;
 				while ($contig_bac_loop_counter >= 0 ){
 					my $contig_bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
+					print STDERR "******** inserting ";
+					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
+					print STDERR "\n";
 					$contig_bac_to_insert->set_accession($component_accessions_arr[$contig_bac_loop_counter]);
 					$bac_inserted_accessions{$component_accessions_arr[$contig_bac_loop_counter]} = 'inserted'; #recording accession name
 					$contig_bac_to_insert->set_local_contig_identifier($bac_to_insert->get_local_contig_identifier() );
