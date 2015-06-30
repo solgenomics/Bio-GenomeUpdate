@@ -1959,17 +1959,21 @@ Returns the length of the accession. Added for use in switchover and trim files
 		if ($insert_line_strand eq '+'){
 			if ($ref_orientation_mummer eq $qry_orientation_mummer){
 				$bac_to_insert->set_orientation('PLUS');
+				print STDERR "$insert_line_accession in PLUS orientation in original TPF, Mummer alignment in same direction in ref and qry $bac_name. Setting orientation to PLUS\n";
 			}
 			elsif ($ref_orientation_mummer ne $qry_orientation_mummer){
 				$bac_to_insert->set_orientation('MINUS');
+				print STDERR "$insert_line_accession in PLUS orientation in original TPF, Mummer alignment in opposite direction in ref and qry $bac_name. Setting orientation to MINUS\n";
 			}
 		}
 		elsif ($insert_line_strand eq '-'){
 			if ($ref_orientation_mummer eq $qry_orientation_mummer){
 				$bac_to_insert->set_orientation('MINUS');
+				print STDERR "$insert_line_accession in MINUS orientation in original TPF, Mummer alignment in same direction in ref and qry $bac_name. Setting orientation to MINUS\n";
 			}
 			elsif ($ref_orientation_mummer ne $qry_orientation_mummer){
 				$bac_to_insert->set_orientation('PLUS');
+				print STDERR "$insert_line_accession in MINUS orientation in original TPF, Mummer alignment in opposite direction in ref and qry $bac_name. Setting orientation to PLUS\n";
 			}
 		}
 
