@@ -1881,7 +1881,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 		}
 		$self->set_tpf_lines( \%tpf_lines );
 
-		#DELETING sequence lines AND gaps
+		#DELETING sequence lines AND gaps, line number logic needed for gaps as no unique ID for gap lines
 		@rev_sorted_sequences_and_gaps_to_remove = sort { $b <=> $a } keys %sequences_and_gaps_to_remove;
 		foreach my $line_number (@rev_sorted_sequences_and_gaps_to_remove) {
 			$self->delete_line($line_number);
@@ -2005,24 +2005,24 @@ Returns the length of the accession. Added for use in switchover and trim files
 		
 		if ($bac_name =~ /^Contig/ ){
 			print STDERR "Substituting in BACs for assembled contig $bac_name\n";
+			if (!(exists $scaffold_component_contigs{$bac_name}) || !(exists $scaffold_component_contig_directions{$bac_name})){
+				print STDERR "$bac_name not found in user supplied ACE file. Exiting ....\n\n"; exit 1;
+			}
 			my $component_accessions_ref = $scaffold_component_contigs{$bac_name};
 			my @component_accessions_arr = @$component_accessions_ref;
 			my $component_accession_directions_ref = $scaffold_component_contig_directions{$bac_name};# orientation 
 			my @component_accession_directions_arr = @$component_accession_directions_ref;            # +1 for positive strand in contig alignment, -1 if on negative strand
-			if (!(exists $scaffold_component_contigs{$bac_name}) || !(exists $scaffold_component_contig_directions{$bac_name})){
-				print STDERR "$bac_name not found in user supplied ACE file. Exiting ....\n\n"; exit 1;
-			}
 			
 			my $component_accessions_count = scalar @component_accessions_arr;
 			my $contig_bac_loop_counter;
 			
 			if ((($bac_to_insert->get_orientation() eq 'PLUS')
-				&& ($insert_before_or_after eq 'after'))
+				&& ($insert_before_or_after eq 'before'))
 				|| 
 				(($bac_to_insert->get_orientation() eq 'MINUS')
-				&& ($insert_before_or_after eq 'before'))
+				&& ($insert_before_or_after eq 'after'))
 				){
-				#simple order, flip orientation if MINUS
+				#reverse order, flip orientation if MINUS
 				$contig_bac_loop_counter = 0;
 				while ($contig_bac_loop_counter < $component_accessions_count){
 					my $contig_bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
@@ -2074,18 +2074,19 @@ Returns the length of the accession. Added for use in switchover and trim files
 					
 					print STDERR "Inserted BAC: ";
 					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
-					print STDERR " for assembled contig $bac_name in simple order\n";
+					print STDERR " for assembled contig $bac_name in reversed order ";
+					print STDERR "$insert_before_or_after accession $accession\n";
 					$contig_bac_loop_counter++;
 					#$insert_line_number++; #increment TPF line number for next insertion
 				}
 			}
 			elsif ((($bac_to_insert->get_orientation() eq 'PLUS')
-				&& ($insert_before_or_after eq 'before'))
+				&& ($insert_before_or_after eq 'after'))
 				|| 
 				(($bac_to_insert->get_orientation() eq 'MINUS')
-				&& ($insert_before_or_after eq 'after'))
+				&& ($insert_before_or_after eq 'before'))
 				){
-				#reverse order, flip orientation if MINUS
+				#simple order, flip orientation if MINUS
 				$contig_bac_loop_counter = $component_accessions_count - 1 ;
 				while ($contig_bac_loop_counter >= 0 ){
 					my $contig_bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
@@ -2139,7 +2140,8 @@ Returns the length of the accession. Added for use in switchover and trim files
 
 					print STDERR "Inserted BAC: ";
 					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
-					print STDERR " for assembled contig $bac_name in reversed order\n";
+					print STDERR " for assembled contig $bac_name in simple order ";
+					print STDERR "$insert_before_or_after accession $accession\n";
 					$contig_bac_loop_counter--;
 					#$insert_line_number--; #deincrement TPF line number for next insertion
 				}
