@@ -1491,8 +1491,9 @@ Returns the length of the accession. Added for use in switchover and trim files
 		my $bac_query_start;
 		my $bac_query_end;
 		my $bac_query_length;
-		my $ref_orientation_mummer;
-		my $qry_orientation_mummer;
+		my $ref_orientation_groupcoords;
+		my $qry_orientation_groupcoords;
+		my $direction;
 		
 		my $bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
 		my %tpf_lines;
@@ -1504,13 +1505,13 @@ Returns the length of the accession. Added for use in switchover and trim files
 		#set BAC variables
 		$bac_to_insert->set_accession($bac_name);
 		if ( $bac[1] < $bac[2] ) {
-			$ref_orientation_mummer = 'PLUS';  #records the orientation of ref region that aligned to bac
+			$ref_orientation_groupcoords = 'PLUS';  #records the orientation of ref region that aligned to bac
 			#$bac_to_insert->set_orientation('PLUS'); #records the orientation of ref region that aligned to bac
 			$bac_ref_start = $bac[1];
 			$bac_ref_end   = $bac[2];
 		}
 		elsif ( $bac[1] > $bac[2] ) {#as mummer flips coords for alignments on MINUS strand
-			$ref_orientation_mummer = 'MINUS';  #records the orientation of ref region that aligned to bac
+			$ref_orientation_groupcoords = 'MINUS';  #records the orientation of ref region that aligned to bac
 			#$bac_to_insert->set_orientation('MINUS'); #records the orientation of ref region that aligned to bac
 			$bac_ref_start = $bac[2];
 			$bac_ref_end   = $bac[1];
@@ -1521,22 +1522,22 @@ Returns the length of the accession. Added for use in switchover and trim files
 		if ( $bac[3] < $bac[4] ) {#query alignment on positive strand
 			$bac_query_start        = $bac[3];
 			$bac_query_end          = $bac[4];
-			$qry_orientation_mummer = 'PLUS';
-#			if ($ref_orientation_mummer eq 'PLUS'){
+			$qry_orientation_groupcoords = 'PLUS';
+#			if ($ref_orientation_groupcoords eq 'PLUS'){
 #				$bac_to_insert->set_orientation('PLUS');
 #			}
-#			elsif ($ref_orientation_mummer eq 'MINUS'){
+#			elsif ($ref_orientation_groupcoords eq 'MINUS'){
 #				$bac_to_insert->set_orientation('MINUS');#flip if qry aligned to opposite strand on ref
 #			}
 		}
 		elsif ( $bac[3] > $bac[4] ) {#query alignment on negative strand
 			$bac_query_start = $bac[4];
 			$bac_query_end   = $bac[3];
-			$qry_orientation_mummer = 'MINUS';
-#			if ($ref_orientation_mummer eq 'PLUS'){
+			$qry_orientation_groupcoords = 'MINUS';
+#			if ($ref_orientation_groupcoords eq 'PLUS'){
 #				$bac_to_insert->set_orientation('MINUS');
 #			}
-#			elsif ($ref_orientation_mummer eq 'MINUS'){
+#			elsif ($ref_orientation_groupcoords eq 'MINUS'){
 #				$bac_to_insert->set_orientation('PLUS');#flip if qry aligned to opposite strand on ref
 #			}
 		}
@@ -1544,6 +1545,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 			die	"Error in BAC query coordinates for BAC $bac_name Start: $bac_query_start End: $bac_query_end\n";
 		}
 		$bac_query_length = $bac[5];
+		$direction        = $bac[6]; #direction (+1 if in ref and query align in same orientation, -1 otherwise)
 		
 		#init vars for placing the BACs in the correct location in TPF file
 		my $prev_agp_sequence_start = 0;
@@ -1571,10 +1573,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 		my %add_scaffold_agp_coords;
 		$add_scaffold_agp_coords{'start'} = $bac_ref_start;
 		$add_scaffold_agp_coords{'end'}   = $bac_ref_end;
-		if ( $ref_orientation_mummer eq 'PLUS' ) {
+		if ( $ref_orientation_groupcoords eq 'PLUS' ) {
 			$add_scaffold_agp_coords{'orientation'} = '+';
 		}
-		elsif ( $ref_orientation_mummer eq 'MINUS' ) {
+		elsif ( $ref_orientation_groupcoords eq 'MINUS' ) {
 			$add_scaffold_agp_coords{'orientation'} = '-';
 		}
 		else {
@@ -1642,10 +1644,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 					else{
 						die "No orientation for $accession. Exiting.. \n";
 					}
-					if ($ref_orientation_mummer eq 'PLUS'){
+					if ($ref_orientation_groupcoords eq 'PLUS'){
 						$accession_suffix_orientation = '+';
 					}
-					elsif($ref_orientation_mummer eq 'MINUS'){
+					elsif($ref_orientation_groupcoords eq 'MINUS'){
 						$accession_suffix_orientation = '-';
 					}
 					else{
@@ -1707,10 +1709,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 				
 					#set switch point line for transition between BAC and WGS contig
 					my ($accession_prefix_orientation, $accession_suffix_orientation, $accession_prefix_last_base, $accession_suffix_first_base);
-					if ($ref_orientation_mummer eq 'PLUS'){
+					if ($ref_orientation_groupcoords eq 'PLUS'){
 						$accession_prefix_orientation = '+';
 					}
-					elsif($ref_orientation_mummer eq 'MINUS'){
+					elsif($ref_orientation_groupcoords eq 'MINUS'){
 						$accession_prefix_orientation = '-';
 					}
 					else{
@@ -1762,10 +1764,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 					else{
 						die "No orientation for $accession. Exiting.. \n";
 					}
-					if ($ref_orientation_mummer eq 'PLUS'){
+					if ($ref_orientation_groupcoords eq 'PLUS'){
 						$accession_suffix_orientation = '+';
 					}
-					elsif($ref_orientation_mummer eq 'MINUS'){
+					elsif($ref_orientation_groupcoords eq 'MINUS'){
 						$accession_suffix_orientation = '-';
 					}
 					else{
@@ -1956,26 +1958,39 @@ Returns the length of the accession. Added for use in switchover and trim files
 		#get the TPF line accession
 		$insert_line_accession = $tpf_lines{$insert_line_number}->get_accession();
 		$insert_line_strand    = $scaffold_agp_coords{$insert_line_accession}->{orientation}; # + or -
-		if ($insert_line_strand eq '+'){
-			if ($ref_orientation_mummer eq $qry_orientation_mummer){
-				$bac_to_insert->set_orientation('PLUS');
-				print STDERR "$insert_line_accession in PLUS orientation in original TPF, Mummer alignment in same direction in ref and qry $bac_name. Setting orientation to PLUS\n";
-			}
-			elsif ($ref_orientation_mummer ne $qry_orientation_mummer){
-				$bac_to_insert->set_orientation('MINUS');
-				print STDERR "$insert_line_accession in PLUS orientation in original TPF, Mummer alignment in opposite direction in ref and qry $bac_name. Setting orientation to MINUS\n";
-			}
+		
+		if ($direction == 1 ){
+			$bac_to_insert->set_orientation('PLUS');
+			print STDERR "$insert_line_accession in $insert_line_strand orientation in original TPF, Mummer alignment in same direction in ref and qry $bac_name. Setting orientation to PLUS\n";
 		}
-		elsif ($insert_line_strand eq '-'){
-			if ($ref_orientation_mummer eq $qry_orientation_mummer){
-				$bac_to_insert->set_orientation('MINUS');
-				print STDERR "$insert_line_accession in MINUS orientation in original TPF, Mummer alignment in same direction in ref and qry $bac_name. Setting orientation to MINUS\n";
-			}
-			elsif ($ref_orientation_mummer ne $qry_orientation_mummer){
-				$bac_to_insert->set_orientation('PLUS');
-				print STDERR "$insert_line_accession in MINUS orientation in original TPF, Mummer alignment in opposite direction in ref and qry $bac_name. Setting orientation to PLUS\n";
-			}
+		elsif ($direction == -1 ){
+			$bac_to_insert->set_orientation('MINUS');
+			print STDERR "$insert_line_accession in $insert_line_strand orientation in original TPF, Mummer alignment in opposite direction in ref and qry $bac_name. Setting orientation to MINUS\n";
 		}
+		
+		
+#		if ($insert_line_strand eq '+'){
+#			if ($ref_orientation_groupcoords eq $qry_orientation_groupcoords){
+#				$bac_to_insert->set_orientation('PLUS');
+#				#print STDERR "$insert_line_accession in PLUS orientation in original TPF, Mummer alignment in same direction in ref and qry $bac_name. Setting orientation to PLUS\n";
+#				print STDERR "$insert_line_accession in $insert_line_strand orientation in original TPF, Mummer alignment in same direction in ref and qry $bac_name. Setting orientation to PLUS\n";
+#			}
+#			elsif ($ref_orientation_groupcoords ne $qry_orientation_groupcoords){
+#				$bac_to_insert->set_orientation('MINUS');
+#				#print STDERR "$insert_line_accession in PLUS orientation in original TPF, Mummer alignment in opposite direction in ref and qry $bac_name. Setting orientation to MINUS\n";
+#				print STDERR "$insert_line_accession in $insert_line_strand orientation in original TPF, Mummer alignment in opposite direction in ref and qry $bac_name. Setting orientation to MINUS\n";
+#			}
+#		}
+#		elsif ($insert_line_strand eq '-'){
+#			if ($ref_orientation_groupcoords eq $qry_orientation_groupcoords){
+#				$bac_to_insert->set_orientation('MINUS');
+#				print STDERR "$insert_line_accession in MINUS orientation in original TPF, Mummer alignment in same direction in ref and qry $bac_name. Setting orientation to MINUS\n";
+#			}
+#			elsif ($ref_orientation_groupcoords ne $qry_orientation_groupcoords){
+#				$bac_to_insert->set_orientation('PLUS');
+#				print STDERR "$insert_line_accession in MINUS orientation in original TPF, Mummer alignment in opposite direction in ref and qry $bac_name. Setting orientation to PLUS\n";
+#			}
+#		}
 
 		#create line number to accession array and accession to TPF hash for insertions later
 		#not using line number + offset logic as it breaks down in complicated cases
@@ -2017,14 +2032,14 @@ Returns the length of the accession. Added for use in switchover and trim files
 			my $contig_bac_loop_counter;
 			
 			if ((($bac_to_insert->get_orientation() eq 'PLUS')
-				&& ($insert_before_or_after eq 'before'))
+				&& ($insert_before_or_after eq 'after'))
 				|| 
 				(($bac_to_insert->get_orientation() eq 'MINUS')
-				&& ($insert_before_or_after eq 'after'))
+				&& ($insert_before_or_after eq 'before'))
 				){
 				#reverse order, flip orientation if MINUS
 				$contig_bac_loop_counter = 0;
-				while ($contig_bac_loop_counter < $component_accessions_count){
+				while ($contig_bac_loop_counter < $component_accessions_count){#first to last
 					my $contig_bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
 					print STDERR "******** inserting ";
 					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
@@ -2074,21 +2089,20 @@ Returns the length of the accession. Added for use in switchover and trim files
 					
 					print STDERR "Inserted BAC: ";
 					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
-					print STDERR " for assembled contig $bac_name in reversed order ";
+					print STDERR " for assembled contig $bac_name in reversed order using simple loop ";
 					print STDERR "$insert_before_or_after accession $accession\n";
 					$contig_bac_loop_counter++;
-					#$insert_line_number++; #increment TPF line number for next insertion
 				}
 			}
 			elsif ((($bac_to_insert->get_orientation() eq 'PLUS')
-				&& ($insert_before_or_after eq 'after'))
+				&& ($insert_before_or_after eq 'before'))
 				|| 
 				(($bac_to_insert->get_orientation() eq 'MINUS')
-				&& ($insert_before_or_after eq 'before'))
+				&& ($insert_before_or_after eq 'after'))
 				){
 				#simple order, flip orientation if MINUS
 				$contig_bac_loop_counter = $component_accessions_count - 1 ;
-				while ($contig_bac_loop_counter >= 0 ){
+				while ($contig_bac_loop_counter >= 0 ){#last to first
 					my $contig_bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
 					print STDERR "******** inserting ";
 					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
@@ -2140,10 +2154,9 @@ Returns the length of the accession. Added for use in switchover and trim files
 
 					print STDERR "Inserted BAC: ";
 					print STDERR $component_accessions_arr[$contig_bac_loop_counter];
-					print STDERR " for assembled contig $bac_name in simple order ";
+					print STDERR " for assembled contig $bac_name in simple order using reverse loop ";
 					print STDERR "$insert_before_or_after accession $accession\n";
 					$contig_bac_loop_counter--;
-					#$insert_line_number--; #deincrement TPF line number for next insertion
 				}
 			}
 			else{
@@ -2161,7 +2174,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 			else {
 				die "BAC $bac_name not inserted\n";
 			}
-			print STDERR "Inserted singleton BAC: $bac_name\n";
+			print STDERR "Inserted singleton BAC: $bac_name $insert_before_or_after accession $accession\n";
 		}
 		
 		$accession_tpflines{$accession} = \@temp_arr;
