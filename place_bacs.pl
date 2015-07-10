@@ -164,15 +164,16 @@ foreach my $line (@group_coords_lines) {
 		next;
 	}
 	chomp($line);
-	my @bac_and_coordinates = split( /\t/, $line );
-	my $bac_name            = $bac_and_coordinates[0]; #query
+	my @bac_end_coordinates = split( /\t/, $line );
+	my $bac_name            = $bac_end_coordinates[0]; #query
 	if ( is_ncbi_format($bac_name) ){ $bac_name = get_accession($bac_name);}
-	my $bac_ref_start           = $bac_and_coordinates[2]; #ref_start
-	my $bac_ref_end             = $bac_and_coordinates[3]; #ref_end
-	my $bac_query_start         = $bac_and_coordinates[5]; #query_start
-	my $bac_query_end           = $bac_and_coordinates[6]; #query_end
-	my $bac_query_length        = $bac_and_coordinates[7]; #query_length
-	my @bac_array           = ( $bac_name, $bac_ref_start, $bac_ref_end, $bac_query_start, $bac_query_end, $bac_query_length );
+	my $bac_ref_start       = $bac_end_coordinates[2]; #ref_start
+	my $bac_ref_end         = $bac_end_coordinates[3]; #ref_end
+	my $bac_query_start     = $bac_end_coordinates[5]; #query_start
+	my $bac_query_end       = $bac_end_coordinates[6]; #query_end
+	my $bac_query_length    = $bac_end_coordinates[7]; #query_length
+	my $direction           = $bac_end_coordinates[9]; #direction (+1 if in same orientation, -1 otherwise)
+	my @bac_array           = ( $bac_name, $bac_ref_start, $bac_ref_end, $bac_query_start, $bac_query_end, $bac_query_length, $direction );
 	push( @bacs, \@bac_array );
 }
 
