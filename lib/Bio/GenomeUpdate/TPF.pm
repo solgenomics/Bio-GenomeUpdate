@@ -1523,23 +1523,11 @@ Returns the length of the accession. Added for use in switchover and trim files
 			$bac_query_start        = $bac[3];
 			$bac_query_end          = $bac[4];
 			$qry_orientation_groupcoords = 'PLUS';
-#			if ($ref_orientation_groupcoords eq 'PLUS'){
-#				$bac_to_insert->set_orientation('PLUS');
-#			}
-#			elsif ($ref_orientation_groupcoords eq 'MINUS'){
-#				$bac_to_insert->set_orientation('MINUS');#flip if qry aligned to opposite strand on ref
-#			}
 		}
 		elsif ( $bac[3] > $bac[4] ) {#query alignment on negative strand
 			$bac_query_start = $bac[4];
 			$bac_query_end   = $bac[3];
 			$qry_orientation_groupcoords = 'MINUS';
-#			if ($ref_orientation_groupcoords eq 'PLUS'){
-#				$bac_to_insert->set_orientation('MINUS');
-#			}
-#			elsif ($ref_orientation_groupcoords eq 'MINUS'){
-#				$bac_to_insert->set_orientation('PLUS');#flip if qry aligned to opposite strand on ref
-#			}
 		}
 		else {
 			die	"Error in BAC query coordinates for BAC $bac_name Start: $bac_query_start End: $bac_query_end\n";
@@ -1969,29 +1957,6 @@ Returns the length of the accession. Added for use in switchover and trim files
 		}
 		
 		
-#		if ($insert_line_strand eq '+'){
-#			if ($ref_orientation_groupcoords eq $qry_orientation_groupcoords){
-#				$bac_to_insert->set_orientation('PLUS');
-#				#print STDERR "$insert_line_accession in PLUS orientation in original TPF, Mummer alignment in same direction in ref and qry $bac_name. Setting orientation to PLUS\n";
-#				print STDERR "$insert_line_accession in $insert_line_strand orientation in original TPF, Mummer alignment in same direction in ref and qry $bac_name. Setting orientation to PLUS\n";
-#			}
-#			elsif ($ref_orientation_groupcoords ne $qry_orientation_groupcoords){
-#				$bac_to_insert->set_orientation('MINUS');
-#				#print STDERR "$insert_line_accession in PLUS orientation in original TPF, Mummer alignment in opposite direction in ref and qry $bac_name. Setting orientation to MINUS\n";
-#				print STDERR "$insert_line_accession in $insert_line_strand orientation in original TPF, Mummer alignment in opposite direction in ref and qry $bac_name. Setting orientation to MINUS\n";
-#			}
-#		}
-#		elsif ($insert_line_strand eq '-'){
-#			if ($ref_orientation_groupcoords eq $qry_orientation_groupcoords){
-#				$bac_to_insert->set_orientation('MINUS');
-#				print STDERR "$insert_line_accession in MINUS orientation in original TPF, Mummer alignment in same direction in ref and qry $bac_name. Setting orientation to MINUS\n";
-#			}
-#			elsif ($ref_orientation_groupcoords ne $qry_orientation_groupcoords){
-#				$bac_to_insert->set_orientation('PLUS');
-#				print STDERR "$insert_line_accession in MINUS orientation in original TPF, Mummer alignment in opposite direction in ref and qry $bac_name. Setting orientation to PLUS\n";
-#			}
-#		}
-
 		#create line number to accession array and accession to TPF hash for insertions later
 		#not using line number + offset logic as it breaks down in complicated cases
 		my %accession_tpflines; # accession key = TPF line value in array 
