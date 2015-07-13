@@ -1976,7 +1976,29 @@ Returns the length of the accession. Added for use in switchover and trim files
 			}
 			$line_key++;
 		}		
-		#print STDERR Dumper \%sequence_accessions_to_remove;
+
+		#record insertion event and modify $insert_line_number if that line was already inserted at, issue #53
+		if ( $insert_before_or_after eq 'before'){
+			if (! exists $before_insertion_counter{$insert_line_number}){
+				$before_insertion_counter{$insert_line_number} = 1 ;
+			}
+			else{
+				my $old_insert_line_number = $insert_line_number;
+				$insert_line_number = $insert_line_number - $before_insertion_counter{$insert_line_number};
+				$before_insertion_counter{$old_insert_line_number}++ ;
+			}
+		}
+		elsif ( $insert_before_or_after eq 'after'){
+			if (! exists $after_insertion_counter{$insert_line_number}){
+				$after_insertion_counter{$insert_line_number} = 1 ;
+			}
+			else{
+				my $old_insert_line_number = $insert_line_number;
+				$insert_line_number = $insert_line_number + $after_insertion_counter{$insert_line_number};
+				$after_insertion_counter{$old_insert_line_number}++ ;
+			}
+		}
+
 		my $accession = $tpfline_accession[$insert_line_number];
 		my $tpf_line_arr_ref = $accession_tpflines{$accession};
 		my @temp_arr = @$tpf_line_arr_ref;
