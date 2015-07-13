@@ -2014,7 +2014,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 
 		#record insertion event and modify $insert_line_number if that line was already inserted at, issue #53
 		if ( $insert_before_or_after eq 'before'){
-			if (!exist $before_insertion_counter{$insert_line_number}){
+			if (! exists $before_insertion_counter{$insert_line_number}){
 				$before_insertion_counter{$insert_line_number} = 1 ;
 			}
 			else{
@@ -2024,7 +2024,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 			}
 		}
 		elsif ( $insert_before_or_after eq 'after'){
-			if (!exist $after_insertion_counter{$insert_line_number}){
+			if (! exists $after_insertion_counter{$insert_line_number}){
 				$after_insertion_counter{$insert_line_number} = 1 ;
 			}
 			else{
