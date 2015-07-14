@@ -1986,6 +1986,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 				my $old_insert_line_number = $insert_line_number;
 				$insert_line_number = $insert_line_number - $before_insertion_counter{$insert_line_number};
 				$before_insertion_counter{$old_insert_line_number}++ ;
+				print STDERR "Original insert line number was $old_insert_line_number. Reducing to $insert_line_number due to previous inserts above it\n";
 			}
 		}
 		elsif ( $insert_before_or_after eq 'after'){
@@ -1996,6 +1997,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 				my $old_insert_line_number = $insert_line_number;
 				$insert_line_number = $insert_line_number + $after_insertion_counter{$insert_line_number};
 				$after_insertion_counter{$old_insert_line_number}++ ;
+				print STDERR "Original insert line number was $old_insert_line_number. Increasing to $insert_line_number due to previous inserts below it\n";
 			}
 		}
 
