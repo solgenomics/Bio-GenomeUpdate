@@ -668,7 +668,7 @@ sub help {
 
     Description:
 
-     This script creates a fasta of BAC ends, aligns to reference with mummer and groups aligned clusters to create a tab delimited file with BAC alignment details. Mixed and out of order alignments are written to separate files. Only removing BACs whose ends align beyond range on ref, no check for BAC ends that align too close.
+     This script creates a fasta of BAC ends, aligns to reference with mummer and groups aligned clusters to create a tab delimited file with BAC alignment details. BACs where both ends align are reported as Contains. Solo BAC end alignments are also reported as Partial alignments. Mixed and out of order alignments are written to separate files. Only removing BACs whose ends align beyond range on ref, no check for BAC ends that align too close. You may need to remove redundant BACs as they confuse the GRC end-to-end aligner or use filter_group_coords_output.pl. 
 
     Usage:
       align_BACends_group_coords.pl -r [fasta] -q [fasta] -c [agp] -s [agp]

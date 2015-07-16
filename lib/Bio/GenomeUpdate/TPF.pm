@@ -1432,7 +1432,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 
 =item C<get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps ( $chr, $switch_points, $trim_points, @bacs, %scaffold_agp_coords, %scaffold_component_contigs, %scaffold_component_contig_directions )>
 
-Returns SP, TP and full TPF objects with BAC accessions inserted in order that replace gaps AND sequences. The sequence and gap components that are encompassed by a BAC are now deleted from the TPF. The assembled BACs start with ContigX in the group_coords.out file. These are substituted with the BACs as they are ordered in the ACE file. Each member BAC will have its own TPF line. You may need to remove redundant BACs as they confuse the GRC end-to-end aligner. Switch point lines are created and added to switch point object but no trim point lines are added as we don't use them right now.
+Returns SP, TP and full TPF objects with BAC accessions inserted in order that replace gaps AND sequences. The sequence and gap components that are encompassed by a BAC are now deleted from the TPF. The assembled BACs start with ContigX in the group_coords.out file. These are substituted with the BACs as they are ordered in the ACE file. Each member BAC will have its own TPF line. You may need to remove redundant BACs as they confuse the GRC end-to-end aligner or use filter_group_coords_output.pl. Switch point lines are created and added to switch point object but no trim point lines are added as we don't use them right now. Cases where a solo BAC end aligns to ref may be reported as CONTAINED for the entire BAC (not just one end).
 
 =cut
 
