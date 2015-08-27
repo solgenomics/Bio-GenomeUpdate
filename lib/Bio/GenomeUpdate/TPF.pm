@@ -2055,15 +2055,15 @@ Returns the length of the accession. Added for use in switchover and trim files
 							$contig_bac_to_insert->set_orientation('PLUS');
 						}
 						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
-							$contig_bac_to_insert->set_orientation('MINUS'); #flip
+							$contig_bac_to_insert->set_orientation('MINUS');
 						}
 					}
-					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){
+					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){ #flip
 						if ($bac_to_insert->get_orientation() eq 'PLUS'){
 							$contig_bac_to_insert->set_orientation('MINUS');
 						}
 						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
-							$contig_bac_to_insert->set_orientation('PLUS'); #flip
+							$contig_bac_to_insert->set_orientation('PLUS');
 						}
 					}
 					
@@ -2120,15 +2120,15 @@ Returns the length of the accession. Added for use in switchover and trim files
 							$contig_bac_to_insert->set_orientation('PLUS');
 						}
 						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
-							$contig_bac_to_insert->set_orientation('MINUS'); #flip
+							$contig_bac_to_insert->set_orientation('MINUS');
 						}
 					}
-					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){
+					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){ #flip
 						if ($bac_to_insert->get_orientation() eq 'PLUS'){
 							$contig_bac_to_insert->set_orientation('MINUS');
 						}
 						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
-							$contig_bac_to_insert->set_orientation('PLUS'); #flip
+							$contig_bac_to_insert->set_orientation('PLUS');
 						}
 					}
 					
