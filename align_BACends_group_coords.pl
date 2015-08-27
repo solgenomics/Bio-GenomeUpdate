@@ -289,7 +289,7 @@ foreach my $line (@lines) {
 		$aln_coords->set_query_start_coord( $row[2] );
 		$aln_coords->set_query_end_coord( $row[3] );
 		$aln_coords->set_query_strand( $row[12] );
-		push( @alignment_coords_array, $aln_coords );
+		push( @alignment_coords_array, $aln_coords );#will also report solo left BAC end alignment
 		
 		$left_aligned = 1;#found left BAC end alignment
 		$left_aligned_reference_direction = $row[11];
