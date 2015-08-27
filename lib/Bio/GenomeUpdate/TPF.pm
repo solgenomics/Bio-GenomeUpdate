@@ -1432,7 +1432,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 
 =item C<get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps ( $chr, $switch_points, $trim_points, @bacs, %scaffold_agp_coords, %scaffold_component_contigs, %scaffold_component_contig_directions )>
 
-Returns SP, TP and full TPF objects with BAC accessions inserted in order that replace gaps AND sequences. The sequence and gap components that are encompassed by a BAC are now deleted from the TPF. The assembled BACs start with ContigX in the group_coords.out file. These are substituted with the BACs as they are ordered in the ACE file. Each member BAC will have its own TPF line. You may need to remove redundant BACs as they confuse the GRC end-to-end aligner. Switch point lines are created and added to switch point object but no trim point lines are added as we don't use them right now.
+Returns SP, TP and full TPF objects with BAC accessions inserted in order that replace gaps AND sequences. The sequence and gap components that are encompassed by a BAC are now deleted from the TPF. The assembled BACs start with ContigX in the group_coords.out file. These are substituted with the BACs as they are ordered in the ACE file. Each member BAC will have its own TPF line. You may need to remove redundant BACs as they confuse the GRC end-to-end aligner or use filter_group_coords_output.pl. Switch point lines are created and added to switch point object but no trim point lines are added as we don't use them right now. Cases where a solo BAC end aligns to ref may be reported as CONTAINED for the entire BAC (not just one end).
 
 =cut
 
@@ -1986,6 +1986,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 				my $old_insert_line_number = $insert_line_number;
 				$insert_line_number = $insert_line_number - $before_insertion_counter{$insert_line_number};
 				$before_insertion_counter{$old_insert_line_number}++ ;
+				print STDERR "Original insert line number was $old_insert_line_number. Reducing to $insert_line_number due to previous inserts above it\n";
 			}
 		}
 		elsif ( $insert_before_or_after eq 'after'){
@@ -1996,6 +1997,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 				my $old_insert_line_number = $insert_line_number;
 				$insert_line_number = $insert_line_number + $after_insertion_counter{$insert_line_number};
 				$after_insertion_counter{$old_insert_line_number}++ ;
+				print STDERR "Original insert line number was $old_insert_line_number. Increasing to $insert_line_number due to previous inserts below it\n";
 			}
 		}
 
@@ -2053,15 +2055,15 @@ Returns the length of the accession. Added for use in switchover and trim files
 							$contig_bac_to_insert->set_orientation('PLUS');
 						}
 						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
-							$contig_bac_to_insert->set_orientation('MINUS'); #flip
+							$contig_bac_to_insert->set_orientation('MINUS');
 						}
 					}
-					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){
+					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){ #flip
 						if ($bac_to_insert->get_orientation() eq 'PLUS'){
 							$contig_bac_to_insert->set_orientation('MINUS');
 						}
 						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
-							$contig_bac_to_insert->set_orientation('PLUS'); #flip
+							$contig_bac_to_insert->set_orientation('PLUS');
 						}
 					}
 					
@@ -2118,15 +2120,15 @@ Returns the length of the accession. Added for use in switchover and trim files
 							$contig_bac_to_insert->set_orientation('PLUS');
 						}
 						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
-							$contig_bac_to_insert->set_orientation('MINUS'); #flip
+							$contig_bac_to_insert->set_orientation('MINUS');
 						}
 					}
-					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){
+					elsif ($component_accession_directions_arr[$contig_bac_loop_counter] == -1){ #flip
 						if ($bac_to_insert->get_orientation() eq 'PLUS'){
 							$contig_bac_to_insert->set_orientation('MINUS');
 						}
 						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
-							$contig_bac_to_insert->set_orientation('PLUS'); #flip
+							$contig_bac_to_insert->set_orientation('PLUS');
 						}
 					}
 					

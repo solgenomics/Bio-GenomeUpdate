@@ -289,7 +289,7 @@ foreach my $line (@lines) {
 		$aln_coords->set_query_start_coord( $row[2] );
 		$aln_coords->set_query_end_coord( $row[3] );
 		$aln_coords->set_query_strand( $row[12] );
-		push( @alignment_coords_array, $aln_coords );
+		push( @alignment_coords_array, $aln_coords );#will also report solo left BAC end alignment
 		
 		$left_aligned = 1;#found left BAC end alignment
 		$left_aligned_reference_direction = $row[11];
@@ -668,7 +668,7 @@ sub help {
 
     Description:
 
-     This script creates a fasta of BAC ends, aligns to reference with mummer and groups aligned clusters to create a tab delimited file with BAC alignment details. Mixed and out of order alignments are written to separate files. Only removing BACs whose ends align beyond range on ref, no check for BAC ends that align too close.
+     This script creates a fasta of BAC ends, aligns to reference with mummer and groups aligned clusters to create a tab delimited file with BAC alignment details. BACs where both ends align are reported as Contains. Solo BAC end alignments are also reported as Partial alignments. Mixed and out of order alignments are written to separate files. Only removing BACs whose ends align beyond range on ref, no check for BAC ends that align too close. You may need to remove redundant BACs as they confuse the GRC end-to-end aligner or use filter_group_coords_output.pl. 
 
     Usage:
       align_BACends_group_coords.pl -r [fasta] -q [fasta] -c [agp] -s [agp]
