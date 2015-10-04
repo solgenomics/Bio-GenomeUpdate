@@ -38,6 +38,17 @@ $VAR1 = {
                          1
                        ]
         };
+%scaffold_component_contig_lengths
+$VAR1 = {
+          'Contig1' => [
+                         133425,
+                         113972
+                       ],
+          'Contig2' => [
+                         133425,
+                         113972
+                       ]
+        };
 Parsing TPF line 31 of 31
 Parsed 31 TPF lines
 Parsing AGP line 22 of 22
