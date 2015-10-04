@@ -66,7 +66,7 @@ my $prev_line_ref_end;
 my $line_counter;
 my $redundant_line_counter;
 my $filtered_line_counter;
-$line_counter = $redundant_line_counter = $filtered_line_counter = 1;
+$line_counter = $redundant_line_counter = $filtered_line_counter = 0;#off by 1 error so changing to 0 from 1
 
 foreach $line (@sorted_input_group_coords){
 	if ((!defined $prev_line_ref_start) && (!defined $prev_line_ref_end)){ #first line
@@ -125,7 +125,7 @@ foreach $line (@sorted_input_group_coords){
 	$line_counter++;
 }
 
-print STDERR "\n\nLines in $opt_f\t\t:\t$line_counter\n";
+print STDERR "\nLines in $opt_f\t\t:\t$line_counter\n";
 print STDERR "Lines in redundant.${opt_f}\t:\t$redundant_line_counter\n";
 print STDERR "Lines in filtered.${opt_f}\t:\t$filtered_line_counter\n\n";
 
