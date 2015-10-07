@@ -1430,7 +1430,7 @@ sub get_tpf_with_bacs_inserted_in_sequences_and_gaps {
 #	return $self;
 }
 
-=item C<get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps ( $chr, $switch_points, $trim_points, @bacs, %scaffold_agp_coords, %scaffold_component_contigs, %scaffold_component_contig_directions )>
+=item C<get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps ( $chr, $switch_points, $trim_points, @bacs, %scaffold_agp_coords, %scaffold_component_contigs, %scaffold_component_contig_directions, %scaffold_component_contig_lengths )>
 
 Returns SP, TP and full TPF objects with BAC accessions inserted in order that replace gaps AND sequences. The sequence and gap components that are encompassed by a BAC are now deleted from the TPF. The assembled BACs start with ContigX in the group_coords.out file. These are substituted with the BACs as they are ordered in the ACE file. Each member BAC will have its own TPF line. You may need to remove redundant BACs as they confuse the GRC end-to-end aligner or use filter_group_coords_output.pl. Switch point lines are created and added to switch point object but no trim point lines are added as we don't use them right now. Cases where a solo BAC end aligns to ref may be reported as CONTAINED for the entire BAC (not just one end).
 
@@ -1445,31 +1445,47 @@ sub get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps {
 	my $scaffold_agp_coords_ref = shift;
 	my $scaffold_component_contigs_ref = shift;
 	my $scaffold_component_contig_directions_ref = shift;
+	my $scaffold_component_contig_lengths_ref = shift;
 	my @bacs           = @$bacs_ref;   # ref to array of arrays with bac names and coordinates
 	my %scaffold_agp_coords     = %$scaffold_agp_coords_ref; # hash of hashes WGS contigs => {start,end,orientation} in scaffold from scaffold AGP
 	my %scaffold_component_contigs = %$scaffold_component_contigs_ref; #hash of arrays BAC contigs => [BAC1,BAC2..] from ACE file
 	my %scaffold_component_contig_directions = %$scaffold_component_contig_directions_ref; #hash of arrays BAC contigs => [direction1,direction2..] from ACE file where direction is +1 or -1
+	my %scaffold_component_contig_lengths = %$scaffold_component_contig_lengths_ref; #hash of arrays BAC contigs => [length1,length2..] from ACE file
 	my %bac_inserted_accessions; 
 	my %sequence_accessions_to_remove; #key is accession and value is delete, can be undef
 	my %before_insertion_counter;      #track insertions before a TPF line to calculate offsets for subsequent insertions
 	my %after_insertion_counter;       #track insertions after a TPF line to calculate offsets for subsequent insertions
 
 	
-=item C<_get_accession_coordinate ($accession, $chromosome_coordinate)> 
+=item C<_get_accession_coordinate_5prime ($accession, $chromosome_coordinate)> 
 	
-Returns the local coordinate of the accession. Added for use in switchover and trim files
+Returns the local coordinate of the accession counting from the 5' end. Added for use in switchover and trim files
 	
 =cut
 	
-	local *_get_accession_coordinate = sub {
+	local *_get_accession_coordinate_5prime = sub {
 		my $accession = shift;
 		my $chromosome_coordinate = shift;
 		
 		my $accession_start = $scaffold_agp_coords{$accession}->{start};
 		
-		return $chromosome_coordinate - $accession_start;
+		return $chromosome_coordinate - $accession_start + 1;
 	};
 
+=item C<_get_accession_coordinate_3prime ($accession, $chromosome_coordinate)> 
+	
+Returns the local coordinate of the accession counting from the 3' end. Added for use in switchover and trim files. Needed as GRC counts -ive coordinates from the 3' end.
+	
+=cut
+	
+	local *_get_accession_coordinate_3prime = sub {
+		my $accession = shift;
+		my $chromosome_coordinate = shift;
+		
+		my $accession_end = $scaffold_agp_coords{$accession}->{end};
+		
+		return (abs($chromosome_coordinate - $accession_end) + 1);
+	};
 =item C<_get_accession_length ($accession)> 
 	
 Returns the length of the accession. Added for use in switchover and trim files
@@ -1478,7 +1494,6 @@ Returns the length of the accession. Added for use in switchover and trim files
 	
 	local *_get_accession_length = sub {
 		my $accession = shift;
-		
 		return ( $scaffold_agp_coords{$accession}->{end} - $scaffold_agp_coords{$accession}->{start} + 1 );
 	};
 	
@@ -1491,8 +1506,6 @@ Returns the length of the accession. Added for use in switchover and trim files
 		my $bac_query_start;
 		my $bac_query_end;
 		my $bac_query_length;
-		my $ref_orientation_groupcoords;
-		my $qry_orientation_groupcoords;
 		my $direction;
 		
 		my $bac_to_insert = Bio::GenomeUpdate::TPF::TPFSequenceLine->new();
@@ -1504,34 +1517,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 
 		#set BAC variables
 		$bac_to_insert->set_accession($bac_name);
-		if ( $bac[1] < $bac[2] ) {
-			$ref_orientation_groupcoords = 'PLUS';  #records the orientation of ref region that aligned to bac
-			#$bac_to_insert->set_orientation('PLUS'); #records the orientation of ref region that aligned to bac
-			$bac_ref_start = $bac[1];
-			$bac_ref_end   = $bac[2];
-		}
-		elsif ( $bac[1] > $bac[2] ) {#as mummer flips coords for alignments on MINUS strand
-			$ref_orientation_groupcoords = 'MINUS';  #records the orientation of ref region that aligned to bac
-			#$bac_to_insert->set_orientation('MINUS'); #records the orientation of ref region that aligned to bac
-			$bac_ref_start = $bac[2];
-			$bac_ref_end   = $bac[1];
-		}
-		else {
-			die	"Error in BAC ref coordinates for BAC $bac_name Start: $bac_ref_start End: $bac_ref_end\n";
-		}
-		if ( $bac[3] < $bac[4] ) {#query alignment on positive strand
-			$bac_query_start        = $bac[3];
-			$bac_query_end          = $bac[4];
-			$qry_orientation_groupcoords = 'PLUS';
-		}
-		elsif ( $bac[3] > $bac[4] ) {#query alignment on negative strand
-			$bac_query_start = $bac[4];
-			$bac_query_end   = $bac[3];
-			$qry_orientation_groupcoords = 'MINUS';
-		}
-		else {
-			die	"Error in BAC query coordinates for BAC $bac_name Start: $bac_query_start End: $bac_query_end\n";
-		}
+		$bac_ref_start    = $bac[1];
+		$bac_ref_end      = $bac[2];
+		$bac_query_start  = $bac[3];
+		$bac_query_end    = $bac[4];
 		$bac_query_length = $bac[5];
 		$direction        = $bac[6]; #direction (+1 if in ref and query align in same orientation, -1 otherwise)
 
@@ -1572,15 +1561,13 @@ Returns the length of the accession. Added for use in switchover and trim files
 		my %add_scaffold_agp_coords;
 		$add_scaffold_agp_coords{'start'} = $bac_ref_start;
 		$add_scaffold_agp_coords{'end'}   = $bac_ref_end;
-		if ( $ref_orientation_groupcoords eq 'PLUS' ) {
+		if ( $bac_to_insert->get_orientation() eq 'PLUS' ) {
 			$add_scaffold_agp_coords{'orientation'} = '+';
 		}
-		elsif ( $ref_orientation_groupcoords eq 'MINUS' ) {
+		elsif ( $bac_to_insert->get_orientation() eq 'MINUS' ) {
 			$add_scaffold_agp_coords{'orientation'} = '-';
 		}
-		else {
-			die "No orientation specified for ref for BAC: $bac_name\n";
-		}
+
 		$scaffold_agp_coords{$bac_name} = \%add_scaffold_agp_coords;
 		
 		###############
@@ -1632,7 +1619,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 					print STDERR "Setting $bac_name contained in $accession\n";
 					
 					#if BAC is not flush with either end of the WGS contig then
-					#set switch point line for transition between BAC and WGS contig
+					#Adding switch point for transition from WGS contig to contained BAC
 					my ($accession_prefix_orientation, $accession_suffix_orientation, $accession_prefix_last_base, $accession_suffix_first_base);
 					if ($tpf_lines{$line_key}->get_orientation() eq 'PLUS'){
 						$accession_prefix_orientation = '+';
@@ -1643,26 +1630,29 @@ Returns the length of the accession. Added for use in switchover and trim files
 					else{
 						die "No orientation for $accession. Exiting.. \n";
 					}
-					if ($ref_orientation_groupcoords eq 'PLUS'){
+					if ($bac_to_insert->get_orientation() eq 'PLUS'){
 						$accession_suffix_orientation = '+';
 					}
-					elsif($ref_orientation_groupcoords eq 'MINUS'){
+					elsif($bac_to_insert->get_orientation() eq 'MINUS'){
 						$accession_suffix_orientation = '-';
 					}
-					else{
-						die "No orientation for $bac_name. Exiting.. \n";
+					
+					if ($accession_prefix_orientation eq '+'){
+						$accession_prefix_last_base = _get_accession_coordinate_5prime ($accession, $bac_ref_start - 1 );
+					}
+					elsif($accession_prefix_orientation eq '-'){#count from 3' end
+#						$accession_prefix_last_base = _get_accession_length ($accession) - _get_accession_coordinate_3prime ($accession, $bac_ref_start - 1 );
+						$accession_prefix_last_base = _get_accession_coordinate_3prime ($accession, $bac_ref_start - 1 );
 					}
 					
-					$accession_prefix_last_base = _get_accession_coordinate ($accession, $bac_ref_start - 1 );
 					print STDERR "$bac_name does not align from base 1 on accession $accession. Might be an error\n" if $bac_query_start != 1;
 					$accession_suffix_first_base = $bac_query_start;
 
 					print STDERR "$bac_name aligns from base 1 on accession $accession. Not creating switch point\n" if $accession_prefix_last_base == -1;
 					
 					#Substituting in BAC for assembled contig BAC if required
-					#Adding switch point for transition from WGS contig to contained BAC
 					if ($bac_name =~ /^Contig/ ){
-						print STDERR "Substituting in BAC for assembled contig $bac_name before creating switch point object\n";
+						print STDERR "Substituting in BAC for assembled contig $bac_name before creating switch point object to move to BAC from WGS\n";
 						if (!(exists $scaffold_component_contigs{$bac_name}) || !(exists $scaffold_component_contig_directions{$bac_name})){
 							print STDERR "$bac_name not found in user supplied ACE file. Exiting ....\n\n"; exit 1;
 						}
@@ -1670,15 +1660,43 @@ Returns the length of the accession. Added for use in switchover and trim files
 						my @component_accessions_arr = @$component_accessions_ref;
 						my $component_accession_directions_ref = $scaffold_component_contig_directions{$bac_name};# orientation 
 						my @component_accession_directions_arr = @$component_accession_directions_ref;            # +1 for positive strand in contig alignment, -1 if on negative strand
+						my $component_accession_lengths_ref = $scaffold_component_contig_lengths{$bac_name};      # lengths
+						my @component_accession_lengths_arr = @$component_accession_lengths_ref;
 						my $contig_bac_name;
+						my $contig_bac_direction;
+						my $contig_bac_first_base;
 						if($bac_to_insert->get_orientation() eq 'PLUS'){
 							$contig_bac_name = $component_accessions_arr[0]; #first contig BAC
+							if ( $component_accession_directions_arr[0] == 1){
+								$contig_bac_direction  = '+'; #same dir as in ACE file
+								$contig_bac_first_base = 1;
+							}
+							elsif( $component_accession_directions_arr[0] == -1 ){
+								$contig_bac_direction  = '-';
+								$contig_bac_first_base = $component_accession_lengths_arr[0]; #last base as counting from 3' end
+							}
 						}
 						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
 							$contig_bac_name = $component_accessions_arr[$#component_accessions_arr]; #last contig BAC
+							if ( $component_accession_directions_arr[$#component_accession_directions_arr] == 1){
+								$contig_bac_direction  = '-'; #flip dir from ACE file
+								$contig_bac_first_base = $component_accession_lengths_arr[$#component_accession_lengths_arr];
+							}
+							elsif( $component_accession_directions_arr[$#component_accession_directions_arr] == -1 ){
+								$contig_bac_direction = '+';
+								$contig_bac_first_base = 1;
+							}
 						}
+						#modify for contig BAC
+						$accession_suffix_first_base  = $contig_bac_first_base;
+						$accession_suffix_orientation = $contig_bac_direction;
 						
 						if ($accession_prefix_last_base != -1){ #contig BAC
+							print STDERR "Creating switch point for transition from $accession with length ";
+							print STDERR _get_accession_length ($accession);
+							print STDERR "bp to CONTAINED contig BAC $contig_bac_name for contained $bac_name\n";
+							print STDERR "Bac ref start: $bac_ref_start, end: $bac_ref_end\n";
+
 							my $sp_prefix_line = Bio::GenomeUpdate::SP::SPLine->new( 
 									chromosome => $chromosome,
 									accession_prefix => $accession,
@@ -1694,6 +1712,25 @@ Returns the length of the accession. Added for use in switchover and trim files
 						}
 					}
 					else{
+						if ($accession_suffix_orientation eq '-'){
+							$accession_suffix_first_base = $bac_query_end; #count from 3' if BAC on -ive strand
+						}
+						print STDERR "Creating switch point for transition from $accession with length ";
+						print STDERR _get_accession_length ($accession);
+						print STDERR "bp to CONTAINED singleton BAC $bac_name\n";
+						print STDERR "Bac ref start: $bac_ref_start, end: $bac_ref_end\n";
+						if ($accession_prefix_orientation eq '+'){
+							print STDERR "Bac WGS start:",_get_accession_coordinate_5prime ($accession, $bac_ref_start);
+							print STDERR ", end:",_get_accession_coordinate_5prime ($accession, $bac_ref_end );
+							print STDERR "\n";
+						}
+						elsif($accession_prefix_orientation eq '-'){#count from 3' end
+							print STDERR "Bac WGS start:",_get_accession_coordinate_3prime ($accession, $bac_ref_start);
+							print STDERR ", end:",_get_accession_coordinate_3prime ($accession, $bac_ref_end);
+							print STDERR "\n";
+
+						}							
+
 						if ($accession_prefix_last_base != -1){ #singleton BAC
 							my $sp_prefix_line = Bio::GenomeUpdate::SP::SPLine->new( 
 									chromosome => $chromosome,
@@ -1710,21 +1747,27 @@ Returns the length of the accession. Added for use in switchover and trim files
 						}
 					}
 					
-					
+					#Adding switch point for transition from contained BAC to WGS contig
 					my $temp_orientation = $accession_prefix_orientation;
 					$accession_prefix_orientation = $accession_suffix_orientation;
 					$accession_suffix_orientation = $temp_orientation;
 					
 					print STDERR "$bac_name does not align till its end on accession $accession. Might be an error\n" if $bac_query_end != $bac_query_length;
 					$accession_prefix_last_base = $bac_query_end;
-					$accession_suffix_first_base = _get_accession_coordinate ($accession, $bac_ref_end + 1 );
+					
+					if ($accession_suffix_orientation eq '+'){
+						$accession_suffix_first_base = _get_accession_coordinate_5prime ($accession, $bac_ref_end + 1 );
+					}
+					elsif($accession_suffix_orientation eq '-'){#count from 3' end
+#						$accession_suffix_first_base = _get_accession_length ($accession) - _get_accession_coordinate_3prime ($accession, $bac_ref_end + 1 );
+						$accession_suffix_first_base = _get_accession_coordinate_3prime ($accession, $bac_ref_end + 1 );
+					}
 					
 					print STDERR "$bac_name aligns till end on accession $accession. Not creating a switch point\n" if $accession_suffix_first_base > _get_accession_length ($accession);
 					
 					#Substituting in BAC for assembled contig BAC if required
-					#Adding switch point for transition from contained BAC to WGS contig
 					if ($bac_name =~ /^Contig/ ){
-						print STDERR "Substituting in BAC for assembled contig $bac_name before creating switch point object\n";
+						print STDERR "Substituting in BAC for assembled contig $bac_name before creating switch point object for BAC to WGS\n";
 						if (!(exists $scaffold_component_contigs{$bac_name}) || !(exists $scaffold_component_contig_directions{$bac_name})){
 							print STDERR "$bac_name not found in user supplied ACE file. Exiting ....\n\n"; exit 1;
 						}
@@ -1732,13 +1775,36 @@ Returns the length of the accession. Added for use in switchover and trim files
 						my @component_accessions_arr = @$component_accessions_ref;
 						my $component_accession_directions_ref = $scaffold_component_contig_directions{$bac_name};# orientation 
 						my @component_accession_directions_arr = @$component_accession_directions_ref;            # +1 for positive strand in contig alignment, -1 if on negative strand
+						my $component_accession_lengths_ref = $scaffold_component_contig_lengths{$bac_name};      # lengths
+						my @component_accession_lengths_arr = @$component_accession_lengths_ref;
 						my $contig_bac_name;
+						my $contig_bac_direction;
+						my $contig_bac_last_base;
 						if($bac_to_insert->get_orientation() eq 'PLUS'){
 							$contig_bac_name = $component_accessions_arr[$#component_accessions_arr]; #last contig BAC							
+							if ( $component_accession_directions_arr[$#component_accession_directions_arr] == 1){
+								$contig_bac_direction  = '+'; #same dir as in ACE file
+								$contig_bac_last_base = $component_accession_lengths_arr[$#component_accession_lengths_arr];
+							}
+							elsif( $component_accession_directions_arr[$#component_accession_directions_arr] == -1 ){
+								$contig_bac_direction  = '-';
+								$contig_bac_last_base = 1; #first base as counting from 3' end
+							}
 						}
 						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
 							$contig_bac_name = $component_accessions_arr[0]; #first contig BAC
+							if ( $component_accession_directions_arr[0] == 1){
+								$contig_bac_direction  = '-'; #flip dir from ACE file
+								$contig_bac_last_base = 1;
+							}
+							elsif( $component_accession_directions_arr[0] == -1 ){
+								$contig_bac_direction = '+';
+								$contig_bac_last_base = $component_accession_lengths_arr[0];
+							}
 						}
+						#modify for contig BAC
+						$accession_prefix_last_base  = $contig_bac_last_base;
+						$accession_prefix_orientation = $contig_bac_direction;
 						
 						if ($accession_prefix_last_base != -1){ #contig BAC
 							my $sp_prefix_line = Bio::GenomeUpdate::SP::SPLine->new( 
@@ -1756,7 +1822,12 @@ Returns the length of the accession. Added for use in switchover and trim files
 						}
 					}
 					else{
+						#create sw pt only if BAC does not align till end of WGS
 						if ($accession_suffix_first_base > _get_accession_length ($accession)){ #singleton BAC
+							if ($accession_prefix_orientation eq '-'){
+								$accession_prefix_last_base = 1; #count from 3' if BAC on -ive strand
+							}
+
 							my $sp_suffix_line = Bio::GenomeUpdate::SP::SPLine->new( 
 										chromosome => $chromosome,
 										accession_prefix => $bac_name,
@@ -1774,22 +1845,18 @@ Returns the length of the accession. Added for use in switchover and trim files
 				}
 				
 				#no need to shrink sequence line as GRC aligner will figure out the switch over points
-				#set switch point in case BAC has partial overlap with WGS contig on 5' end
+				#Adding switch point for transition from 5' aligned BAC to WGS contig in case BAC has partial overlap with WGS contig on 5' end
 				if (	!$remove
 					&& $bac_ref_start <= $agp_sequence_start
 					&& $bac_ref_end   >  $agp_sequence_start
 					&& $bac_ref_end   <  $agp_sequence_end ){ #for all lines incl first line in TPF
 				
-					#set switch point line for transition between BAC and WGS contig
 					my ($accession_prefix_orientation, $accession_suffix_orientation, $accession_prefix_last_base, $accession_suffix_first_base);
-					if ($ref_orientation_groupcoords eq 'PLUS'){
+					if ($bac_to_insert->get_orientation() eq 'PLUS'){
 						$accession_prefix_orientation = '+';
 					}
-					elsif($ref_orientation_groupcoords eq 'MINUS'){
+					elsif($bac_to_insert->get_orientation() eq 'MINUS'){
 						$accession_prefix_orientation = '-';
-					}
-					else{
-						die "No orientation for $bac_name. Exiting.. \n";
 					}
 					
 					if ($tpf_lines{$line_key}->get_orientation() eq 'PLUS'){
@@ -1804,12 +1871,17 @@ Returns the length of the accession. Added for use in switchover and trim files
 
 					print STDERR "$bac_name does not align till its end on accession $accession. Might be an error\n" if $bac_query_end != $bac_query_length;
 					$accession_prefix_last_base = $bac_query_end;
-					$accession_suffix_first_base = _get_accession_coordinate ($accession, $bac_ref_end + 1 );
+					if ($accession_suffix_orientation eq '+'){
+						$accession_suffix_first_base = _get_accession_coordinate_5prime ($accession, $bac_ref_end + 1 );
+					}
+					elsif($accession_suffix_orientation eq '-'){#count from 3' end
+#						$accession_suffix_first_base = _get_accession_length ($accession) - _get_accession_coordinate_3prime ($accession, $bac_ref_end + 1 );
+						$accession_suffix_first_base = _get_accession_coordinate_3prime ($accession, $bac_ref_end + 1 );
+					}
 					
 					#Substituting in BAC for assembled contig BAC if required
-					#Adding switch point for transition from 5' aligned BAC to WGS contig
 					if ($bac_name =~ /^Contig/ ){
-						print STDERR "Substituting in BAC for assembled contig $bac_name before creating switch point object\n";
+						print STDERR "Substituting in BAC for assembled contig $bac_name before creating switch point object for 5' BAC to WGS\n";
 						if (!(exists $scaffold_component_contigs{$bac_name}) || !(exists $scaffold_component_contig_directions{$bac_name})){
 							print STDERR "$bac_name not found in user supplied ACE file. Exiting ....\n\n"; exit 1;
 						}
@@ -1817,13 +1889,37 @@ Returns the length of the accession. Added for use in switchover and trim files
 						my @component_accessions_arr = @$component_accessions_ref;
 						my $component_accession_directions_ref = $scaffold_component_contig_directions{$bac_name};# orientation 
 						my @component_accession_directions_arr = @$component_accession_directions_ref;            # +1 for positive strand in contig alignment, -1 if on negative strand
+						my $component_accession_lengths_ref = $scaffold_component_contig_lengths{$bac_name};# lengths
+						my @component_accession_lengths_arr = @$component_accession_lengths_ref;
 						my $contig_bac_name;
+						my $contig_bac_direction;
+						my $contig_bac_last_base;
 						if($bac_to_insert->get_orientation() eq 'PLUS'){
 							$contig_bac_name = $component_accessions_arr[$#component_accessions_arr]; #last contig BAC							
+							if ( $component_accession_directions_arr[$#component_accession_directions_arr] == 1){
+								$contig_bac_direction  = '+'; #same dir as in ACE file
+								$contig_bac_last_base = $component_accession_lengths_arr[$#component_accession_lengths_arr];
+							}
+							elsif( $component_accession_directions_arr[$#component_accession_directions_arr] == -1 ){
+								$contig_bac_direction  = '-';
+								$contig_bac_last_base = 1; #first base as counting from 3' end
+							}
 						}
 						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
 							$contig_bac_name = $component_accessions_arr[0]; #first contig BAC
+							if ( $component_accession_directions_arr[0] == 1){
+								$contig_bac_direction  = '-'; #flip dir from ACE file
+								$contig_bac_last_base = 1;
+							}
+							elsif( $component_accession_directions_arr[0] == -1 ){
+								$contig_bac_direction = '+';
+								$contig_bac_last_base = $component_accession_lengths_arr[0];
+							}
 						}
+						#modify for contig BAC
+						$accession_prefix_last_base  = $contig_bac_last_base;
+						$accession_prefix_orientation = $contig_bac_direction;
+
 						#contig BAC
 						my $sp_5prime_line = Bio::GenomeUpdate::SP::SPLine->new( 
 								chromosome => $chromosome,
@@ -1840,6 +1936,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 					}
 					else{
 						 #singleton BAC
+						if ($accession_prefix_orientation eq '-'){
+							$accession_prefix_last_base = 1; #count from 3' if BAC on -ive strand
+						}
+
 						my $sp_5prime_line = Bio::GenomeUpdate::SP::SPLine->new( 
 									chromosome => $chromosome,
 									accession_prefix => $bac_name,
@@ -1854,7 +1954,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 						$switch_points->add_line_to_end($sp_5prime_line);					
 					}
 				}
-				#set switch points in case BAC has partial overlap with WGS contig on 3' end
+				#set switch points in case BAC has partial overlap with WGS contig on 3' end so WGS to BAC
 				#should handle last sequence line in TPF
 				elsif ( $prev_line_key
 					&& !$remove
@@ -1873,24 +1973,27 @@ Returns the length of the accession. Added for use in switchover and trim files
 					else{
 						die "No orientation for $accession. Exiting.. \n";
 					}
-					if ($ref_orientation_groupcoords eq 'PLUS'){
+					if ($bac_to_insert->get_orientation() eq 'PLUS'){
 						$accession_suffix_orientation = '+';
 					}
-					elsif($ref_orientation_groupcoords eq 'MINUS'){
+					elsif($bac_to_insert->get_orientation() eq 'MINUS'){
 						$accession_suffix_orientation = '-';
-					}
-					else{
-						die "No orientation for $bac_name. Exiting.. \n";
 					}
 
 					print STDERR "$bac_name does not align from base 1 on accession $accession. Might be an error\n" if $bac_query_start != 1;
-					$accession_prefix_last_base = _get_accession_coordinate ($accession, $bac_ref_start - 1 );
+					if ($accession_prefix_orientation eq '+'){
+						$accession_prefix_last_base = _get_accession_coordinate_5prime ($accession, $bac_ref_start - 1 );
+					}
+					elsif($accession_prefix_orientation eq '-'){#count from 3' end
+#						$accession_prefix_last_base = _get_accession_length ($accession) - _get_accession_coordinate_3prime ($accession, $bac_ref_start - 1 );
+						$accession_prefix_last_base = _get_accession_coordinate_3prime ($accession, $bac_ref_start - 1 );
+					}
 					$accession_suffix_first_base = $bac_query_start;
 					
 					#Substituting in BAC for assembled contig BAC if required
 					#Adding switch point for transition from  WGS contig to 3' aligned BAC
 					if ($bac_name =~ /^Contig/ ){
-						print STDERR "Substituting in BAC for assembled contig $bac_name before creating switch point object\n";
+						print STDERR "Substituting in BAC for assembled contig $bac_name before creating switch point object for WGS to 3' BAC\n";
 						if (!(exists $scaffold_component_contigs{$bac_name}) || !(exists $scaffold_component_contig_directions{$bac_name})){
 							print STDERR "$bac_name not found in user supplied ACE file. Exiting ....\n\n"; exit 1;
 						}
@@ -1898,13 +2001,37 @@ Returns the length of the accession. Added for use in switchover and trim files
 						my @component_accessions_arr = @$component_accessions_ref;
 						my $component_accession_directions_ref = $scaffold_component_contig_directions{$bac_name};# orientation 
 						my @component_accession_directions_arr = @$component_accession_directions_ref;            # +1 for positive strand in contig alignment, -1 if on negative strand
+						my $component_accession_lengths_ref = $scaffold_component_contig_lengths{$bac_name};      # lengths
+						my @component_accession_lengths_arr = @$component_accession_lengths_ref;
 						my $contig_bac_name;
+						my $contig_bac_direction;
+						my $contig_bac_first_base;
 						if($bac_to_insert->get_orientation() eq 'PLUS'){
 							$contig_bac_name = $component_accessions_arr[0]; #first contig BAC
+							if ( $component_accession_directions_arr[0] == 1){
+								$contig_bac_direction  = '+'; #same dir as in ACE file
+								$contig_bac_first_base = 1;
+							}
+							elsif( $component_accession_directions_arr[0] == -1 ){
+								$contig_bac_direction  = '-';
+								$contig_bac_first_base = $component_accession_lengths_arr[0]; #last base as counting from 3' end
+							}
 						}
 						elsif($bac_to_insert->get_orientation() eq 'MINUS'){
 							$contig_bac_name = $component_accessions_arr[$#component_accessions_arr]; #last contig BAC
+							if ( $component_accession_directions_arr[$#component_accession_directions_arr] == 1){
+								$contig_bac_direction  = '-'; #flip dir from ACE file
+								$contig_bac_first_base = $component_accession_lengths_arr[$#component_accession_lengths_arr];
+							}
+							elsif( $component_accession_directions_arr[$#component_accession_directions_arr] == -1 ){
+								$contig_bac_direction = '+';
+								$contig_bac_first_base = 1;
+							}
 						}
+						#modify for contig BAC
+						$accession_suffix_first_base  = $contig_bac_first_base;
+						$accession_suffix_orientation = $contig_bac_direction;
+
 						#contig BAC
 						my $sp_3prime_line = Bio::GenomeUpdate::SP::SPLine->new( 
 								chromosome => $chromosome,
@@ -1921,6 +2048,10 @@ Returns the length of the accession. Added for use in switchover and trim files
 					}
 					else{
 						 #singleton BAC
+						if ($accession_suffix_orientation eq '-'){
+							$accession_suffix_first_base = $bac_query_end; #count from 3' if BAC on -ive strand
+						}
+
 						my $sp_3prime_line = Bio::GenomeUpdate::SP::SPLine->new( 
 									chromosome => $chromosome,
 									accession_prefix => $accession,
@@ -2102,15 +2233,6 @@ Returns the length of the accession. Added for use in switchover and trim files
 		#get the TPF line accession
 		$insert_line_accession = $tpf_lines{$insert_line_number}->get_accession();
 		$insert_line_strand    = $scaffold_agp_coords{$insert_line_accession}->{orientation}; # + or -
-		
-#		if ($direction == 1 ){
-#			$bac_to_insert->set_orientation('PLUS');
-#			print STDERR "$insert_line_accession in $insert_line_strand orientation in original TPF, Mummer alignment in same direction in ref and qry $bac_name. Setting orientation to PLUS\n";
-#		}
-#		elsif ($direction == -1 ){
-#			$bac_to_insert->set_orientation('MINUS');
-#			print STDERR "$insert_line_accession in $insert_line_strand orientation in original TPF, Mummer alignment in opposite direction in ref and qry $bac_name. Setting orientation to MINUS\n";
-#		}
 		
 		#create line number to accession array and accession to TPF hash for insertions later
 		#not using line number + offset logic as it breaks down in complicated cases

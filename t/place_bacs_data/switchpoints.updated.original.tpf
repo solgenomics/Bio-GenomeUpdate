@@ -1,4 +1,4 @@
 4081	TGP	Primary	10	chromosome	AEKE02013046	AC247069	-	-	849	113972	BAC AC247069 from Contig1 that aligns to the 3' end of WGS contig AEKE02013046 from previous version. Designates switch point from WGS contig AEKE02013046 to BAC AC247069.
-4081	TGP	Primary	10	chromosome	AC247069	AEKE02013592	+	+	113972	9295	BAC AC247069 from Contig2 that aligns to the 5' end of WGS contig AEKE02013592 from previous version. Designates switch point from BAC AC247069 to WGS contig AEKE02013592.
-4081	TGP	Primary	10	chromosome	AEKE02013593	AC193777	+	+	7856	1	BAC AC193777 aligns to the 3' end of WGS contig AEKE02013593 from previous version. Designates switch point from WGS contig AEKE02013593 to BAC AC193777.
-4081	TGP	Primary	10	chromosome	AC193777	AEKE02013594	+	+	40000	32248	BAC AC193777 aligns to the 5' end of WGS contig AEKE02013594 from previous version. Designates switch point from BAC to WGS contig.
+4081	TGP	Primary	10	chromosome	AC247069	AEKE02013592	+	+	113972	9294	BAC AC247069 from Contig2 that aligns to the 5' end of WGS contig AEKE02013592 from previous version. Designates switch point from BAC AC247069 to WGS contig AEKE02013592.
+4081	TGP	Primary	10	chromosome	AEKE02013593	AC193777	+	+	7855	1	BAC AC193777 aligns to the 3' end of WGS contig AEKE02013593 from previous version. Designates switch point from WGS contig AEKE02013593 to BAC AC193777.
+4081	TGP	Primary	10	chromosome	AC193777	AEKE02013594	+	+	40000	32247	BAC AC193777 aligns to the 5' end of WGS contig AEKE02013594 from previous version. Designates switch point from BAC to WGS contig.

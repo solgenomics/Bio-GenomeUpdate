@@ -85,12 +85,14 @@ my $scaffold = $assembly->next_assembly();
 scaffold_summary($scaffold);
 my %scaffold_component_contigs;
 my %scaffold_component_contig_directions;
+my %scaffold_component_contig_lengths;
 my $contig_ctr = 0;
 foreach my $contig ($scaffold->all_contigs()){
 ##	print Dumper ($contig);
-	my ($contig_component_bacs_ref,$contig_component_directions_ref) = contig_component_id_direction($contig);
+	my ($contig_component_bacs_ref,$contig_component_directions_ref,$contig_component_lengths_ref) = contig_component_id_direction($contig);
 	$scaffold_component_contigs{$contig->id()}= $contig_component_bacs_ref;  
 	$scaffold_component_contig_directions{$contig->id()}  = $contig_component_directions_ref;
+	$scaffold_component_contig_lengths{$contig->id()}  = $contig_component_lengths_ref;
 	$contig_ctr++;
 }
 print STDERR "\n$contig_ctr contigs processed from $opt_a\n";
@@ -99,7 +101,8 @@ print STDERR "\n$contig_ctr contigs processed from $opt_a\n";
 #print STDERR Dumper \%scaffold_component_contigs;
 #print STDERR "\%scaffold_component_contig_directions\n";
 #print STDERR Dumper \%scaffold_component_contig_directions;
-
+#print STDERR "\%scaffold_component_contig_lengths\n";
+#print STDERR Dumper \%scaffold_component_contig_lengths;
 
 my $tpf            = Bio::GenomeUpdate::TPF->new();
 my $scaffold_agp   = Bio::GenomeUpdate::AGP->new();
@@ -205,7 +208,7 @@ my $tp = Bio::GenomeUpdate::TP->new(
 	tpf_type => 'chromosome');
 
 ($ordered_tpf_with_bacs_inserted_in_sequences_and_gaps, $sp_with_bacs_inserted_in_sequences_and_gaps, $tp_with_bacs_inserted_in_sequences_and_gaps) 
-	= $tpf->get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps( $chromosome, $sp, $tp, \@bacs, \%scaffold_agp_coords, \%scaffold_component_contigs, \%scaffold_component_contig_directions );
+	= $tpf->get_tpf_sp_tp_with_bacs_inserted_in_sequences_and_gaps( $chromosome, $sp, $tp, \@bacs, \%scaffold_agp_coords, \%scaffold_component_contigs, \%scaffold_component_contig_directions, \%scaffold_component_contig_lengths );
 
 #setting tomato genome values, change for other genomes
 $ordered_tpf_with_bacs_inserted_in_sequences_and_gaps->set_assembly_version('3.0');
@@ -291,21 +294,23 @@ sub contig_component_id_direction {
 	my $number_of_sequences = $contig->num_sequences();
 	my $sequence_counter = 1;
 	my $sequences_processed = 0;
-	my (@contig_component_sequence_arr, @contig_component_directions_arr); 
+	my (@contig_component_sequence_arr, @contig_component_directions_arr, @contig_component_lengths_arr);
 	while ( $sequences_processed < $number_of_sequences ){#hacky logic
 		if(defined $contig->get_seq_by_pos($sequence_counter)){#does not return value for $sequence_counter = 1, weird BioPerl 
-			my $locatableleq = $contig->get_seq_by_pos($sequence_counter); #returns Bio::LocatableSeq
-			my $contig_bac_name;
-			if ( is_ncbi_format($locatableleq->id()) ){ $contig_bac_name = get_accession($locatableleq->id());}
+			my $locatableseq = $contig->get_seq_by_pos($sequence_counter); #returns Bio::LocatableSeq
+			my ($contig_bac_name,$contig_bac_length);
+			if ( is_ncbi_format($locatableseq->id()) ){ $contig_bac_name = get_accession($locatableseq->id());}
+			$contig_bac_length = $locatableseq->end() - $locatableseq->start() + 1;
 
 			push @contig_component_sequence_arr, $contig_bac_name ;
-			push @contig_component_directions_arr, $locatableleq->strand(); # returns the value of the strandedness (-1, 0 or 1)
+			push @contig_component_directions_arr, $locatableseq->strand(); # returns the value of the strandedness (-1, 0 or 1)
+			push @contig_component_lengths_arr, $contig_bac_length; # returns length for use in switchpoint file
 			$sequences_processed++;
 		}
 		$sequence_counter++;
 	}
 	
-	return (\@contig_component_sequence_arr, \@contig_component_directions_arr);
+	return (\@contig_component_sequence_arr, \@contig_component_directions_arr, \@contig_component_lengths_arr);
 }
 
 
