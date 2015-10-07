@@ -1641,7 +1641,6 @@ Returns the length of the accession. Added for use in switchover and trim files
 						$accession_prefix_last_base = _get_accession_coordinate_5prime ($accession, $bac_ref_start - 1 );
 					}
 					elsif($accession_prefix_orientation eq '-'){#count from 3' end
-#						$accession_prefix_last_base = _get_accession_length ($accession) - _get_accession_coordinate_3prime ($accession, $bac_ref_start - 1 );
 						$accession_prefix_last_base = _get_accession_coordinate_3prime ($accession, $bac_ref_start - 1 );
 					}
 					
@@ -1715,21 +1714,6 @@ Returns the length of the accession. Added for use in switchover and trim files
 						if ($accession_suffix_orientation eq '-'){
 							$accession_suffix_first_base = $bac_query_end; #count from 3' if BAC on -ive strand
 						}
-						print STDERR "Creating switch point for transition from $accession with length ";
-						print STDERR _get_accession_length ($accession);
-						print STDERR "bp to CONTAINED singleton BAC $bac_name\n";
-						print STDERR "Bac ref start: $bac_ref_start, end: $bac_ref_end\n";
-						if ($accession_prefix_orientation eq '+'){
-							print STDERR "Bac WGS start:",_get_accession_coordinate_5prime ($accession, $bac_ref_start);
-							print STDERR ", end:",_get_accession_coordinate_5prime ($accession, $bac_ref_end );
-							print STDERR "\n";
-						}
-						elsif($accession_prefix_orientation eq '-'){#count from 3' end
-							print STDERR "Bac WGS start:",_get_accession_coordinate_3prime ($accession, $bac_ref_start);
-							print STDERR ", end:",_get_accession_coordinate_3prime ($accession, $bac_ref_end);
-							print STDERR "\n";
-
-						}							
 
 						if ($accession_prefix_last_base != -1){ #singleton BAC
 							my $sp_prefix_line = Bio::GenomeUpdate::SP::SPLine->new( 
@@ -1759,7 +1743,6 @@ Returns the length of the accession. Added for use in switchover and trim files
 						$accession_suffix_first_base = _get_accession_coordinate_5prime ($accession, $bac_ref_end + 1 );
 					}
 					elsif($accession_suffix_orientation eq '-'){#count from 3' end
-#						$accession_suffix_first_base = _get_accession_length ($accession) - _get_accession_coordinate_3prime ($accession, $bac_ref_end + 1 );
 						$accession_suffix_first_base = _get_accession_coordinate_3prime ($accession, $bac_ref_end + 1 );
 					}
 					
@@ -1875,7 +1858,6 @@ Returns the length of the accession. Added for use in switchover and trim files
 						$accession_suffix_first_base = _get_accession_coordinate_5prime ($accession, $bac_ref_end + 1 );
 					}
 					elsif($accession_suffix_orientation eq '-'){#count from 3' end
-#						$accession_suffix_first_base = _get_accession_length ($accession) - _get_accession_coordinate_3prime ($accession, $bac_ref_end + 1 );
 						$accession_suffix_first_base = _get_accession_coordinate_3prime ($accession, $bac_ref_end + 1 );
 					}
 					
@@ -1985,7 +1967,6 @@ Returns the length of the accession. Added for use in switchover and trim files
 						$accession_prefix_last_base = _get_accession_coordinate_5prime ($accession, $bac_ref_start - 1 );
 					}
 					elsif($accession_prefix_orientation eq '-'){#count from 3' end
-#						$accession_prefix_last_base = _get_accession_length ($accession) - _get_accession_coordinate_3prime ($accession, $bac_ref_start - 1 );
 						$accession_prefix_last_base = _get_accession_coordinate_3prime ($accession, $bac_ref_start - 1 );
 					}
 					$accession_suffix_first_base = $bac_query_start;
@@ -2084,7 +2065,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 
 				#SHRINK gaps when partially spanned by a BAC
 				#if BAC start is in the middle of a gap
-				# $bac_ref_start < $agp_sequence_start works as there is a offset of 1 even if mummer does not align at N 
+				#$bac_ref_start < $agp_sequence_start works as there is a offset of 1 even if mummer does not align at N 
 				if (   $prev_line_key
 					&& $bac_ref_start < $agp_sequence_start
 					&& $bac_ref_start > $prev_agp_sequence_end
@@ -2097,7 +2078,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 							$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
 					}
 					elsif( ($bac_query_end - $bac_query_start + 1) < $bac_query_length ){ #partial BAC aligned to ref
-						print STDERR "Partial alignment for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
+						print STDERR "Partial alignment for $bac_name query start: $bac_query_start query end: $bac_query_end. CAN CAUSE Segment too short WARNINGS.\n";
 						if ( $bac_query_start > 1 ){#fix overhang at begininng
 							my $bac_start_overhang =  $bac_query_start - 1;
 							
@@ -2126,7 +2107,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 							$gaps_to_resize{$gap_location}." bp w.r.t. original TPF\n";
 					}
 					elsif( ($bac_query_end - $bac_query_start + 1) < $bac_query_length ){ #partial BAC aligned to ref
-						print STDERR "Partial alignment for $bac_name query start: $bac_query_start query end: $bac_query_end\n";
+						print STDERR "Partial alignment for $bac_name query start: $bac_query_start query end: $bac_query_end. CAN CAUSE Segment too short WARNINGS.\n";
 						my $bac_end_overhang = $bac_query_length - $bac_query_end + 1;
 						
 						$gaps_to_resize{ $line_key - 1 } = $agp_sequence_start - $bac_ref_end - $bac_end_overhang ;
@@ -2182,7 +2163,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 				my %line_coords         = %$agp_line_coords_ref;
 				$agp_sequence_start = $line_coords{'start'};
 				$agp_sequence_end   = $line_coords{'end'};
-				if ( $line_key == 1 ) {          #deal with first one
+				if ( $line_key == 1 ) { #deal with first one
 					if ( $bac_ref_start <= 0 ) {
 						$insert_before_or_after = 'before';
 						$insert_line_number     = $line_key;
