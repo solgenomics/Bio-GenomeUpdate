@@ -1647,7 +1647,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 					print STDERR "$bac_name does not align from base 1 on accession $accession. Might be an error\n" if $bac_query_start != 1;
 					$accession_suffix_first_base = $bac_query_start;
 
-					print STDERR "$bac_name aligns from base 1 on accession $accession. Not creating switch point\n" if $accession_prefix_last_base == -1;
+					print STDERR "$bac_name aligns from base 1 on accession $accession. Not creating switch point\n" if $accession_prefix_last_base <= 0;
 					
 					#Substituting in BAC for assembled contig BAC if required
 					if ($bac_name =~ /^Contig/ ){
@@ -1690,7 +1690,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 						$accession_suffix_first_base  = $contig_bac_first_base;
 						$accession_suffix_orientation = $contig_bac_direction;
 						
-						if ($accession_prefix_last_base != -1){ #contig BAC
+						if ($accession_prefix_last_base > 0){ #contig BAC
 							print STDERR "Creating switch point for transition from $accession with length ";
 							print STDERR _get_accession_length ($accession);
 							print STDERR "bp to CONTAINED contig BAC $contig_bac_name for contained $bac_name\n";
@@ -1715,7 +1715,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 							$accession_suffix_first_base = $bac_query_end; #count from 3' if BAC on -ive strand
 						}
 
-						if ($accession_prefix_last_base != -1){ #singleton BAC
+						if ($accession_prefix_last_base > 0){ #singleton BAC
 							my $sp_prefix_line = Bio::GenomeUpdate::SP::SPLine->new( 
 									chromosome => $chromosome,
 									accession_prefix => $accession,
@@ -1789,7 +1789,7 @@ Returns the length of the accession. Added for use in switchover and trim files
 						$accession_prefix_last_base  = $contig_bac_last_base;
 						$accession_prefix_orientation = $contig_bac_direction;
 						
-						if ($accession_prefix_last_base != -1){ #contig BAC
+						if ($accession_prefix_last_base > 0){ #contig BAC
 							my $sp_prefix_line = Bio::GenomeUpdate::SP::SPLine->new( 
 									chromosome => $chromosome,
 									accession_prefix => $contig_bac_name,
