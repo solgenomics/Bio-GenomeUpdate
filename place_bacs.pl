@@ -97,12 +97,12 @@ foreach my $contig ($scaffold->all_contigs()){
 }
 print STDERR "\n$contig_ctr contigs processed from $opt_a\n";
 
-#print STDERR "\%scaffold_component_contigs\n";
-#print STDERR Dumper \%scaffold_component_contigs;
-#print STDERR "\%scaffold_component_contig_directions\n";
-#print STDERR Dumper \%scaffold_component_contig_directions;
-#print STDERR "\%scaffold_component_contig_lengths\n";
-#print STDERR Dumper \%scaffold_component_contig_lengths;
+print STDERR "\%scaffold_component_contigs\n";
+print STDERR Dumper \%scaffold_component_contigs;
+print STDERR "\%scaffold_component_contig_directions\n";
+print STDERR Dumper \%scaffold_component_contig_directions;
+print STDERR "\%scaffold_component_contig_lengths\n";
+print STDERR Dumper \%scaffold_component_contig_lengths;
 
 my $tpf            = Bio::GenomeUpdate::TPF->new();
 my $scaffold_agp   = Bio::GenomeUpdate::AGP->new();
@@ -240,7 +240,7 @@ Checks if BAC name is in NCBI format, i.e. gi|118344469|gb|AC193777.1|
 sub is_ncbi_format{
 	my $name = shift;
 	my @name_arr = split (/\|/, $name);
-	if (( $name_arr[0] eq 'gi' ) && ( $name_arr[2] eq 'gb' )){
+	if (( $name_arr[0] eq 'gi' ) && (( $name_arr[2] eq 'gb' ) || ( $name_arr[2] eq 'emb' ) || ( $name_arr[2] eq 'dbj' ))){
 		return 1;
 	}
 	else{
