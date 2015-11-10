@@ -24,6 +24,8 @@ If the [mismatch %] is more than threshold then a new ACE file error_contigs.ace
      misfit BAC(s) from the contigs and treat as singletons. Reassemble the rest of the BACs in the contig and add to final 
      assembled BAC set.
      
+=head1 CAVEATS
+
 Many routines mentioned in Bio::Assembly::Contig documentation ARE NOT IMPLEMENTED.
 BACs in reverse orientation inside the contig are NOT reverse complemented before writing to disk. See https://github.com/solgenomics/Bio-GenomeUpdate/issues/57
 
