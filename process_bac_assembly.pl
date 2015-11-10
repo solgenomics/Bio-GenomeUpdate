@@ -17,14 +17,15 @@ process_bac_assembly.pl -f [ACE file] -m [mismatch %] -o [output directory]
  -o  Output directory
  -h  Help
 
-=NOTES
+=head1 NOTES
 
 If the [mismatch %] is more than threshold then a new ACE file error_contigs.ace can be created with only those erroneous 
      contigs. Manually explore the erroneous contigs in a ACE viewer (Tablet http://ics.hutton.ac.uk/tablet/) and remove the 
      misfit BAC(s) from the contigs and treat as singletons. Reassemble the rest of the BACs in the contig and add to final 
      assembled BAC set.
      
-Many routines mentioned in Bio::Assembly::Contig documentation ARE NOT IMPLEMENTED. 
+Many routines mentioned in Bio::Assembly::Contig documentation ARE NOT IMPLEMENTED.
+BACs in reverse orientation inside the contig are NOT reverse complemented before writing to disk. See https://github.com/solgenomics/Bio-GenomeUpdate/issues/57
 
 TODO: 
  See github issues 
@@ -67,7 +68,7 @@ Accepts a single contig object from an assembly. Returns fasta sequences for con
 =cut
 sub contig_to_fasta {
 	my $contig = shift;
-#	print Dumper ($contig);
+	print Dumper ($contig);
 	my @seqs = $contig->get_seq_ids();
 	my $BAC_fasta = '';
 	foreach my $seqname (@seqs){
@@ -114,6 +115,7 @@ sub singlet_to_fasta {
 Accepts a single contig object from an assembly. Returns floats containing the mismatch percentage and the gap percentage for the contig. Does not work????
 
 =cut
+
 sub contig_mismatch {
 	my ($contig,$debug) = (@_);
 #	print STDERR ref($contig);
@@ -166,10 +168,10 @@ sub contig_mismatch {
 
 =item C<add_contig_to_scaffold  ( Bio::Assembly::Scaffold, Bio::Assembly::Contig  )>
 
-Accepts a single contig object from an assembly and a test scaffold object. Returns updated scaffold object. ABANDONED for now as new ACE file 
-has wrong coordinates for test ACE assembly. Can just write out the fasta for the BACs in the contig for re-assembly with phrap.
+Accepts a single contig object from an assembly and a test scaffold object. Returns updated scaffold object. ABANDONED for now as new ACE file has wrong coordinates for test ACE assembly. Can just write out the fasta for the BACs in the contig for re-assembly with phrap.
 
 =cut
+
 sub add_contig_to_scaffold {
 #	my ($ace,$contig,$debug) = shift;
 #	my ($scaffold,$contig,$debug) = @_;#need to use for passing >1 objects or it fails
@@ -189,6 +191,7 @@ sub add_contig_to_scaffold {
 =item C<run_tests ()>
 
 Runs a test of all functions with dummy data. No ACE file required in this case.
+
 =cut
 
 sub run_tests{
