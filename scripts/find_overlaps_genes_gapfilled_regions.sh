@@ -7,7 +7,7 @@
 # Please change Bio-GenomeUpdate directory to reflect your installation
 # Please modify group_coords.pl output filenames according to your runs
 
-BG_DIR="/home/surya/work/Eclipse/Bio-GenomeUpdate/"
+BG_DIR="/home/surya/source_code_repos/Bio-GenomeUpdate/"
 
 printf "Stats for proper alignments\n"
 
