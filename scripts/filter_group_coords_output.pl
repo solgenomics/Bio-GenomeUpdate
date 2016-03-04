@@ -154,7 +154,7 @@ EOF
 
 =head1 LICENSE
 
-  Same as Perl. Change??????????
+  Same as Perl.
 
 =head1 AUTHORS
 
