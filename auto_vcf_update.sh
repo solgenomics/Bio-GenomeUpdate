@@ -137,7 +137,7 @@ ls *.vcf | parallel ./create_pseudo_gff_from_vcf.pl
 mkdir updated_vcfs
 
 echo Output directory updated_vcfs created
-echo Starting coordinate update tasks in parallel
+echo Starting parallelized coordinate update tasks
 
 for file in *pseudo.gff* ; do
 
