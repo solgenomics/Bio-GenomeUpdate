@@ -10,7 +10,7 @@ bacs_blast_gff_mixed.pl -g [ GFF file] -l [ 1000 ]
 
 =head1 COMMAND-LINE OPTIONS
 
- -g  GFF file from blast output (required, use Blast2HitGFF3.pl)
+ -g  GFF file from blast output (required, use https://github.com/suryasaha/Utils/blob/master/Blast2HitGFF3.pl)
  -l  minimum length of feature or HSP (default 1000bp)
  -d  debugging messages (1 or 0)
  -h  Help
@@ -36,8 +36,9 @@ if ( !$opt_g ) {
 
 my $minimum_length = defined $opt_l ? $opt_l : 1000;
 unless (open (GFF, "<${opt_g}")) {die "Not able to open ${opt_g}\n\n";}
-my ($bacs_mixed, $bacs_mixed_gff, $prev_rec_strand, $prev_rec_bac, $prev_rec_ref, $prev_rec_start, $prev_rec_stop);
+my ($bacs_mixed, $bacs_mixed_gff, $prev_rec_strand, $prev_rec_bac, $prev_rec_ref, $prev_rec_start, $prev_rec_stop, $counter);
 $bacs_mixed = $bacs_mixed_gff = '';
+$counter = 0;
 
 while (my $rec = <GFF>){
 	if( $rec =~ /^#/ ){ next;}
@@ -68,6 +69,7 @@ while (my $rec = <GFF>){
 			if ($opt_d){ print STDERR "$rec_bac in mixed orientation at \n$rec";}
 			
 			$bacs_mixed_gff = $bacs_mixed_gff.$rec;
+			$counter++;
 		}
 #		#if bac changes or ref changes
 #		elsif ( ( $rec_ref ne $prev_rec_ref ) || ( $rec_bac ne $prev_rec_bac ) ){
@@ -81,14 +83,14 @@ while (my $rec = <GFF>){
 }
 close(GFF);
 
-unless (open (OGFF, ">mixed.${opt_g}")) {die "Not able to open mixed.${opt_g}\n\n";}
+unless (open (OGFF, ">mixed.hsplen${$minimum_length}.${opt_g}")) {die "Not able to open mixed.hsplen${$minimum_length}.${opt_g}\n\n";}
 print OGFF $bacs_mixed_gff;
 close (OGFF);
-unless (open (OBACS, ">${opt_g}.mixed_bacs.full_names")) {die "Not able to open ${opt_g}.mixed_bacs.full_names\n\n";}
+unless (open (OBACS, ">${opt_g}.mixed_bacs.hsplen${$minimum_length}.full_names")) {die "Not able to open ${opt_g}.mixed_bacs.hsplen${$minimum_length}.full_names\n\n";}
 print OBACS $bacs_mixed;
 close (OBACS);
 
-
+print STDERR "Number of BAC HSPs in mixed orientation: ".$counter."\n";
 
 
 #----------------------------------------------------------------------------
@@ -99,7 +101,8 @@ sub help {
 
     Description:
 
-    This script will print a list of BACs that align in mixed orientation to the reference chromosome. These regions could be errors in the reference assembly. This does NOT check if the alignments to the reference are OUT OF ORDER on the BAC. It does NOT check if the HSPs are in the same region in the reference sequence.
+    This script will print a list of BACs that align in mixed orientation to the reference chromosome. These regions could be errors in the reference assembly. It cimply compares the current GFF record to the previous one and reports records where the strand changes.
+    It does NOT check if the alignments to the reference are OUT OF ORDER on the BAC. It does NOT check if the HSPs are in the same region in the reference sequence.
      
     Usage:
       bacs_blast_gff_mixed.pl -g [ GFF file] -l [ 1000 ]
