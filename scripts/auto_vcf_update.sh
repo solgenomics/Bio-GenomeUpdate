@@ -7,7 +7,8 @@
 # SYNOPSIS
 # Shell script for updating VCF file coordinates. AGP files must be given as command line arguments.
 # Script will automatically update all vcf files in the current directory unless glob at step 3 is modified.
-# Step 5 and 6 can also be modified to change speed / CPU core usage.
+# Step 5 and 6 can also be modified to change speed / CPU core usage. This script should be run from the 
+# scripts directory
 #
 # ./auto_update_vcf_coordinates.sh -o [old AGP file] -n [new AGP file]
 #
@@ -143,7 +144,7 @@ for file in *pseudo.gff* ; do
 
 mkdir temp_update_files 
 
-./split_by_lines.sh $file | parallel -j 12 --verbose --rpl '{..} s/^.*([0-9][0-9])\.[0-9]+$/\1/;' "./update_coordinates_gff.pl -o ${OLD_AGP}.${OLD_CHROM_LABEL}{..} -n ${NEW_AGP}.${NEW_CHROM_LABEL}{..} -g {} -m {}_mapped -c 0" ;
+./split_by_lines.sh $file | parallel -j 12 --verbose --rpl '{..} s/^.*([0-9][0-9])\.[0-9]+$/\1/;' "../update_coordinates_gff.pl -o ${OLD_AGP}.${OLD_CHROM_LABEL}{..} -n ${NEW_AGP}.${NEW_CHROM_LABEL}{..} -g {} -m {}_mapped -c 0" ;
 
 #------------------------------------------------------------------------------------------------
 # 7 compile  all split chromosome files for current accession back into a single updated gff file 
