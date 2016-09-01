@@ -111,6 +111,9 @@ sub replace_with_complementary_base {
     elsif ($_[0] eq 'G') {
 	return 'C';
     }
+    else {
+    	return $_[0];  # to handle Ns
+    }
 }
 
 sub find_reverse_compliment {
