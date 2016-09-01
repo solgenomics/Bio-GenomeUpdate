@@ -32,15 +32,14 @@ my $data_line_counter = 0;
 
 for (<OLDVCF>) {
     chomp;
-    if (m/^##/) {
-	    print $NEWVCF $_ . "\n";
+    if (m/^##reference=/) {
+	    print $NEWVCF "##reference=$FASTA\n";
     }
     elsif (m/^#/) {
-	    print $NEWVCF "##mapped to $build_name " . localtime . "\n";
 	    print $NEWVCF $_ . "\n";
     }
     else {
-	    my ($chrom, $position, $id, $ref, $alt, $qual, $filter, $info, @extra) = split /\t/;
+      my ($chrom, $position, $id, $ref, $alt, $qual, $filter, $info, @extra) = split /\t/;
       chomp (my $gff_string = <MAPPEDGFF>);
       my @values = split "\t", $gff_string;
       my $new_position = $values[3];
