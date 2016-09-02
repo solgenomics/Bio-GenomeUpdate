@@ -131,7 +131,7 @@ echo NEW_CHROM_LABEL = "$NEW_CHROM_LABEL"
 # 3 create pseudo gff files from each vcf file in parallel
 #-------------------------------------------------------------------------------
 
-ls *.vcf | parallel ./create_pseudo_gff_from_vcf.pl
+ls *.vcf | parallel --gnu ./create_pseudo_gff_from_vcf.pl
 
 
 #--------------------------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ for file in *pseudo.gff* ; do
 
 mkdir temp_update_files
 
-./split_by_lines.sh $file | parallel -j 12 --verbose --rpl '{..} s/^.*([0-9][0-9])\.[0-9]+$/\1/;' "../update_coordinates_gff.pl -o ${OLD_AGP}.${OLD_CHROM_LABEL}{..} -n ${NEW_AGP}.${NEW_CHROM_LABEL}{..} -g {} -m {}_mapped -c 0" ;
+./split_by_lines.sh $file | parallel -j 12 --gnu --verbose --rpl '{..} s/^.*([0-9][0-9])\.[0-9]+$/\1/;' "../update_coordinates_gff.pl -o ${OLD_AGP}.${OLD_CHROM_LABEL}{..} -n ${NEW_AGP}.${NEW_CHROM_LABEL}{..} -g {} -m {}_mapped -c 0" ;
 
 #------------------------------------------------------------------------------------------------
 # 7 compile  all split chromosome files for current accession back into a single updated gff file
@@ -171,8 +171,8 @@ samtools faidx $FASTA;
 # 9 remove files temporarily created during update process
 #------------------------------------------------------------------------------------------------
 
-rm -r temp_update_files
-rm $file
+#rm -r temp_update_files
+#rm $file
 
 done
 

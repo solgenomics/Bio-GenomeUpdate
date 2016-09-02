@@ -65,9 +65,9 @@ for (<OLDVCF>) {
           }
           $new_alt = join ",", @new_seqs;
 
-          print STDERR "ref $ref with alt $alt is an INDEL\n";
-          print STDERR "new leading base at position $new_position not affected by indel event is $new_ref_base\n";
-          print STDERR "corrected to ref $new_ref and alt $new_alt\n";
+          #print STDERR "ref $ref with alt $alt is an INDEL\n";
+          #print STDERR "new leading base at position $new_position not affected by indel event is $new_ref_base\n";
+          #print STDERR "corrected to ref $new_ref and alt $new_alt\n";
 
 	      } else { #if a SNP, find simple complement
           $new_ref = &replace_with_complementary_base($ref);
