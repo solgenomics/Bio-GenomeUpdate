@@ -32,15 +32,14 @@ my $data_line_counter = 0;
 
 for (<OLDVCF>) {
     chomp;
-    if (m/^##/) {
-	    print $NEWVCF $_ . "\n";
+    if (m/^##reference=/) {
+	    print $NEWVCF "##reference=$FASTA\n";
     }
     elsif (m/^#/) {
-	    print $NEWVCF "##mapped to $build_name " . localtime . "\n";
 	    print $NEWVCF $_ . "\n";
     }
     else {
-	    my ($chrom, $position, $id, $ref, $alt, $qual, $filter, $info, @extra) = split /\t/;
+      my ($chrom, $position, $id, $ref, $alt, $qual, $filter, $info, @extra) = split /\t/;
       chomp (my $gff_string = <MAPPEDGFF>);
       my @values = split "\t", $gff_string;
       my $new_position = $values[3];
@@ -48,7 +47,7 @@ for (<OLDVCF>) {
       $chrom =~ s/^(.*)([0-9][0-9])$/$chrom_label$2/;
 
 	    if ($new_orientation eq '-') { #if scaffold has been flipped
-        my ($new_ref, $new_alt);
+        my ($new_ref, $new_alt, @new_alts);
 
         if ($info =~ m/^INDEL/) { #if indel, fix position, get new leading ref base, and calculate new ref and alt seqs (reverse complements of old seqs)
 
@@ -71,7 +70,12 @@ for (<OLDVCF>) {
 
 	      } else { #if a SNP, find simple complement
           $new_ref = &replace_with_complementary_base($ref);
-          $new_alt = &replace_with_complementary_base($alt);
+
+	  my @old_alts = split ",", $alt;
+	  foreach my $base(@old_alts) {
+	      push @new_alts, &replace_with_complementary_base($base);
+	  }
+	  $new_alt = join ",", @new_alts;
         }
 
         print $NEWVCF join "\t", ($chrom, $new_position, $id, $new_ref, $new_alt, $qual, $filter, $info, @extra);
@@ -105,6 +109,9 @@ sub replace_with_complementary_base {
     }
     elsif ($_[0] eq 'G') {
 	return 'C';
+    }
+    else {
+    	return $_[0];  # to handle Ns
     }
 }
 

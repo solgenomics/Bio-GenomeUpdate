@@ -10,7 +10,7 @@
 # Step 5 and 6 can also be modified to change speed / CPU core usage. This script should be run from the
 # scripts directory
 #
-# ./auto_update_vcf_coordinates.sh -o [old AGP file] -n [new AGP file] -f [new ref seq FASTA file]
+# ./auto_vcf_update.sh -o [old AGP file] -n [new AGP file] -f [new ref seq FASTA file]
 #
 # To run, this script requires:
 #                      samtools
