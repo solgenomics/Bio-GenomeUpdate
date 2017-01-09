@@ -6,7 +6,7 @@ update_coordinates_gff.pl
 
 =head1 SYNOPSIS
 
-update_coordinates_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF file] -c 0
+update_coordinates_gff.pl -o [old AGP file] -n [new AGP file] -g [GFF file] -m [output GFF file] -c 0 -d 0
 
 =head1 COMMAND-LINE OPTIONS
 
