@@ -7,3 +7,4 @@ error.messages.filename
 errors.filename
 filename.error.messages
 test.fas
+/temp/*
