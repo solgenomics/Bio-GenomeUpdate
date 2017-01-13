@@ -186,7 +186,7 @@ foreach my $line (@lines) {
 			elsif( $line_arr[2] eq 'three_prime_UTR' ){
 				my $current_threeprime_Solycid = $current_mRNA_Solycid.'.'.$three_prime_UTR_count;
 				$three_prime_UTR_count++;
-				$new_attr = 'ID=five_prime_UTR:'.$current_threeprime_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
+				$new_attr = 'ID=three_prime_UTR:'.$current_threeprime_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
 				for (0..7){
 					print STDOUT $line_arr[$_]."\t";
 				}
@@ -298,7 +298,7 @@ foreach my $prev_gff_line ( @gene_gff_line_arr ){
 	elsif( $line_arr[2] eq 'three_prime_UTR' ){
 		my $current_threeprime_Solycid = $current_mRNA_Solycid.'.'.$three_prime_UTR_count;
 		$three_prime_UTR_count++;
-		$new_attr = 'ID=five_prime_UTR:'.$current_threeprime_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
+		$new_attr = 'ID=three_prime_UTR:'.$current_threeprime_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
 		for (0..7){
 			print STDOUT $line_arr[$_]."\t";
 		}
