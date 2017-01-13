@@ -11,7 +11,6 @@ update_maker_names_gff.pl -i [old GFF file]
 =head1 COMMAND-LINE OPTIONS
 
  -i  Maker GFF file for 1 chr (required)
- -n  List of new Solyc ids
  -h  Help
 
 =cut
@@ -21,8 +20,8 @@ use warnings;
 use File::Slurp;
 use Getopt::Std;
 
-our ( $opt_i, $opt_n, $opt_h );
-getopts('i:n:h');
+our ( $opt_i, $opt_h );
+getopts('i:h');
 if ($opt_h) {
 	help();
 	exit;
@@ -326,12 +325,11 @@ sub help {
 
      
     Usage:
-      update_maker_names_gff.pl -i [old chr GFF file] -o [new chr GFF file] -n [New Solyc ids] -d 0
+      update_maker_names_gff.pl
       
     Flags:
 
      -i  old GFF file (required)
-     -n  List of new Solyc ids
      -h  Help
 
 
