@@ -8,14 +8,10 @@ update_maker_names_gff.pl
 
 update_maker_names_gff.pl -i [old GFF file] -o [new GFF file] -n [New Solyc ids] -d 0
 
-=head1
-
-Gets Solyc id from the mRNA record and assigns to gene and mRNA records. Generates a new Solyc id if no old id was passed through and assigns to gene and mRNA records. Generates a list of new Solyc ids. Need to check if any new id overlaps with a deprecated gene.
-
 =head1 COMMAND-LINE OPTIONS
 
- -i  old GFF file (required)
- -o  new GFF file with updated names for genes and mRNA (required)
+ -i  Maker GFF file for 1 chr (required)
+ -o  new ITAG GFF file with updated names for features on 1 chr (required)
  -n  List of new Solyc ids
  -d  debugging messages (1 or 0)
  -h  Help
@@ -53,7 +49,7 @@ if (defined $opt_n){
 	my $new_id_output_file   = $opt_n;
 }
 else{
-	my $new_id_output_file   = $opt_o_{new_ids.names};
+	my $new_id_output_file   = $opt_o.'_new_ids.names';
 }
 
 
@@ -70,7 +66,9 @@ my @lines        = split( /\n/, $input_old_gff );
 my $line_count   = scalar(@lines);
 my $line_counter = 0;
 my $gene_flag    = 0;
-my @gene_gff_line_hashes;
+my @gene_gff_line_arr;
+my $current_mRNA_Solycid;
+my $prev_mRNA_Solycid;
 
 foreach my $line (@lines) {
 	$line_counter++;
@@ -79,23 +77,129 @@ foreach my $line (@lines) {
 	if ( $line =~ m/^#/ ) {
 		next;
 	}
-	else {
-		my $gff_line_hash = gff3_parse_feature($line);
-	}
-	print STDERR "\rParsing GFF3 line "
-	  . $line_counter . " of "
-	  . $line_count;
 	
+	#get Solyc id if any
+	if ( $line =~ m/\tmRNA\t/ ){
+		my @line_arr = split ("\t", $line);
+		my @line_attr_arr = split (/\;/, $line_arr[8]);
+		foreach my $attr (@line_attr_arr){
+			my ($key,$value) = split (/=/, $attr);
+			if (($key eq 'Name') && ($value =~ /^Solyc/)){
+				chomp $value; $current_mRNA_Solycid = $value; last;
+			}
+			elsif (($key eq 'Alias') && ($value =~ /^Solyc/)){
+				chomp $value; $current_mRNA_Solycid = $value; last;
+			}
+			elsif (($key eq 'Alias') && ($value =~ /Solyc/)){
+				my @value_arr = split (/,/,$value);
+				foreach my $alias (@value_arr){
+					if ($alias =~ /^Solyc/) {
+						chomp $alias; $current_mRNA_Solycid = $alias;
+						last;
+					}
+				}
+			}
+		}
+	}
+	
+	print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count;
+
+	push (@gene_gff_line_arr, $line);
+		
 	## if first gene
-	if ( ($gff_line_hash{'type'} eq 'gene') && ( $gene_flag == 0) ){
+	if (( $line =~ /\tgene\t/ ) && ( $gene_flag == 0) ){
 		$gene_flag = 1;
-		push (@gene_gff_line_hashes, $gff_line_hash);
 	}
 	## if next gene
-	elsif( ($gff_line_hash{'type'} eq 'gene') && ( $gene_flag == 1) ){
-		#process last gene
+	elsif (( $line =~ /\tgene\t/ ) && ( $gene_flag == 1) ){
+		#if no Solyc id, generate a new unique id based upon previous id
+		if ( $current_mRNA_Solycid eq '' ){
+			$current_mRNA_Solycid = 'TODO';
+			# no multiples of 10
+		}
+
+		#process prev gene
+		foreach my $prev_gff_line ( @gene_gff_line_arr ){
+			my @line_arr = split ("\t", $line);
+			my $new_attr;
+			my $exon_count = 1;
+			my $cds_count = 1;
+			my $three_prime_UTR_count = 0;
+			my $five_prime_UTR_count = 0;
+			
+			if ( $line_arr[2] eq 'gene' ){
+				my $length = $line_arr[4] - $line_arr[3];
+				my $current_gene_Solycid = $current_mRNA_Solycid;
+				$current_gene_Solycid =~ s/\.\d$//;
+				my $current_alias_Solycid = $current_gene_Solycid;
+				$current_alias_Solycid =~ s/\.\d$//;
+				$new_attr = 'Alias='.$current_alias_Solycid.';ID=gene:'.$current_gene_Solycid.';Name='.$current_gene_Solycid.';length='.$length."\n";
+				
+				for (0..7){
+					print STDOUT $line_arr[$_]."\t";
+				}
+				print STDOUT $new_attr;
+			}
+			elsif( $line_arr[2] eq 'mRNA' ){ #add AED
+				$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Name='.$current_mRNA_Solycid.';';
+				
+				my @line_attr_arr = split (/\;/, $line_arr[8]);
+				foreach my $attr (@line_attr_arr){ 
+					my ($key,$value) = split (/=/, $attr);
+					if ($key eq '_AED'){
+						$new_attr = $new_attr.'AED='.$value.';';
+					}
+					elsif ($key eq '_eAED'){
+						$new_attr = $new_attr.'eAED='.$value.';';
+					}
+				}
+				for (0..7){
+					print STDOUT $line_arr[$_]."\t";
+				}
+				print STDOUT $new_attr."\n";
+			}
+			elsif( $line_arr[2] eq 'exon' ){
+				my $current_exon_Solycid = $current_mRNA_Solycid.'.'.$exon_count;
+				$exon_count++;
+				$new_attr = 'ID=exon:'.$current_exon_Solycid.';Parent=mRNA'.$current_mRNA_Solycid."\n";
+				for (0..7){
+					print STDOUT $line_arr[$_]."\t";
+				}
+				print STDOUT $new_attr;
+			
+			}
+			elsif( $line_arr[2] eq 'CDS' ){
+				my $current_cds_Solycid = $current_mRNA_Solycid.'.'.$cds_count;
+				$cds_count++;
+				$new_attr = 'ID=CDS:'.$current_cds_Solycid.';Parent=mRNA'.$current_mRNA_Solycid."\n";
+				for (0..7){
+					print STDOUT $line_arr[$_]."\t";
+				}
+				print STDOUT $new_attr;
+			}
+			elsif( $line_arr[2] eq 'five_prime_UTR' ){
+				my $current_fiveprime_Solycid = $current_mRNA_Solycid.'.'.$five_prime_UTR_count;
+				$five_prime_UTR_count++;
+				$new_attr = 'ID=five_prime_UTR:'.$current_fiveprime_Solycid.';Parent=mRNA'.$current_mRNA_Solycid."\n";
+				for (0..7){
+					print STDOUT $line_arr[$_]."\t";
+				}
+				print STDOUT $new_attr;
+			}
+			elsif( $line_arr[2] eq 'three_prime_UTR' ){
+				my $current_threeprime_Solycid = $current_mRNA_Solycid.'.'.$three_prime_UTR_count;
+				$three_prime_UTR_count++;
+				$new_attr = 'ID=five_prime_UTR:'.$current_threeprime_Solycid.';Parent=mRNA'.$current_mRNA_Solycid."\n";
+				for (0..7){
+					print STDOUT $line_arr[$_]."\t";
+				}
+				print STDOUT $new_attr;
+			}
+		}
 		
-		@gene_gff_line_hashes = (); # reset
+		$prev_mRNA_Solycid = $current_mRNA_Solycid;
+		@gene_gff_line_arr = (); # reset
+		push (@gene_gff_line_arr, $line);
 	}
 	
 }
@@ -115,22 +219,22 @@ if ($opt_d) {
 ###TODO
 
 #print the GFF ($gff_output_file)
-if ( !defined($new_gff) ) {
-	print STDERR "No valid GFF records found..\n";
-	exit 1;
-} else {
-	unless ( open( OGFF, ">$gff_output_file" ) ) {
-		print STDERR "Cannot open $gff_output_file\n";
-		exit 1;
-	}
-	print OGFF $new_gff;
-	close(OGFF);
-	if ($opt_d) {
-		print STDERR "GFF written..\n";
-		$util->mem_used();
-		$util->run_time();
-	}
-}
+#if ( !defined($new_gff) ) {
+#	print STDERR "No valid GFF records found..\n";
+#	exit 1;
+#} else {
+#	unless ( open( OGFF, ">$gff_output_file" ) ) {
+#		print STDERR "Cannot open $gff_output_file\n";
+#		exit 1;
+#	}
+#	print OGFF $new_gff;
+#	close(OGFF);
+#	if ($opt_d) {
+#		print STDERR "GFF written..\n";
+#		$util->mem_used();
+#		$util->run_time();
+#	}
+#}
 
 #----------------------------------------------------------------------------
 
@@ -140,12 +244,11 @@ sub help {
 
     Description:
 
-     Gets Solyc id from the mRNA record and assigns to gene and mRNA records. Generates a new Solyc id if no old id was passed through and assigns to gene 
-     and mRNA records. Generates a list of new Solyc ids. Need to check if any new id overlaps with a deprecated gene.
+     Gets Solyc id from the mRNA record and assigns to gene and mRNA records. Generates a new Solyc id (skipping over multiples of 10 to avoid old ids) if no old id was passed through and assigns to gene and mRNA records. Generates a list of new Solyc ids. No need to check if any new id overlaps with a deprecated gene. Output GFF contains intron records and feature names in ITAG convention
 
      
     Usage:
-      update_maker_names_gff.pl -i [old GFF file] -o [new GFF file] -n [New Solyc ids] -d 0
+      update_maker_names_gff.pl -i [old chr GFF file] -o [new chr GFF file] -n [New Solyc ids] -d 0
       
     Flags:
 
