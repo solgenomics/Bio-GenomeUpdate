@@ -72,10 +72,10 @@ foreach my $line (@lines) {
 			if (($key eq 'Name') && ($value =~ /^Solyc/)){
 				chomp $value; $current_mRNA_Solycid = $value; last;
 			}
-			elsif (($key eq 'Alias') && ($value =~ /^Solyc/)){
+			elsif (($key eq 'Alias') && ($value =~ /^Solyc/) && ($value !~ /\,/)){ #only Solyc in Alias
 				chomp $value; $current_mRNA_Solycid = $value; last;
 			}
-			elsif (($key eq 'Alias') && ($value =~ /Solyc/)){
+			elsif (($key eq 'Alias') && ($value =~ /Solyc/)){ #multiple aliases incl Solyc id 
 				my @value_arr = split (/,/,$value);
 				foreach my $alias (@value_arr){
 					if ($alias =~ /^Solyc/) {
