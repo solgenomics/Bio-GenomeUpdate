@@ -6,36 +6,30 @@ update_maker_names_gff.pl
 
 =head1 SYNOPSIS
 
-update_maker_names_gff.pl -i [old GFF file] -o [new GFF file] -n [New Solyc ids] -d 0
+update_maker_names_gff.pl -i [old GFF file] 
 
 =head1 COMMAND-LINE OPTIONS
 
  -i  Maker GFF file for 1 chr (required)
- -o  new ITAG GFF file with updated names for features on 1 chr (required)
  -n  List of new Solyc ids
- -d  debugging messages (1 or 0)
  -h  Help
 
 =cut
 
 use strict;
 use warnings;
-use Utilities;
 use File::Slurp;
 use Getopt::Std;
-use Bio::GFF3::LowLevel
-  qw (gff3_parse_feature  gff3_format_feature gff3_parse_attributes);
 
-
-our ( $opt_i, $opt_o, $opt_n, $opt_d, $opt_h );
-getopts('i:o:n:d:h');
+our ( $opt_i, $opt_n, $opt_h );
+getopts('i:n:h');
 if ($opt_h) {
 	help();
 	exit;
 }
-if ( !$opt_i || !$opt_o ) {
+if ( !$opt_i ) {
 	print
-"\nOld and new GFF3 are required. 
+"\nOld GFF3 are required. 
 See help below\n\n\n";
 	help();
 }
@@ -44,31 +38,18 @@ See help below\n\n\n";
 my $old_gff_input_file = $opt_i;
 my $input_old_gff      = read_file($old_gff_input_file)
   or die "Could not open old GFF input file: $old_gff_input_file\n";
-my $gff_output_file = $opt_o;
-if (defined $opt_n){ 
-	my $new_id_output_file   = $opt_n;
-}
-else{
-	my $new_id_output_file   = $opt_o.'_new_ids.names';
-}
 
-
-my $util = Utilities->new();
-if ($opt_d) {
-	print STDERR "Params parsed..\n";
-	$util->mem_used();
-	$util->run_time();
-}
-
-#object for gff
+my $new_id_output_file;
+$new_id_output_file   = 'new_ids.names';
 
 my @lines        = split( /\n/, $input_old_gff );
 my $line_count   = scalar(@lines);
 my $line_counter = 0;
 my $gene_flag    = 0;
 my @gene_gff_line_arr;
-my $current_mRNA_Solycid;
+my $current_mRNA_Solycid = '';
 my $prev_mRNA_Solycid;
+my $new_id_output = '';
 
 foreach my $line (@lines) {
 	$line_counter++;
@@ -78,6 +59,10 @@ foreach my $line (@lines) {
 		next;
 	}
 	
+	#print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count;
+
+	#push (@gene_gff_line_arr, $line);
+
 	#get Solyc id if any
 	if ( $line =~ m/\tmRNA\t/ ){
 		my @line_arr = split ("\t", $line);
@@ -101,11 +86,7 @@ foreach my $line (@lines) {
 			}
 		}
 	}
-	
-	print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count;
 
-	push (@gene_gff_line_arr, $line);
-		
 	## if first gene
 	if (( $line =~ /\tgene\t/ ) && ( $gene_flag == 0) ){
 		$gene_flag = 1;
@@ -114,18 +95,35 @@ foreach my $line (@lines) {
 	elsif (( $line =~ /\tgene\t/ ) && ( $gene_flag == 1) ){
 		#if no Solyc id, generate a new unique id based upon previous id
 		if ( $current_mRNA_Solycid eq '' ){
-			$current_mRNA_Solycid = 'TODO';
+			#$current_mRNA_Solycid = 'TODO'; Solyc02g094750.1.1
+			my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
+			#print STDERR "\t\t".$prev_mRNA_Solycid_arr[0]."\n\n";
+			#$prev_mRNA_Solycid_arr[0] =~ m/\d\d$/ or die "Invalid data in $prev_mRNA_Solycid_arr[0]\n";
+			my $old_count = substr ($prev_mRNA_Solycid_arr[0], -2, 2);
+			#print STDERR "\t\t$old_count\n\n";
+			$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
+			
 			# no multiples of 10
+			if ( ($old_count + 1) % 10 != 0 ){
+				my $new_count = $old_count + 1;
+				$current_mRNA_Solycid = $prev_mRNA_Solycid.$new_count.'.1.1' ;
+			}
+			else{
+				$current_mRNA_Solycid = 'NOID';
+			}
+			
+			$new_id_output = $new_id_output.$current_mRNA_Solycid."\n";
 		}
+
+		my $exon_count = 1;
+		my $cds_count = 1;
+		my $three_prime_UTR_count = 0;
+		my $five_prime_UTR_count = 0;
 
 		#process prev gene
 		foreach my $prev_gff_line ( @gene_gff_line_arr ){
-			my @line_arr = split ("\t", $line);
+			my @line_arr = split ("\t", $prev_gff_line);
 			my $new_attr;
-			my $exon_count = 1;
-			my $cds_count = 1;
-			my $three_prime_UTR_count = 0;
-			my $five_prime_UTR_count = 0;
 			
 			if ( $line_arr[2] eq 'gene' ){
 				my $length = $line_arr[4] - $line_arr[3];
@@ -150,7 +148,7 @@ foreach my $line (@lines) {
 						$new_attr = $new_attr.'AED='.$value.';';
 					}
 					elsif ($key eq '_eAED'){
-						$new_attr = $new_attr.'eAED='.$value.';';
+						$new_attr = $new_attr.'eAED='.$value;
 					}
 				}
 				for (0..7){
@@ -161,7 +159,7 @@ foreach my $line (@lines) {
 			elsif( $line_arr[2] eq 'exon' ){
 				my $current_exon_Solycid = $current_mRNA_Solycid.'.'.$exon_count;
 				$exon_count++;
-				$new_attr = 'ID=exon:'.$current_exon_Solycid.';Parent=mRNA'.$current_mRNA_Solycid."\n";
+				$new_attr = 'ID=exon:'.$current_exon_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
 				for (0..7){
 					print STDOUT $line_arr[$_]."\t";
 				}
@@ -171,7 +169,7 @@ foreach my $line (@lines) {
 			elsif( $line_arr[2] eq 'CDS' ){
 				my $current_cds_Solycid = $current_mRNA_Solycid.'.'.$cds_count;
 				$cds_count++;
-				$new_attr = 'ID=CDS:'.$current_cds_Solycid.';Parent=mRNA'.$current_mRNA_Solycid."\n";
+				$new_attr = 'ID=CDS:'.$current_cds_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
 				for (0..7){
 					print STDOUT $line_arr[$_]."\t";
 				}
@@ -180,7 +178,7 @@ foreach my $line (@lines) {
 			elsif( $line_arr[2] eq 'five_prime_UTR' ){
 				my $current_fiveprime_Solycid = $current_mRNA_Solycid.'.'.$five_prime_UTR_count;
 				$five_prime_UTR_count++;
-				$new_attr = 'ID=five_prime_UTR:'.$current_fiveprime_Solycid.';Parent=mRNA'.$current_mRNA_Solycid."\n";
+				$new_attr = 'ID=five_prime_UTR:'.$current_fiveprime_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
 				for (0..7){
 					print STDOUT $line_arr[$_]."\t";
 				}
@@ -189,7 +187,7 @@ foreach my $line (@lines) {
 			elsif( $line_arr[2] eq 'three_prime_UTR' ){
 				my $current_threeprime_Solycid = $current_mRNA_Solycid.'.'.$three_prime_UTR_count;
 				$three_prime_UTR_count++;
-				$new_attr = 'ID=five_prime_UTR:'.$current_threeprime_Solycid.';Parent=mRNA'.$current_mRNA_Solycid."\n";
+				$new_attr = 'ID=five_prime_UTR:'.$current_threeprime_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
 				for (0..7){
 					print STDOUT $line_arr[$_]."\t";
 				}
@@ -198,43 +196,123 @@ foreach my $line (@lines) {
 		}
 		
 		$prev_mRNA_Solycid = $current_mRNA_Solycid;
+		$current_mRNA_Solycid = '';
 		@gene_gff_line_arr = (); # reset
-		push (@gene_gff_line_arr, $line);
 	}
-	
+
+	#load for next round
+	push (@gene_gff_line_arr, $line);
 }
 
 ## last gene
-
-
-if ($opt_d) {
-	print STDERR "Input GFF file read..\n";
-	$util->mem_used();
-	$util->run_time();
+#if no Solyc id, generate a new unique id based upon previous id
+if ( $current_mRNA_Solycid eq '' ){
+	#$current_mRNA_Solycid = 'TODO';
+	my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
+	#print STDERR "\t\t".$prev_mRNA_Solycid_arr[0]."\n\n";
+	#$prev_mRNA_Solycid_arr[0] =~ m/\d\d$/ or die "Invalid data in $prev_mRNA_Solycid_arr[0]\n";
+	my $old_count = substr ($prev_mRNA_Solycid_arr[0], -2, 2);
+	#print STDERR "\t\t$old_count\n\n";
+	$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
+	
+	# no multiples of 10
+	if ( ($old_count + 1) % 10 != 0 ){
+		my $new_count = $old_count + 1;
+		$current_mRNA_Solycid = $prev_mRNA_Solycid.$new_count.'.1.1' ;
+	}
+	else{
+		$current_mRNA_Solycid = 'NOID';
+	}
+	
+	$new_id_output = $new_id_output.$current_mRNA_Solycid."\n";
 }
 
+my $exon_count = 1;
+my $cds_count = 1;
+my $three_prime_UTR_count = 0;
+my $five_prime_UTR_count = 0;
 
+#process prev gene
+foreach my $prev_gff_line ( @gene_gff_line_arr ){
+	my @line_arr = split ("\t", $prev_gff_line);
+	my $new_attr;
+	
+	if ( $line_arr[2] eq 'gene' ){
+		my $length = $line_arr[4] - $line_arr[3];
+		my $current_gene_Solycid = $current_mRNA_Solycid;
+		$current_gene_Solycid =~ s/\.\d$//;
+		my $current_alias_Solycid = $current_gene_Solycid;
+		$current_alias_Solycid =~ s/\.\d$//;
+		$new_attr = 'Alias='.$current_alias_Solycid.';ID=gene:'.$current_gene_Solycid.';Name='.$current_gene_Solycid.';length='.$length."\n";
+		
+		for (0..7){
+			print STDOUT $line_arr[$_]."\t";
+		}
+		print STDOUT $new_attr;
+	}
+	elsif( $line_arr[2] eq 'mRNA' ){ #add AED
+		$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Name='.$current_mRNA_Solycid.';';
+		
+		my @line_attr_arr = split (/\;/, $line_arr[8]);
+		foreach my $attr (@line_attr_arr){ 
+			my ($key,$value) = split (/=/, $attr);
+			if ($key eq '_AED'){
+				$new_attr = $new_attr.'AED='.$value.';';
+			}
+			elsif ($key eq '_eAED'){
+				$new_attr = $new_attr.'eAED='.$value;
+			}
+		}
+		for (0..7){
+			print STDOUT $line_arr[$_]."\t";
+		}
+		print STDOUT $new_attr."\n";
+	}
+	elsif( $line_arr[2] eq 'exon' ){
+		my $current_exon_Solycid = $current_mRNA_Solycid.'.'.$exon_count;
+		$exon_count++;
+		$new_attr = 'ID=exon:'.$current_exon_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
+		for (0..7){
+			print STDOUT $line_arr[$_]."\t";
+		}
+		print STDOUT $new_attr;
+	
+	}
+	elsif( $line_arr[2] eq 'CDS' ){
+		my $current_cds_Solycid = $current_mRNA_Solycid.'.'.$cds_count;
+		$cds_count++;
+		$new_attr = 'ID=CDS:'.$current_cds_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
+		for (0..7){
+			print STDOUT $line_arr[$_]."\t";
+		}
+		print STDOUT $new_attr;
+	}
+	elsif( $line_arr[2] eq 'five_prime_UTR' ){
+		my $current_fiveprime_Solycid = $current_mRNA_Solycid.'.'.$five_prime_UTR_count;
+		$five_prime_UTR_count++;
+		$new_attr = 'ID=five_prime_UTR:'.$current_fiveprime_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
+		for (0..7){
+			print STDOUT $line_arr[$_]."\t";
+		}
+		print STDOUT $new_attr;
+	}
+	elsif( $line_arr[2] eq 'three_prime_UTR' ){
+		my $current_threeprime_Solycid = $current_mRNA_Solycid.'.'.$three_prime_UTR_count;
+		$three_prime_UTR_count++;
+		$new_attr = 'ID=five_prime_UTR:'.$current_threeprime_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
+		for (0..7){
+			print STDOUT $line_arr[$_]."\t";
+		}
+		print STDOUT $new_attr;
+	}
+}
 
-
-###TODO
-
-#print the GFF ($gff_output_file)
-#if ( !defined($new_gff) ) {
-#	print STDERR "No valid GFF records found..\n";
-#	exit 1;
-#} else {
-#	unless ( open( OGFF, ">$gff_output_file" ) ) {
-#		print STDERR "Cannot open $gff_output_file\n";
-#		exit 1;
-#	}
-#	print OGFF $new_gff;
-#	close(OGFF);
-#	if ($opt_d) {
-#		print STDERR "GFF written..\n";
-#		$util->mem_used();
-#		$util->run_time();
-#	}
-#}
+unless ( open( OID, ">$new_id_output_file" ) ) {
+	print STDERR "Cannot open $new_id_output_file\n";
+	exit 1;
+}
+print OID $new_id_output;
+close(OID);
 
 #----------------------------------------------------------------------------
 
@@ -253,9 +331,7 @@ sub help {
     Flags:
 
      -i  old GFF file (required)
-     -o  new GFF file with updated names for genes and mRNA (required)
      -n  List of new Solyc ids
-     -d  debugging messages (1 or 0)
      -h  Help
 
 
