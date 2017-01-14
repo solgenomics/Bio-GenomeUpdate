@@ -49,6 +49,7 @@ my @gene_gff_line_arr;
 my $current_mRNA_Solycid = '';
 my $prev_mRNA_Solycid;
 my $new_id_output = '';
+my $outofrange_gene_counter = 0;
 
 foreach my $line (@lines) {
 	$line_counter++;
@@ -103,12 +104,14 @@ foreach my $line (@lines) {
 			$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
 			
 			# no multiples of 10
+			print STDERR "old count $old_count prev_mRNA_Solycid $prev_mRNA_Solycid))\n";
 			if ( ($old_count + 1) % 10 != 0 ){
 				my $new_count = $old_count + 1;
 				$current_mRNA_Solycid = $prev_mRNA_Solycid.$new_count.'.1.1' ;
 			}
 			else{
-				$current_mRNA_Solycid = 'NOID';
+				$current_mRNA_Solycid = 'ID_OUT_OF_RANGE_'.$outofrange_gene_counter; #placeholder for cases where there are > 9 new genes between 2 old Solyc ids
+				$outofrange_gene_counter++;
 			}
 			
 			$new_id_output = $new_id_output.$current_mRNA_Solycid."\n";
