@@ -104,8 +104,8 @@ foreach my $line (@lines) {
 			$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
 			
 			# no multiples of 10
-			print STDERR "old count $old_count prev_mRNA_Solycid $prev_mRNA_Solycid))\n";
-			if ( ($old_count + 1) % 10 != 0 ){
+			#print STDERR "old count $old_count prev_mRNA_Solycid $prev_mRNA_Solycid))\n";
+			if ( ( $prev_mRNA_Solycid !~ /ID_OUT_OF_RANGE/) && (($old_count + 1) % 10 != 0) ){ #if prev gene was out of range
 				my $new_count = $old_count + 1;
 				$current_mRNA_Solycid = $prev_mRNA_Solycid.$new_count.'.1.1' ;
 			}
