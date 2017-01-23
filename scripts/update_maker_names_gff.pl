@@ -39,7 +39,7 @@ my $input_old_gff      = read_file($old_gff_input_file)
   or die "Could not open old GFF input file: $old_gff_input_file\n";
 
 my $new_id_output_file;
-$new_id_output_file   = 'new_ids.names';
+$new_id_output_file   = $old_gff_input_file.'_new-ids.names';
 
 my @lines        = split( /\n/, $input_old_gff );
 my $line_count   = scalar(@lines);
@@ -59,11 +59,9 @@ foreach my $line (@lines) {
 		next;
 	}
 
-	#print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count;
+	print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count;
 
-	#push (@gene_gff_line_arr, $line);
-
-	#get Solyc id if any
+	#get Solyc id ,if any, from mRNA record 
 	if ( $line =~ m/\tmRNA\t/ ){
 		my @line_arr = split ("\t", $line);
 		my @line_attr_arr = split (/\;/, $line_arr[8]);
@@ -96,12 +94,21 @@ foreach my $line (@lines) {
 		#if no Solyc id, generate a new unique id based upon previous id
 		if ( $current_mRNA_Solycid eq '' ){
 			#$current_mRNA_Solycid = 'TODO'; Solyc02g094750.1.1
-			my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
-			#print STDERR "\t\t".$prev_mRNA_Solycid_arr[0]."\n\n";
-			#$prev_mRNA_Solycid_arr[0] =~ m/\d\d$/ or die "Invalid data in $prev_mRNA_Solycid_arr[0]\n";
-			my $old_count = substr ($prev_mRNA_Solycid_arr[0], -2, 2);
-			#print STDERR "\t\t$old_count\n\n";
-			$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
+			
+			my $old_count;
+			
+			#if gene has Solyc id
+			if ( (defined $prev_mRNA_Solycid) && ($prev_mRNA_Solycid =~ /^Solyc/) ){
+				my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
+				#print STDERR "\t\t".$prev_mRNA_Solycid_arr[0]."\n\n";
+				#$prev_mRNA_Solycid_arr[0] =~ m/\d\d$/ or die "Invalid data in $prev_mRNA_Solycid_arr[0]\n";
+				$old_count = substr ($prev_mRNA_Solycid_arr[0], -2, 2);
+				#print STDERR "\t\t$old_count\n\n";
+				$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
+			}
+			else{#if first gene does not have Solyc id
+				$prev_mRNA_Solycid = 'ID_OUT_OF_RANGE_';
+			}
 
 			# no multiples of 10
 			#print STDERR "old count $old_count prev_mRNA_Solycid $prev_mRNA_Solycid))\n";
@@ -110,8 +117,8 @@ foreach my $line (@lines) {
 				$current_mRNA_Solycid = $prev_mRNA_Solycid.$new_count.'.1.1' ;
 			}
 			else{
-				$current_mRNA_Solycid = 'ID_OUT_OF_RANGE_'.$outofrange_gene_counter; #placeholder for cases where there are > 9 new genes between 2 old Solyc ids
 				$outofrange_gene_counter++;
+				$current_mRNA_Solycid = 'ID_OUT_OF_RANGE_'.$outofrange_gene_counter; #placeholder for cases where there are > 9 new genes between 2 old Solyc ids
 			}
 
 			$new_id_output = $new_id_output.$current_mRNA_Solycid."\n";
@@ -147,10 +154,7 @@ foreach my $line (@lines) {
 				foreach my $attr (@line_attr_arr){
 					my ($key,$value) = split (/=/, $attr);
 					if ($key eq '_AED'){
-						$new_attr = $new_attr.'_AED='.$value.';';
-					}
-					elsif ($key eq '_eAED'){
-						$new_attr = $new_attr.'eAED='.$value;
+						$new_attr = $new_attr.'_AED='.$value;
 					}
 				}
 				for (0..7){
@@ -218,13 +222,15 @@ if ( $current_mRNA_Solycid eq '' ){
 	$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
 
 	# no multiples of 10
-	if ( ($old_count + 1) % 10 != 0 ){
+	if ( ( $prev_mRNA_Solycid !~ /ID_OUT_OF_RANGE/) && (($old_count + 1) % 10 != 0) ){ #if prev gene was out of range
 		my $new_count = $old_count + 1;
 		$current_mRNA_Solycid = $prev_mRNA_Solycid.$new_count.'.1.1' ;
 	}
 	else{
-		$current_mRNA_Solycid = 'NOID';
+		$outofrange_gene_counter++;
+		$current_mRNA_Solycid = 'ID_OUT_OF_RANGE_'.$outofrange_gene_counter; #placeholder for cases where there are > 9 new genes between 2 old Solyc ids
 	}
+
 
 	$new_id_output = $new_id_output.$current_mRNA_Solycid."\n";
 }
@@ -234,7 +240,7 @@ my $cds_count = 1;
 my $three_prime_UTR_count = 0;
 my $five_prime_UTR_count = 0;
 
-#process prev gene
+#process last gene
 foreach my $prev_gff_line ( @gene_gff_line_arr ){
 	my @line_arr = split ("\t", $prev_gff_line);
 	my $new_attr;
@@ -259,10 +265,7 @@ foreach my $prev_gff_line ( @gene_gff_line_arr ){
 		foreach my $attr (@line_attr_arr){
 			my ($key,$value) = split (/=/, $attr);
 			if ($key eq '_AED'){
-				$new_attr = $new_attr.'AED='.$value.';';
-			}
-			elsif ($key eq '_eAED'){
-				$new_attr = $new_attr.'eAED='.$value;
+				$new_attr = $new_attr.'AED='.$value;
 			}
 		}
 		for (0..7){
@@ -316,6 +319,8 @@ unless ( open( OID, ">$new_id_output_file" ) ) {
 print OID $new_id_output;
 close(OID);
 
+print STDERR "\nNumber of genes without Solyc id assignments (ID_OUT_OF_RANGE): $outofrange_gene_counter\n";
+
 #----------------------------------------------------------------------------
 
 sub help {
@@ -324,7 +329,7 @@ sub help {
 
     Description:
 
-     Gets Solyc id from the mRNA record and assigns to gene and mRNA records. Generates a new Solyc id (skipping over multiples of 10 to avoid old ids) if no old id was passed through and assigns to gene and mRNA records. Generates a list of new Solyc ids. No need to check if any new id overlaps with a deprecated gene. Output GFF contains intron records and feature names in ITAG convention
+     Gets Solyc id from the mRNA record and assigns to gene and mRNA records. Generates a new Solyc id (skipping over multiples of 10 to avoid old ids) if no old id was passed through and assigns to gene and mRNA records. Generates a file with list of new Solyc ids. No need to check if any new id overlaps with a deprecated gene. Output GFF contains feature names in ITAG convention
 
 
     Usage:
