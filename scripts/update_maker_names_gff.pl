@@ -103,7 +103,7 @@ foreach my $line (@lines) {
 	}
 	## if next gene
 	elsif (( $line =~ /\tgene\t/ ) && ( $gene_flag == 1) ){
-		#if no Solyc id, generate a new unique id based upon previous id
+		#IF NO SOLYC ID, GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
 		if ( ! defined $current_mRNA_Solycid ){
 			#$current_mRNA_Solycid = 'TODO'; Solyc02g094750.1.1
 			
@@ -114,9 +114,11 @@ foreach my $line (@lines) {
 				my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
 				#print STDERR "\t\t".$prev_mRNA_Solycid_arr[0]."\n\n";
 				#$prev_mRNA_Solycid_arr[0] =~ m/\d\d$/ or die "Invalid data in $prev_mRNA_Solycid_arr[0]\n";
-				$old_count = substr ($prev_mRNA_Solycid_arr[0], -2, 2);
+				#$old_count = substr ($prev_mRNA_Solycid_arr[0], -2, 2);
+				$old_count = substr ($prev_mRNA_Solycid_arr[0], -1, 1);
 				#print STDERR "\t\t$old_count\n\n";
-				$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
+				#$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
+				$prev_mRNA_Solycid =~ s/\d\.\d\.\d$//;
 			}
 			else{#if first gene does not have Solyc id
 				$prev_mRNA_Solycid = 'ID_OUT_OF_RANGE_';
@@ -223,15 +225,17 @@ foreach my $line (@lines) {
 }
 
 ## last gene
-#if no Solyc id, generate a new unique id based upon previous id
+#IF NO SOLYC ID, GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
 if ( ! defined $current_mRNA_Solycid ){
 	#$current_mRNA_Solycid = 'TODO';
 	my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
 	#print STDERR "\t\t".$prev_mRNA_Solycid_arr[0]."\n\n";
 	#$prev_mRNA_Solycid_arr[0] =~ m/\d\d$/ or die "Invalid data in $prev_mRNA_Solycid_arr[0]\n";
-	my $old_count = substr ($prev_mRNA_Solycid_arr[0], -2, 2);
+	#my $old_count = substr ($prev_mRNA_Solycid_arr[0], -2, 2);
+	my $old_count = substr ($prev_mRNA_Solycid_arr[0], -1, 1);
 	#print STDERR "\t\t$old_count\n\n";
-	$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
+	#$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
+	$prev_mRNA_Solycid =~ s/\d\.\d\.\d$//;
 
 	# no multiples of 10
 	if ( ( $prev_mRNA_Solycid !~ /ID_OUT_OF_RANGE/) && (($old_count + 1) % 10 != 0) ){ #if prev gene was out of range
