@@ -46,10 +46,11 @@ my $line_count   = scalar(@lines);
 my $line_counter = 0;
 my $gene_flag    = 0;
 my @gene_gff_line_arr;
-my $current_mRNA_Solycid = '';
+my $current_mRNA_Solycid;
 my $prev_mRNA_Solycid;
 my $new_id_output = '';
 my $outofrange_gene_counter = 0;
+my %mRNA_Solycid_hash;
 
 foreach my $line (@lines) {
 	$line_counter++;
@@ -83,6 +84,17 @@ foreach my $line (@lines) {
 				}
 			}
 		}
+		
+		#reset if Solyc id already exists
+		if ( defined $current_mRNA_Solycid){
+			if (exists ($mRNA_Solycid_hash{$current_mRNA_Solycid})){
+				undef $current_mRNA_Solycid;
+			}
+			else{
+				#add to hash
+				$mRNA_Solycid_hash{$current_mRNA_Solycid} = '';
+			}		
+		}
 	}
 
 	## if first gene
@@ -92,7 +104,7 @@ foreach my $line (@lines) {
 	## if next gene
 	elsif (( $line =~ /\tgene\t/ ) && ( $gene_flag == 1) ){
 		#if no Solyc id, generate a new unique id based upon previous id
-		if ( $current_mRNA_Solycid eq '' ){
+		if ( ! defined $current_mRNA_Solycid ){
 			#$current_mRNA_Solycid = 'TODO'; Solyc02g094750.1.1
 			
 			my $old_count;
@@ -202,7 +214,7 @@ foreach my $line (@lines) {
 		}
 
 		$prev_mRNA_Solycid = $current_mRNA_Solycid;
-		$current_mRNA_Solycid = '';
+		undef $current_mRNA_Solycid;
 		@gene_gff_line_arr = (); # reset
 	}
 
@@ -212,7 +224,7 @@ foreach my $line (@lines) {
 
 ## last gene
 #if no Solyc id, generate a new unique id based upon previous id
-if ( $current_mRNA_Solycid eq '' ){
+if ( ! defined $current_mRNA_Solycid ){
 	#$current_mRNA_Solycid = 'TODO';
 	my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
 	#print STDERR "\t\t".$prev_mRNA_Solycid_arr[0]."\n\n";
