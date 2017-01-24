@@ -62,7 +62,7 @@ foreach my $line (@lines) {
 
 	print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count;
 
-	#get Solyc id ,if any, from mRNA record 
+	#get Solyc id ,if any, from mRNA record
 	if ( $line =~ m/\tmRNA\t/ ){
 		my @line_arr = split ("\t", $line);
 		my @line_attr_arr = split (/\;/, $line_arr[8]);
@@ -106,9 +106,9 @@ foreach my $line (@lines) {
 		#IF NO SOLYC ID, GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
 		if ( ! defined $current_mRNA_Solycid ){
 			#$current_mRNA_Solycid = 'TODO'; Solyc02g094750.1.1
-			
+
 			my $old_count;
-			
+
 			#if gene has Solyc id
 			if ( (defined $prev_mRNA_Solycid) && ($prev_mRNA_Solycid =~ /^Solyc/) ){
 				my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
@@ -162,7 +162,7 @@ foreach my $line (@lines) {
 				print STDOUT $new_attr;
 			}
 			elsif( $line_arr[2] eq 'mRNA' ){ #add AED
-				$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Name='.$current_mRNA_Solycid.';';
+				$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Parent=gene:'.$current_mRNA_Solycid.';Name='.$current_mRNA_Solycid.';';
 
 				my @line_attr_arr = split (/\;/, $line_arr[8]);
 				foreach my $attr (@line_attr_arr){
