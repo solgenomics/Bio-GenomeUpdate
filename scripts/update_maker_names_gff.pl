@@ -51,7 +51,9 @@ my $prev_mRNA_Solycid;
 my $new_id_output = '';
 my $outofrange_gene_counter = 0;
 my %mRNA_Solycid_hash;
+my %mRNA_Solycid_new_gene_count_hash;
 
+# parsing file to figure out number of novel genes between old Solyc ids
 foreach my $line (@lines) {
 	$line_counter++;
 	chomp($line);
@@ -60,9 +62,92 @@ foreach my $line (@lines) {
 		next;
 	}
 
-	print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count;
+	print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count . 'to count novel genes';
+	
+	#get Solyc id ,if any, from mRNA record 
+	if ( $line =~ m/\tmRNA\t/ ){
+		my @line_arr = split ("\t", $line);
+		my @line_attr_arr = split (/\;/, $line_arr[8]);
+		foreach my $attr (@line_attr_arr){
+			my ($key,$value) = split (/=/, $attr);
+			if (($key eq 'Name') && ($value =~ /^Solyc/)){
+				chomp $value; $current_mRNA_Solycid = $value; last;
+			}
+			elsif (($key eq 'Alias') && ($value =~ /^Solyc/) && ($value !~ /\,/)){ #only Solyc in Alias
+				chomp $value; $current_mRNA_Solycid = $value; last;
+			}
+			elsif (($key eq 'Alias') && ($value =~ /Solyc/)){ #multiple aliases incl Solyc id
+				my @value_arr = split (/,/,$value);
+				foreach my $alias (@value_arr){
+					if ($alias =~ /^Solyc/) {
+						chomp $alias; $current_mRNA_Solycid = $alias;
+						last;
+					}
+				}
+			}
+		}
+		
+		#reset if Solyc id already exists
+		if ( defined $current_mRNA_Solycid){
+			if (exists ($mRNA_Solycid_hash{$current_mRNA_Solycid})){
+				undef $current_mRNA_Solycid;
+			}
+			else{
+				#add to hash
+				$mRNA_Solycid_hash{$current_mRNA_Solycid} = '';
+			}		
+		}
+	}
+	
+	## if first gene
+	if (( $line =~ /\tgene\t/ ) && ( $gene_flag == 0) ){
+		$gene_flag = 1;
+	}
+	## if next gene
+	elsif (( $line =~ /\tgene\t/ ) && ( $gene_flag == 1) ){
+		#IF NO SOLYC ID, GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
+		if ( ! defined $current_mRNA_Solycid ){
+			
+			#$current_mRNA_Solycid = 'TODO'; Solyc02g094750.1.1
+			my $old_count;
+			
+			#if prev gene has Solyc id
+			if ( (defined $prev_mRNA_Solycid) && ($prev_mRNA_Solycid =~ /^Solyc/) ){
+			
+				if ( exists $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_Solycid}){
+					$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_Solycid} = $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_Solycid}++;
+				}
+				else{
+					$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_Solycid} = 1;
+				}
 
-	#get Solyc id ,if any, from mRNA record
+			}
+
+		}
+	}	
+
+}
+
+# reset
+%mRNA_Solycid_hash = ();
+$line_counter = 0;
+$gene_flag    = 0;
+@gene_gff_line_arr = ();
+undef $current_mRNA_Solycid;
+undef $prev_mRNA_Solycid;
+
+# writing out modified GFF3
+foreach my $line (@lines) {
+	$line_counter++;
+	chomp($line);
+
+	if ( $line =~ m/^#/ ) {
+		next;
+	}
+
+	print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count . 'to write modified GFF3';
+
+	#get Solyc id ,if any, from mRNA record 
 	if ( $line =~ m/\tmRNA\t/ ){
 		my @line_arr = split ("\t", $line);
 		my @line_attr_arr = split (/\;/, $line_arr[8]);
@@ -106,18 +191,21 @@ foreach my $line (@lines) {
 		#IF NO SOLYC ID, GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
 		if ( ! defined $current_mRNA_Solycid ){
 			#$current_mRNA_Solycid = 'TODO'; Solyc02g094750.1.1
+			
 			my $old_count;
-
-			#if gene has Solyc id
+			
+			#if prev gene has Solyc id
 			if ( (defined $prev_mRNA_Solycid) && ($prev_mRNA_Solycid =~ /^Solyc/) ){
 				my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
 				#print STDERR "\t\t".$prev_mRNA_Solycid_arr[0]."\n\n";
 				#$prev_mRNA_Solycid_arr[0] =~ m/\d\d$/ or die "Invalid data in $prev_mRNA_Solycid_arr[0]\n";
+				#$old_count = substr ($prev_mRNA_Solycid_arr[0], -2, 2);
 				$old_count = substr ($prev_mRNA_Solycid_arr[0], -1, 1);
 				#print STDERR "\t\t$old_count\n\n";
+				#$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
 				$prev_mRNA_Solycid =~ s/\d\.\d\.\d$//;
 			}
-			else{#if first gene does not have Solyc id
+			else{# cases where first gene does not have Solyc id
 				$prev_mRNA_Solycid = 'ID_OUT_OF_RANGE_';
 			}
 
@@ -143,6 +231,7 @@ foreach my $line (@lines) {
 		#process prev gene
 		foreach my $prev_gff_line ( @gene_gff_line_arr ){
 			my @line_arr = split ("\t", $prev_gff_line);
+			$line_arr[1] = 'maker_ITAG'; #using source to reflect ITAG/eugene fed into maker
 			my $new_attr;
 
 			if ( $line_arr[2] eq 'gene' ){
@@ -159,9 +248,7 @@ foreach my $line (@lines) {
 				print STDOUT $new_attr;
 			}
 			elsif( $line_arr[2] eq 'mRNA' ){ #add AED
-				my $current_gene_Solycid = $current_mRNA_Solycid;
-				$current_gene_Solycid =~ s/\.\d$//;
-				$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Parent=gene:'.$current_gene_Solycid.';Name='.$current_mRNA_Solycid.';';
+				$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Name='.$current_mRNA_Solycid.';';
 
 				my @line_attr_arr = split (/\;/, $line_arr[8]);
 				foreach my $attr (@line_attr_arr){
@@ -226,10 +313,14 @@ foreach my $line (@lines) {
 ## last gene
 #IF NO SOLYC ID, GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
 if ( ! defined $current_mRNA_Solycid ){
+	#$current_mRNA_Solycid = 'TODO';
 	my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
 	#print STDERR "\t\t".$prev_mRNA_Solycid_arr[0]."\n\n";
+	#$prev_mRNA_Solycid_arr[0] =~ m/\d\d$/ or die "Invalid data in $prev_mRNA_Solycid_arr[0]\n";
+	#my $old_count = substr ($prev_mRNA_Solycid_arr[0], -2, 2);
 	my $old_count = substr ($prev_mRNA_Solycid_arr[0], -1, 1);
 	#print STDERR "\t\t$old_count\n\n";
+	#$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
 	$prev_mRNA_Solycid =~ s/\d\.\d\.\d$//;
 
 	# no multiples of 10
@@ -254,6 +345,7 @@ my $five_prime_UTR_count = 0;
 #process last gene
 foreach my $prev_gff_line ( @gene_gff_line_arr ){
 	my @line_arr = split ("\t", $prev_gff_line);
+	$line_arr[1] = 'maker_ITAG'; #using source to reflect ITAG/eugene fed into maker
 	my $new_attr;
 
 	if ( $line_arr[2] eq 'gene' ){
@@ -270,9 +362,7 @@ foreach my $prev_gff_line ( @gene_gff_line_arr ){
 		print STDOUT $new_attr;
 	}
 	elsif( $line_arr[2] eq 'mRNA' ){ #add AED
-		my $current_gene_Solycid = $current_mRNA_Solycid;
-		$current_gene_Solycid =~ s/\.\d$//;
-		$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Parent=gene:'.$current_gene_Solycid.';Name='.$current_mRNA_Solycid.';';
+		$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Name='.$current_mRNA_Solycid.';';
 
 		my @line_attr_arr = split (/\;/, $line_arr[8]);
 		foreach my $attr (@line_attr_arr){
