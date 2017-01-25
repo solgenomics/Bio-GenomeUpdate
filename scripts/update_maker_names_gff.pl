@@ -106,7 +106,6 @@ foreach my $line (@lines) {
 		#IF NO SOLYC ID, GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
 		if ( ! defined $current_mRNA_Solycid ){
 			#$current_mRNA_Solycid = 'TODO'; Solyc02g094750.1.1
-
 			my $old_count;
 
 			#if gene has Solyc id
@@ -114,10 +113,8 @@ foreach my $line (@lines) {
 				my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
 				#print STDERR "\t\t".$prev_mRNA_Solycid_arr[0]."\n\n";
 				#$prev_mRNA_Solycid_arr[0] =~ m/\d\d$/ or die "Invalid data in $prev_mRNA_Solycid_arr[0]\n";
-				#$old_count = substr ($prev_mRNA_Solycid_arr[0], -2, 2);
 				$old_count = substr ($prev_mRNA_Solycid_arr[0], -1, 1);
 				#print STDERR "\t\t$old_count\n\n";
-				#$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
 				$prev_mRNA_Solycid =~ s/\d\.\d\.\d$//;
 			}
 			else{#if first gene does not have Solyc id
@@ -229,14 +226,10 @@ foreach my $line (@lines) {
 ## last gene
 #IF NO SOLYC ID, GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
 if ( ! defined $current_mRNA_Solycid ){
-	#$current_mRNA_Solycid = 'TODO';
 	my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
 	#print STDERR "\t\t".$prev_mRNA_Solycid_arr[0]."\n\n";
-	#$prev_mRNA_Solycid_arr[0] =~ m/\d\d$/ or die "Invalid data in $prev_mRNA_Solycid_arr[0]\n";
-	#my $old_count = substr ($prev_mRNA_Solycid_arr[0], -2, 2);
 	my $old_count = substr ($prev_mRNA_Solycid_arr[0], -1, 1);
 	#print STDERR "\t\t$old_count\n\n";
-	#$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
 	$prev_mRNA_Solycid =~ s/\d\.\d\.\d$//;
 
 	# no multiples of 10
@@ -277,7 +270,9 @@ foreach my $prev_gff_line ( @gene_gff_line_arr ){
 		print STDOUT $new_attr;
 	}
 	elsif( $line_arr[2] eq 'mRNA' ){ #add AED
-		$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Name='.$current_mRNA_Solycid.';';
+		my $current_gene_Solycid = $current_mRNA_Solycid;
+		$current_gene_Solycid =~ s/\.\d$//;
+		$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Parent=gene:'.$current_gene_Solycid.';Name='.$current_mRNA_Solycid.';';
 
 		my @line_attr_arr = split (/\;/, $line_arr[8]);
 		foreach my $attr (@line_attr_arr){
