@@ -50,6 +50,7 @@ my $current_mRNA_Solycid;
 my $prev_mRNA_Solycid;
 my $new_id_output = '';
 my $outofrange_gene_counter = 0;
+my $new_gene_counter = 0;
 my %mRNA_Solycid_hash;
 my %mRNA_Solycid_new_gene_count_hash;
 
@@ -62,9 +63,9 @@ foreach my $line (@lines) {
 		next;
 	}
 
-	print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count . 'to count novel genes';
+	print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count . ' to count novel genes';
 	
-	#get Solyc id ,if any, from mRNA record 
+	#get Solyc id, if any, from mRNA record
 	if ( $line =~ m/\tmRNA\t/ ){
 		my @line_arr = split ("\t", $line);
 		my @line_attr_arr = split (/\;/, $line_arr[8]);
@@ -95,7 +96,7 @@ foreach my $line (@lines) {
 			else{
 				#add to hash
 				$mRNA_Solycid_hash{$current_mRNA_Solycid} = '';
-			}		
+			}
 		}
 	}
 	
@@ -105,36 +106,46 @@ foreach my $line (@lines) {
 	}
 	## if next gene
 	elsif (( $line =~ /\tgene\t/ ) && ( $gene_flag == 1) ){
-		#IF NO SOLYC ID, GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
+		#IF NO SOLYC ID IN PREV GENE, ADD TO COUNT OF NEW GENES AFTER PREV SOLYC ID
 		if ( ! defined $current_mRNA_Solycid ){
-			
-			#$current_mRNA_Solycid = 'TODO'; Solyc02g094750.1.1
-			my $old_count;
-			
-			#if prev gene has Solyc id
-			if ( (defined $prev_mRNA_Solycid) && ($prev_mRNA_Solycid =~ /^Solyc/) ){
-			
-				if ( exists $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_Solycid}){
-					$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_Solycid} = $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_Solycid}++;
-				}
-				else{
-					$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_Solycid} = 1;
-				}
-
+			if ( exists $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_Solycid}){
+				$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_Solycid} = $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_Solycid}++;
 			}
-
+			else{
+				$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_Solycid} = 1;
+			}
+			$new_gene_counter++;
 		}
+		
+		
+		if ( (defined $current_mRNA_Solycid) && ($current_mRNA_Solycid =~ /^Solyc/) ){
+			$prev_mRNA_Solycid = $current_mRNA_Solycid;
+		}
+		undef $current_mRNA_Solycid;
 	}	
-
 }
 
 # reset
+print STDERR "\nIdentified $new_gene_counter new genes. Now writing modified GFF3\n";
 %mRNA_Solycid_hash = ();
 $line_counter = 0;
 $gene_flag    = 0;
 @gene_gff_line_arr = ();
 undef $current_mRNA_Solycid;
 undef $prev_mRNA_Solycid;
+
+#hash of arrays for up to 9 new genes, > 9 should have ID_OUT_OF_RANGE_ names
+my %new_solyc_id_increments = (
+	1 => [5],
+	2 => [3,7],
+	3 => [3,5,7],
+	4 => [2,4,6,8],
+	5 => [1,2,4,6,8],
+	6 => [1,2,3,4,6,8],
+	7 => [1,2,3,4,5,6,8],
+	8 => [1,2,3,4,5,6,7,8],
+	9 => [1,2,3,4,5,6,7,8,9]
+);
 
 # writing out modified GFF3
 foreach my $line (@lines) {
@@ -145,9 +156,9 @@ foreach my $line (@lines) {
 		next;
 	}
 
-	print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count . 'to write modified GFF3';
+	print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count . ' to write modified GFF3';
 
-	#get Solyc id ,if any, from mRNA record 
+	#get Solyc id ,if any, from mRNA record
 	if ( $line =~ m/\tmRNA\t/ ){
 		my @line_arr = split ("\t", $line);
 		my @line_attr_arr = split (/\;/, $line_arr[8]);
@@ -193,7 +204,6 @@ foreach my $line (@lines) {
 			#$current_mRNA_Solycid = 'TODO'; Solyc02g094750.1.1
 			
 			my $old_count;
-			
 			#if prev gene has Solyc id
 			if ( (defined $prev_mRNA_Solycid) && ($prev_mRNA_Solycid =~ /^Solyc/) ){
 				my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
