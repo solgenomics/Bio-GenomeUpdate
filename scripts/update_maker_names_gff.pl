@@ -45,14 +45,17 @@ my @lines        = split( /\n/, $input_old_gff );
 my $line_count   = scalar(@lines);
 my $line_counter = 0;
 my $gene_flag    = 0;
-my @gene_gff_line_arr;
+my @gene_gff_lines_arr;
 my $current_mRNA_Solycid;
-my $prev_mRNA_Solycid;
+my $prev_mRNA_Solycid;			#can be old ITAG2.4 Solyc id or new ITAG Solyc id or ID_OUT_OF_RANGE
+my $prev_mRNA_ITAG24_Solycid;		#can be only ITAG2.4 Solyc id ending wt 0
 my $new_id_output = '';
 my $outofrange_gene_counter = 0;
 my $new_gene_counter = 0;
 my %mRNA_Solycid_hash;
-my %mRNA_Solycid_new_gene_count_hash;
+my %mRNA_Solycid_new_gene_count_hash;	#hash of nof new genes after $prev_mRNA_ITAG24_Solycid
+my @solycid_new_gene_block_arr;		#arr of Solyc ids for new genes after $prev_mRNA_ITAG24_Solycid and before the next mRNA_ITAG24_Solycid
+my @solycid_increment_arr;		#arr of increments to use to create solyc ids for new genes in a block
 
 # parsing file to figure out number of novel genes between old Solyc ids
 foreach my $line (@lines) {
@@ -130,7 +133,7 @@ print STDERR "\nIdentified $new_gene_counter new genes. Now writing modified GFF
 %mRNA_Solycid_hash = ();
 $line_counter = 0;
 $gene_flag    = 0;
-@gene_gff_line_arr = ();
+@gene_gff_lines_arr = ();
 undef $current_mRNA_Solycid;
 undef $prev_mRNA_Solycid;
 
@@ -174,8 +177,7 @@ foreach my $line (@lines) {
 				my @value_arr = split (/,/,$value);
 				foreach my $alias (@value_arr){
 					if ($alias =~ /^Solyc/) {
-						chomp $alias; $current_mRNA_Solycid = $alias;
-						last;
+						chomp $alias; $current_mRNA_Solycid = $alias; last;
 					}
 				}
 			}
@@ -187,8 +189,7 @@ foreach my $line (@lines) {
 				undef $current_mRNA_Solycid;
 			}
 			else{
-				#add to hash
-				$mRNA_Solycid_hash{$current_mRNA_Solycid} = '';
+				$mRNA_Solycid_hash{$current_mRNA_Solycid} = ''; #add to hash
 			}		
 		}
 	}
@@ -199,37 +200,50 @@ foreach my $line (@lines) {
 	}
 	## if next gene
 	elsif (( $line =~ /\tgene\t/ ) && ( $gene_flag == 1) ){
-		#IF NO SOLYC ID, GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
-		if ( ! defined $current_mRNA_Solycid ){
-			#$current_mRNA_Solycid = 'TODO'; Solyc02g094750.1.1
+		#IF NO SOLYC ID AND PREV GENE WITH SOLYC ID FROM ITAG2.4 EXISTS IN HASH
+		#GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
+		if ((!defined $current_mRNA_Solycid) 
+			&& (defined $prev_mRNA_ITAG24_Solycid) 
+			&& (exists $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid})){
+
+			if (scalar @solycid_new_gene_block_arr == 0) {#this is a new gene interval
+				my $new_gene_count = $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid};
+
+				#Get Solycid prefix
+				#Solyc02g094750.1.1				
+				my @prev_mRNA_ITAG24_Solycid_arr = split (/\./, $prev_mRNA_ITAG24_Solycid);
+				my $old_count = substr ($prev_mRNA_ITAG24_Solycid_arr[0], -1, 1);#will always be 0
+				die "\nprev_mRNA_ITAG24_Solycid does not end with 0 in $prev_mRNA_ITAG24_Solycid_arr[0]\n" if $old_count!=0;
+				(my $prev_mRNA_ITAG24_Solycid_prefix = $prev_mRNA_ITAG24_Solycid) =~ s/\d\.\d\.\d$//; #removing gene and mRNA ver #
+				
+				#create new solyc ids for new genes in block before next ITAG2.4 gene
+				@solycid_increment_arr = ();#reset
+				if ($new_gene_count <= 9){
+					@solycid_increment_arr = $new_solyc_id_increments{$new_gene_count};
+					for (1..$new_gene_count){
+						my $new_count   = $old_count + $solycid_increment_arr[$_];
+						my $new_Solycid = $prev_mRNA_ITAG24_Solycid_prefix.$new_count.'1.1';
+						push @solycid_new_gene_block_arr,$new_Solycid;#assigns to bottom of arr
+					}
+					
+					
+				}
+				elsif ($new_gene_count > 9){
+					for (1..9){
+						my $new_count   = $old_count + $solycid_increment_arr[$_];
+						my $new_Solycid = $prev_mRNA_ITAG24_Solycid_prefix.$new_count.'1.1';
+						push @solycid_new_gene_block_arr,$new_Solycid;#assigns to bottom of arr
+					}
+					for (10..$new_gene_count){
+						$outofrange_gene_counter++;
+						my $new_Solycid = 'ID_OUT_OF_RANGE_'.$outofrange_gene_counter;
+						push @solycid_new_gene_block_arr,$new_Solycid;#assigns to bottom of arr
+					}
+				}
+			}
 			
-			my $old_count;
-			#if prev gene has Solyc id
-			if ( (defined $prev_mRNA_Solycid) && ($prev_mRNA_Solycid =~ /^Solyc/) ){
-				my @prev_mRNA_Solycid_arr = split (/\./, $prev_mRNA_Solycid);
-				#print STDERR "\t\t".$prev_mRNA_Solycid_arr[0]."\n\n";
-				#$prev_mRNA_Solycid_arr[0] =~ m/\d\d$/ or die "Invalid data in $prev_mRNA_Solycid_arr[0]\n";
-				#$old_count = substr ($prev_mRNA_Solycid_arr[0], -2, 2);
-				$old_count = substr ($prev_mRNA_Solycid_arr[0], -1, 1);
-				#print STDERR "\t\t$old_count\n\n";
-				#$prev_mRNA_Solycid =~ s/\d\d\.\d\.\d$//;
-				$prev_mRNA_Solycid =~ s/\d\.\d\.\d$//;
-			}
-			else{# cases where first gene does not have Solyc id
-				$prev_mRNA_Solycid = 'ID_OUT_OF_RANGE_';
-			}
-
-			# no multiples of 10
-			#print STDERR "old count $old_count prev_mRNA_Solycid $prev_mRNA_Solycid))\n";
-			if ( ( $prev_mRNA_Solycid !~ /ID_OUT_OF_RANGE/) && (($old_count + 1) % 10 != 0) ){ #if prev gene was out of range
-				my $new_count = $old_count + 1;
-				$current_mRNA_Solycid = $prev_mRNA_Solycid.$new_count.'.1.1' ;
-			}
-			else{
-				$outofrange_gene_counter++;
-				$current_mRNA_Solycid = 'ID_OUT_OF_RANGE_'.$outofrange_gene_counter; #placeholder for cases where there are > 9 new genes between 2 old Solyc ids
-			}
-
+			#shift and assign id in @solycid_new_gene_block_arr to current_mRNA_Solycid
+			$current_mRNA_Solycid = shift @solycid_new_gene_block_arr;# to current_mRNA_Solycid
 			$new_id_output = $new_id_output.$current_mRNA_Solycid."\n";
 		}
 
@@ -239,7 +253,7 @@ foreach my $line (@lines) {
 		my $five_prime_UTR_count = 0;
 
 		#process prev gene
-		foreach my $prev_gff_line ( @gene_gff_line_arr ){
+		foreach my $prev_gff_line ( @gene_gff_lines_arr ){
 			my @line_arr = split ("\t", $prev_gff_line);
 			$line_arr[1] = 'maker_ITAG'; #using source to reflect ITAG/eugene fed into maker
 			my $new_attr;
@@ -312,12 +326,16 @@ foreach my $line (@lines) {
 		}
 
 		$prev_mRNA_Solycid = $current_mRNA_Solycid;
+		#only remember ITAG2.4 mRNA Solyc ids (ending with 0)
+		if (($current_mRNA_Solycid =~ /^Solyc/) && ($current_mRNA_Solycid =~ /0\.\d\.\d$/)){
+			$prev_mRNA_ITAG24_Solycid = $current_mRNA_Solycid;
+		}
 		undef $current_mRNA_Solycid;
-		@gene_gff_line_arr = (); # reset
+		@gene_gff_lines_arr = (); # reset
 	}
 
 	#load for next round
-	push (@gene_gff_line_arr, $line);
+	push (@gene_gff_lines_arr, $line);
 }
 
 ## last gene
@@ -353,7 +371,7 @@ my $three_prime_UTR_count = 0;
 my $five_prime_UTR_count = 0;
 
 #process last gene
-foreach my $prev_gff_line ( @gene_gff_line_arr ){
+foreach my $prev_gff_line ( @gene_gff_lines_arr ){
 	my @line_arr = split ("\t", $prev_gff_line);
 	$line_arr[1] = 'maker_ITAG'; #using source to reflect ITAG/eugene fed into maker
 	my $new_attr;
