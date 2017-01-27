@@ -19,7 +19,6 @@ use strict;
 use warnings;
 use File::Slurp;
 use Getopt::Std;
-use Math::Random;
 
 our ( $opt_i, $opt_h );
 getopts('i:h');
