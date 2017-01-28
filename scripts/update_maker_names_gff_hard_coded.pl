@@ -108,9 +108,9 @@ foreach my $line (@lines) {
 	}
 	## if next gene
 	elsif (( $line =~ /\tgene\t/ ) && ( $gene_flag == 1) ){
-		#IF NO SOLYC ID IN PREV GENE, ADD TO COUNT OF NEW GENES AFTER PREV SOLYC ID
-		if ( ! defined $current_mRNA_Solycid ){
-			if ( exists $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid}){
+		#IF NO SOLYC ID IN PREV GENE AND PREV SOLYC ID EXISTS, ADD TO COUNT OF NEW GENES AFTER PREV SOLYC ID
+		if (( ! defined $current_mRNA_Solycid ) && (defined $prev_mRNA_ITAG24_Solycid)){
+			if ( exists $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid} ){
 				#$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid} = $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid}++;
 				$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid} = $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid} + 1;
 			}
@@ -119,7 +119,6 @@ foreach my $line (@lines) {
 			}
 			$new_gene_counter++;
 		}
-		
 		
 		if ( (defined $current_mRNA_Solycid) && ($current_mRNA_Solycid =~ /^Solyc/) ){
 			$prev_mRNA_Solycid = $current_mRNA_Solycid;
@@ -277,6 +276,14 @@ foreach my $line (@lines) {
 			$current_mRNA_Solycid = shift @solycid_new_gene_block_arr;# to current_mRNA_Solycid
 			$new_id_output = $new_id_output.$current_mRNA_Solycid."\n";
 		}
+		
+		if ((!defined $current_mRNA_Solycid) 
+			&& (!defined $prev_mRNA_ITAG24_Solycid)){
+			$outofrange_gene_counter++;
+			$current_mRNA_Solycid = 'ID_OUT_OF_RANGE_'.$outofrange_gene_counter;
+			
+		}
+
 
 		my $exon_count = 1;
 		my $cds_count = 1;
