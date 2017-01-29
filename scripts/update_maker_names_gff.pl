@@ -310,7 +310,10 @@ foreach my $line (@lines) {
 				print STDOUT $new_attr;
 			}
 			elsif( $line_arr[2] eq 'mRNA' ){ #add AED
-				$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Name='.$current_mRNA_Solycid.';';
+				my $current_gene_Solycid = $current_mRNA_Solycid;
+				$current_gene_Solycid =~ s/\.\d$//;
+				#$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Name='.$current_mRNA_Solycid.';';
+				$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Parent=gene:'.$current_gene_Solycid.';Name='.$current_mRNA_Solycid.';';
 
 				my @line_attr_arr = split (/\;/, $line_arr[8]);
 				foreach my $attr (@line_attr_arr){
@@ -464,7 +467,10 @@ foreach my $prev_gff_line ( @gene_gff_lines_arr ){
 		print STDOUT $new_attr;
 	}
 	elsif( $line_arr[2] eq 'mRNA' ){ #add AED
-		$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Name='.$current_mRNA_Solycid.';';
+		my $current_gene_Solycid = $current_mRNA_Solycid;
+		$current_gene_Solycid =~ s/\.\d$//;
+		$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Parent=gene:'.$current_gene_Solycid.';Name='.$current_mRNA_Solycid.';';
+		#$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Name='.$current_mRNA_Solycid.';';
 
 		my @line_attr_arr = split (/\;/, $line_arr[8]);
 		foreach my $attr (@line_attr_arr){
