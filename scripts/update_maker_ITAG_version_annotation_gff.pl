@@ -46,136 +46,25 @@ my $version_annotation_input_file = $opt_a;
 my $input_version_annotation      = read_file($version_annotation_input_file)
   or die "Could not open version and annotation input file: $version_annotation_input_file\n";
 
-my @version_annotations        = split( /\n/, $input_version_annotation );
 my @lines        = split( /\n/, $input_old_gff );
 my $line_count   = scalar(@lines);
 my $line_counter = 0;
-my $gene_flag    = 0;
-my @gene_gff_lines_arr;
-my $current_mRNA_Solycid;
-my $prev_mRNA_Solycid;			#can be old ITAG2.4 Solyc id or new ITAG Solyc id or ID_OUT_OF_RANGE
-my $prev_mRNA_ITAG24_Solycid;		#can be only ITAG2.4 Solyc id ending wt 0
-my $new_id_output = '';
-my $outofrange_gene_counter = 0;
-my $new_gene_counter = 0;
-my %mRNA_Solycid_hash;
-my %mRNA_Solycid_new_gene_count_hash;	#hash of nof new genes after $prev_mRNA_ITAG24_Solycid
-my @solycid_new_gene_block_arr;		#arr of Solyc ids for new genes after $prev_mRNA_ITAG24_Solycid and before the next mRNA_ITAG24_Solycid
-my @solycid_increment_arr;		#arr of increments to use to create solyc ids for new genes in a block
+my $current_Solycid;
 
-# PARSING FILE TO FIGURE OUT NUMBER OF NOVEL GENES BETWEEN OLD SOLYC IDS
-#foreach my $line (@lines) {
-#	$line_counter++;
-#	chomp($line);
+my @version_annotations        = split( /\n/, $input_version_annotation );
+my %solycid_new_version_hash;
+my %solycid_annotation_hash;
 
-#	if ( $line =~ m/^#/ ) {
-#		next;
-#	}
-
-#	print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count . ' to count novel genes';
-#	
-#	#get Solyc id, if any, from mRNA record
-#	if ( $line =~ m/\tmRNA\t/ ){
-#		my @line_arr = split ("\t", $line);
-#		my @line_attr_arr = split (/\;/, $line_arr[8]);
-#		foreach my $attr (@line_attr_arr){
-#			my ($key,$value) = split (/=/, $attr);
-#			if (($key eq 'Name') && ($value =~ /^Solyc/)){
-#				chomp $value; $current_mRNA_Solycid = $value; last;
-#			}
-#			elsif (($key eq 'Alias') && ($value =~ /^Solyc/) && ($value !~ /\,/)){ #only Solyc in Alias
-#				chomp $value; $current_mRNA_Solycid = $value; last;
-#			}
-#			elsif (($key eq 'Alias') && ($value =~ /Solyc/)){ #multiple aliases incl Solyc id
-#				my @value_arr = split (/,/,$value);
-#				foreach my $alias (@value_arr){
-#					if ($alias =~ /^Solyc/) {
-#						chomp $alias; $current_mRNA_Solycid = $alias;
-#						last;
-#					}
-#				}
-#			}
-#		}
-#		
-#		#reset if Solyc id already exists as Maker assigns same id to multiple genes during pass through
-#		if ( defined $current_mRNA_Solycid){
-#			if (exists ($mRNA_Solycid_hash{$current_mRNA_Solycid})){
-#				undef $current_mRNA_Solycid;
-#			}
-#			else{
-#				$mRNA_Solycid_hash{$current_mRNA_Solycid} = '';#add to hash
-#			}
-#		}
-#	}
-#	
-#	## if first gene
-#	if (( $line =~ /\tgene\t/ ) && ( $gene_flag == 0) ){
-#		$gene_flag = 1;
-#	}
-#	## if next gene
-#	elsif (( $line =~ /\tgene\t/ ) && ( $gene_flag == 1) ){
-#		#IF NO SOLYC ID IN PREV GENE AND PREV SOLYC ID EXISTS, ADD TO COUNT OF NEW GENES AFTER PREV SOLYC ID
-#		if (( ! defined $current_mRNA_Solycid ) && (defined $prev_mRNA_ITAG24_Solycid)){
-#			if ( exists $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid} ){
-#				#$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid} = $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid}++;
-#				$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid} = $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid} + 1;
-#			}
-#			else{
-#				$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid} = 1;
-#			}
-#			$new_gene_counter++;
-#		}
-#		
-#		if ( (defined $current_mRNA_Solycid) && ($current_mRNA_Solycid =~ /^Solyc/) ){
-#			$prev_mRNA_Solycid = $current_mRNA_Solycid;
-#		}
-#		
-#		#only remember ITAG2.4 mRNA Solyc ids (ending with 0)
-#		if ((defined $current_mRNA_Solycid) && ($current_mRNA_Solycid =~ /^Solyc/) && ($current_mRNA_Solycid =~ /0\.\d\.\d$/)){
-#			$prev_mRNA_ITAG24_Solycid = $current_mRNA_Solycid;
-#		}
-
-#		undef $current_mRNA_Solycid;
-#	}	
-#}
-
-##last gene
-#if ( ! defined $current_mRNA_Solycid ){
-#	if ( exists $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid}){
-#		#$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid} = $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid}++;
-#		$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid} = $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid} + 1;
-#	}
-#	else{
-#		$mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid} = 1;
-#	}
-#	$new_gene_counter++;
-#}
-
-
-
-# RESET
-print STDERR "\nIdentified $new_gene_counter new genes. Now writing modified GFF3\n";
-%mRNA_Solycid_hash = ();
-$line_counter = 0;
-$gene_flag    = 0;
-@gene_gff_lines_arr = ();
-undef $current_mRNA_Solycid;
-undef $prev_mRNA_Solycid;
-undef $prev_mRNA_ITAG24_Solycid;
-
-#HASH OF ARRAYS FOR UP TO 9 NEW GENES, > 9 SHOULD HAVE ID_OUT_OF_RANGE_ NAMES
-#hard coded for interval of 9 between 2 ITAG2.4 Solyc ids but it can be larger. Elastic ranges are better
-my %new_solyc_id_increments = (
-	1 => [5],
-	2 => [3,7],
-	3 => [3,5,7],
-	4 => [2,4,6,8],
-	5 => [1,2,4,6,8],
-	6 => [1,2,3,4,6,8],
-	7 => [1,2,3,4,5,6,8],
-	8 => [1,2,3,4,5,6,7,8],
-	9 => [1,2,3,4,5,6,7,8,9]
-);
+# CREATE HASH OF NEW VERSION AND ANNOTATION
+foreach my $line (@version_annotations) {
+	$line_counter++;
+	chomp($line);
+	
+	my @line_arr = split ("\t", $line);
+	$solycid_new_version_hash{$line_arr[0]} = $line_arr[1];
+	chomp $line_arr[2];
+	$solycid_annotation_hash{$line_arr[0]} = $line_arr[2];
+}
 
 # WRITING OUT MODIFIED GFF3
 foreach my $line (@lines) {
@@ -188,355 +77,186 @@ foreach my $line (@lines) {
 
 	print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count . ' to write modified GFF3';
 
-	#get Solyc id ,if any, from mRNA record
-	if ( $line =~ m/\tmRNA\t/ ){
-		my @line_arr = split ("\t", $line);
-		my @line_attr_arr = split (/\;/, $line_arr[8]);
+	my @line_arr = split ("\t", $line);
+	my @line_attr_arr = split (/\;/, $line_arr[8]);
+	my $new_attr;
+
+	#SL3.0ch07	maker_ITAG	gene	41762	45808	.	+	.	Alias=Solyc07g005010;ID=gene:Solyc07g005010.2;Name=Solyc07g005010.2;length=4046
+	if ( $line_arr[2] eq 'gene' ){
 		foreach my $attr (@line_attr_arr){
 			my ($key,$value) = split (/=/, $attr);
 			if (($key eq 'Name') && ($value =~ /^Solyc/)){
-				chomp $value; $current_mRNA_Solycid = $value; last;
-			}
-			elsif (($key eq 'Alias') && ($value =~ /^Solyc/) && ($value !~ /\,/)){ #only Solyc in Alias
-				chomp $value; $current_mRNA_Solycid = $value; last;
-			}
-			elsif (($key eq 'Alias') && ($value =~ /Solyc/)){ #multiple aliases incl Solyc id
-				my @value_arr = split (/,/,$value);
-				foreach my $alias (@value_arr){
-					if ($alias =~ /^Solyc/) {
-						chomp $alias; $current_mRNA_Solycid = $alias; last;
-					}
-				}
+				chomp $value; $current_Solycid = $value; last;
 			}
 		}
 		
-		#reset if Solyc id already exists
-		if ( defined $current_mRNA_Solycid){
-			if (exists ($mRNA_Solycid_hash{$current_mRNA_Solycid})){
-				undef $current_mRNA_Solycid;
+		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
+			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
+			my $length = $line_arr[4] - $line_arr[3];
+			my $current_alias_Solycid_new = $current_Solycid_new;
+			$current_alias_Solycid_new =~ s/\.\d$//;
+			$new_attr = 'Alias='.$current_alias_Solycid_new.';ID=gene:'.$current_Solycid_new.';Name='.$current_Solycid_new.';length='.$length."\n";
+
+			for (0..7){
+				print STDOUT $line_arr[$_]."\t";
 			}
-			else{
-				$mRNA_Solycid_hash{$current_mRNA_Solycid} = ''; #add to hash
-			}		
+			print STDOUT $new_attr;
+		}
+		else{
+			print STDOUT $line; #no changes
 		}
 	}
-
-	## if first gene
-	if (( $line =~ /\tgene\t/ ) && ( $gene_flag == 0) ){
-		$gene_flag = 1;
-	}
-	## if next gene
-	elsif (( $line =~ /\tgene\t/ ) && ( $gene_flag == 1) ){
-		#IF NO SOLYC ID AND PREV GENE WITH SOLYC ID FROM ITAG2.4 EXISTS IN HASH
-		#GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
-		if ((!defined $current_mRNA_Solycid) 
-			&& (defined $prev_mRNA_ITAG24_Solycid) 
-			&& (exists $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid})){
-
-			if (scalar @solycid_new_gene_block_arr == 0) {#this is a new gene interval
-				my $new_gene_count = $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid};
-
-				#Get Solycid prefix
-				#Solyc02g094750.1.1				
-				my @prev_mRNA_ITAG24_Solycid_arr = split (/\./, $prev_mRNA_ITAG24_Solycid);
-				my $old_count = substr ($prev_mRNA_ITAG24_Solycid_arr[0], -1, 1);#will always be 0
-				die "\nprev_mRNA_ITAG24_Solycid does not end with 0 in $prev_mRNA_ITAG24_Solycid_arr[0]\n" if $old_count != 0;
-				(my $prev_mRNA_ITAG24_Solycid_prefix = $prev_mRNA_ITAG24_Solycid) =~ s/\d\.\d\.\d$//; #removing gene and mRNA ver #
-				
-				#create new solyc ids for new genes in block before next ITAG2.4 gene
-				#@solycid_increment_arr = ();#reset
-				if ($new_gene_count <= 9){
-					#@solycid_increment_arr = $new_solyc_id_increments{$new_gene_count};
-					for (0 .. ($new_gene_count - 1)){
-						#my $new_count   = $old_count + $solycid_increment_arr[$_];
-						#my $new_count   = $old_count + @{$new_solyc_id_increments{$new_gene_count}}[$_];
-						#my $new_count   = $old_count + @{$new_solyc_id_increments{$new_gene_count}}[$_];
-						my $new_suffix   = @{$new_solyc_id_increments{$new_gene_count}}[$_];
-						#my $new_Solycid = $prev_mRNA_ITAG24_Solycid_prefix.$new_count.'.1.1';
-						my $new_Solycid = $prev_mRNA_ITAG24_Solycid_prefix.$new_suffix.'.1.1';
-						push @solycid_new_gene_block_arr,$new_Solycid;#assigns to bottom of arr
-					}
-					
-					
-				}
-				elsif ($new_gene_count > 9){
-					for (0..8){
-						#my $new_count   = $old_count + $solycid_increment_arr[$_];
-						#my $new_count   = $old_count + @{$new_solyc_id_increments{$new_gene_count}}[$_];
-						#my $new_count   = $old_count + @{$new_solyc_id_increments{$new_gene_count}}[$_];
-						#print STDERR "For $prev_mRNA_ITAG24_Solycid with $new_gene_count value ".@{$new_solyc_id_increments{$new_gene_count}}[$_]."\n";
-						my $new_suffix   = @{$new_solyc_id_increments{9}}[$_];
-						#my $new_Solycid = $prev_mRNA_ITAG24_Solycid_prefix.$new_count.'.1.1';
-						my $new_Solycid = $prev_mRNA_ITAG24_Solycid_prefix.$new_suffix.'.1.1';
-						push @solycid_new_gene_block_arr,$new_Solycid;#assigns to bottom of arr
-					}
-					for (9 .. ($new_gene_count - 1)){
-						$outofrange_gene_counter++;
-						my $new_Solycid = 'ID_OUT_OF_RANGE_'.$outofrange_gene_counter;
-						push @solycid_new_gene_block_arr,$new_Solycid;#assigns to bottom of arr
-					}
-				}
-			}
-			
-			#shift and assign id in @solycid_new_gene_block_arr to current_mRNA_Solycid
-			$current_mRNA_Solycid = shift @solycid_new_gene_block_arr;# to current_mRNA_Solycid
-			$new_id_output = $new_id_output.$current_mRNA_Solycid."\n";
-		}
-		
-		if ((!defined $current_mRNA_Solycid) 
-			&& (!defined $prev_mRNA_ITAG24_Solycid)){
-			$outofrange_gene_counter++;
-			$current_mRNA_Solycid = 'ID_OUT_OF_RANGE_'.$outofrange_gene_counter;
-			
-		}
-
-
-		my $exon_count = 1;
-		my $cds_count = 1;
-		my $three_prime_UTR_count = 0;
-		my $five_prime_UTR_count = 0;
-
-		#process prev gene
-		foreach my $prev_gff_line ( @gene_gff_lines_arr ){
-			my @line_arr = split ("\t", $prev_gff_line);
-			$line_arr[1] = 'maker_ITAG'; #using source to reflect ITAG/eugene fed into maker
-			my $new_attr;
-
-			if ( $line_arr[2] eq 'gene' ){
-				my $length = $line_arr[4] - $line_arr[3];
-				my $current_gene_Solycid = $current_mRNA_Solycid;
-				$current_gene_Solycid =~ s/\.\d$//;
-				my $current_alias_Solycid = $current_gene_Solycid;
-				$current_alias_Solycid =~ s/\.\d$//;
-				$new_attr = 'Alias='.$current_alias_Solycid.';ID=gene:'.$current_gene_Solycid.';Name='.$current_gene_Solycid.';length='.$length."\n";
-
-				for (0..7){
-					print STDOUT $line_arr[$_]."\t";
-				}
-				print STDOUT $new_attr;
-			}
-			elsif( $line_arr[2] eq 'mRNA' ){ #add AED
-				my $current_gene_Solycid = $current_mRNA_Solycid;
-				$current_gene_Solycid =~ s/\.\d$//;
-				#$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Name='.$current_mRNA_Solycid.';';
-				$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Parent=gene:'.$current_gene_Solycid.';Name='.$current_mRNA_Solycid.';';
-
-				my @line_attr_arr = split (/\;/, $line_arr[8]);
-				foreach my $attr (@line_attr_arr){
-					my ($key,$value) = split (/=/, $attr);
-					if ($key eq '_AED'){
-						$new_attr = $new_attr.'_AED='.$value;
-					}
-				}
-				for (0..7){
-					print STDOUT $line_arr[$_]."\t";
-				}
-				print STDOUT $new_attr."\n";
-			}
-			elsif( $line_arr[2] eq 'exon' ){
-				my $current_exon_Solycid = $current_mRNA_Solycid.'.'.$exon_count;
-				$exon_count++;
-				$new_attr = 'ID=exon:'.$current_exon_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
-				for (0..7){
-					print STDOUT $line_arr[$_]."\t";
-				}
-				print STDOUT $new_attr;
-
-			}
-			elsif( $line_arr[2] eq 'CDS' ){
-				my $current_cds_Solycid = $current_mRNA_Solycid.'.'.$cds_count;
-				$cds_count++;
-				$new_attr = 'ID=CDS:'.$current_cds_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
-				for (0..7){
-					print STDOUT $line_arr[$_]."\t";
-				}
-				print STDOUT $new_attr;
-			}
-			elsif( $line_arr[2] eq 'five_prime_UTR' ){
-				my $current_fiveprime_Solycid = $current_mRNA_Solycid.'.'.$five_prime_UTR_count;
-				$five_prime_UTR_count++;
-				$new_attr = 'ID=five_prime_UTR:'.$current_fiveprime_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
-				for (0..7){
-					print STDOUT $line_arr[$_]."\t";
-				}
-				print STDOUT $new_attr;
-			}
-			elsif( $line_arr[2] eq 'three_prime_UTR' ){
-				my $current_threeprime_Solycid = $current_mRNA_Solycid.'.'.$three_prime_UTR_count;
-				$three_prime_UTR_count++;
-				$new_attr = 'ID=three_prime_UTR:'.$current_threeprime_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
-				for (0..7){
-					print STDOUT $line_arr[$_]."\t";
-				}
-				print STDOUT $new_attr;
-			}
-		}
-
-		$prev_mRNA_Solycid = $current_mRNA_Solycid;
-		#only remember ITAG2.4 mRNA Solyc ids (ending with 0)
-		if (($current_mRNA_Solycid =~ /^Solyc/) && ($current_mRNA_Solycid =~ /0\.\d\.\d$/)){
-			$prev_mRNA_ITAG24_Solycid = $current_mRNA_Solycid;
-		}
-		undef $current_mRNA_Solycid;
-		@gene_gff_lines_arr = (); # reset
-	}
-
-	#load for next round
-	push (@gene_gff_lines_arr, $line);
-}
-
-## last gene
-#IF NO SOLYC ID, GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
-if ( ! defined $current_mRNA_Solycid ){
-
-	#IF NO SOLYC ID AND PREV GENE WITH SOLYC ID FROM ITAG2.4 EXISTS IN HASH
-	#GENERATE A NEW UNIQUE ID BASED UPON PREVIOUS ID
-	if ((!defined $current_mRNA_Solycid) 
-		&& (defined $prev_mRNA_ITAG24_Solycid) 
-		&& (exists $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid})){
-
-		if (scalar @solycid_new_gene_block_arr == 0) {#this is a new gene interval
-			my $new_gene_count = $mRNA_Solycid_new_gene_count_hash{$prev_mRNA_ITAG24_Solycid};
-
-			#Get Solycid prefix
-			#Solyc02g094750.1.1				
-			my @prev_mRNA_ITAG24_Solycid_arr = split (/\./, $prev_mRNA_ITAG24_Solycid);
-			my $old_count = substr ($prev_mRNA_ITAG24_Solycid_arr[0], -1, 1);#will always be 0
-			die "\nprev_mRNA_ITAG24_Solycid does not end with 0 in $prev_mRNA_ITAG24_Solycid_arr[0]\n" if $old_count!=0;
-			(my $prev_mRNA_ITAG24_Solycid_prefix = $prev_mRNA_ITAG24_Solycid) =~ s/\d\.\d\.\d$//; #removing gene and mRNA ver #
-			
-			#create new solyc ids for new genes in block before next ITAG2.4 gene
-			#@solycid_increment_arr = ();#reset <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< FIX
-			if ($new_gene_count <= 9){
-				#@solycid_increment_arr = $new_solyc_id_increments{$new_gene_count};
-				for (0 .. ($new_gene_count - 1)){
-					#my $new_count   = $old_count + $solycid_increment_arr[$_];
-					#my $new_count   = $old_count + @{$new_solyc_id_increments{$new_gene_count}}[$_];
-					#my $new_count   = $old_count + @{$new_solyc_id_increments{$new_gene_count}}[$_];
-					my $new_suffix   = @{$new_solyc_id_increments{$new_gene_count}}[$_];
-					#my $new_Solycid = $prev_mRNA_ITAG24_Solycid_prefix.$new_count.'.1.1';
-					my $new_Solycid = $prev_mRNA_ITAG24_Solycid_prefix.$new_suffix.'.1.1';
-					push @solycid_new_gene_block_arr,$new_Solycid;#assigns to bottom of arr
-				}
-				
-				
-			}
-			elsif ($new_gene_count > 9){
-				for (0 .. 8){
-					#my $new_count   = $old_count + $solycid_increment_arr[$_];
-					#my $new_count   = $old_count + @{$new_solyc_id_increments{$new_gene_count}}[$_];
-					#my $new_count   = $old_count + @{$new_solyc_id_increments{$new_gene_count}}[$_];
-					#my $new_suffix   = @{$new_solyc_id_increments{$new_gene_count}}[$_];
-					my $new_suffix   = @{$new_solyc_id_increments{9}}[$_];
-					#my $new_Solycid = $prev_mRNA_ITAG24_Solycid_prefix.$new_count.'.1.1';
-					my $new_Solycid = $prev_mRNA_ITAG24_Solycid_prefix.$new_suffix.'.1.1';
-					push @solycid_new_gene_block_arr,$new_Solycid;#assigns to bottom of arr
-				}
-				for (9 .. ($new_gene_count - 1)){
-					$outofrange_gene_counter++;
-					my $new_Solycid = 'ID_OUT_OF_RANGE_'.$outofrange_gene_counter;
-					push @solycid_new_gene_block_arr,$new_Solycid;#assigns to bottom of arr
-				}
-			}
-		}
-		
-		#shift and assign id in @solycid_new_gene_block_arr to current_mRNA_Solycid
-		$current_mRNA_Solycid = shift @solycid_new_gene_block_arr;# to current_mRNA_Solycid
-		$new_id_output = $new_id_output.$current_mRNA_Solycid."\n";
-	}
-
-	$new_id_output = $new_id_output.$current_mRNA_Solycid."\n";
-}
-
-my $exon_count = 1;
-my $cds_count = 1;
-my $three_prime_UTR_count = 0;
-my $five_prime_UTR_count = 0;
-
-#process last gene
-foreach my $prev_gff_line ( @gene_gff_lines_arr ){
-	my @line_arr = split ("\t", $prev_gff_line);
-	$line_arr[1] = 'maker_ITAG'; #using source to reflect ITAG/eugene fed into maker
-	my $new_attr;
-
-	if ( $line_arr[2] eq 'gene' ){
-		my $length = $line_arr[4] - $line_arr[3];
-		my $current_gene_Solycid = $current_mRNA_Solycid;
-		$current_gene_Solycid =~ s/\.\d$//;
-		my $current_alias_Solycid = $current_gene_Solycid;
-		$current_alias_Solycid =~ s/\.\d$//;
-		$new_attr = 'Alias='.$current_alias_Solycid.';ID=gene:'.$current_gene_Solycid.';Name='.$current_gene_Solycid.';length='.$length."\n";
-
-		for (0..7){
-			print STDOUT $line_arr[$_]."\t";
-		}
-		print STDOUT $new_attr;
-	}
-	elsif( $line_arr[2] eq 'mRNA' ){ #add AED
-		my $current_gene_Solycid = $current_mRNA_Solycid;
-		$current_gene_Solycid =~ s/\.\d$//;
-		$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Parent=gene:'.$current_gene_Solycid.';Name='.$current_mRNA_Solycid.';';
-		#$new_attr = 'ID=mRNA:'.$current_mRNA_Solycid.';Name='.$current_mRNA_Solycid.';';
-
-		my @line_attr_arr = split (/\;/, $line_arr[8]);
+	#SL3.0ch07	maker_ITAG	mRNA	41762	45808	.	+	.	ID=mRNA:Solyc07g005010.2.1;Name=Solyc07g005010.2.1;_AED=0.03
+	elsif ( $line_arr[2] eq 'mRNA' ){
+		my $AED;
 		foreach my $attr (@line_attr_arr){
 			my ($key,$value) = split (/=/, $attr);
-			if ($key eq '_AED'){
-				$new_attr = $new_attr.'AED='.$value;
+			if (($key eq 'Name') && ($value =~ /^Solyc/)){
+				chomp $value; $current_Solycid = $value;
+			}
+			elsif ( $key eq '_AED' ){
+				chomp $value; $AED = $value;
 			}
 		}
-		for (0..7){
-			print STDOUT $line_arr[$_]."\t";
-		}
-		print STDOUT $new_attr."\n";
-	}
-	elsif( $line_arr[2] eq 'exon' ){
-		my $current_exon_Solycid = $current_mRNA_Solycid.'.'.$exon_count;
-		$exon_count++;
-		$new_attr = 'ID=exon:'.$current_exon_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
-		for (0..7){
-			print STDOUT $line_arr[$_]."\t";
-		}
-		print STDOUT $new_attr;
 
-	}
-	elsif( $line_arr[2] eq 'CDS' ){
-		my $current_cds_Solycid = $current_mRNA_Solycid.'.'.$cds_count;
-		$cds_count++;
-		$new_attr = 'ID=CDS:'.$current_cds_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
-		for (0..7){
-			print STDOUT $line_arr[$_]."\t";
+		$current_Solycid =~ s/\.\d$//;
+		
+		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
+			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
+			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
+			$current_Solycid_new = $current_Solycid_new.'.1';
+			$new_attr = 'ID=mRNA:'.$current_Solycid_new.';Name='.$current_Solycid_new.';_AED='.$AED;
+
+			for (0..7){
+				print STDOUT $line_arr[$_]."\t";
+			}
+			print STDOUT $new_attr;
 		}
-		print STDOUT $new_attr;
-	}
-	elsif( $line_arr[2] eq 'five_prime_UTR' ){
-		my $current_fiveprime_Solycid = $current_mRNA_Solycid.'.'.$five_prime_UTR_count;
-		$five_prime_UTR_count++;
-		$new_attr = 'ID=five_prime_UTR:'.$current_fiveprime_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
-		for (0..7){
-			print STDOUT $line_arr[$_]."\t";
+		else{
+			chomp $line;
+			print STDOUT $line;
 		}
-		print STDOUT $new_attr;
+		
+		die "$current_Solycid not present in annotation hash" if ! exists $solycid_annotation_hash{$current_Solycid};
+		my $annotation = $solycid_annotation_hash{$current_Solycid};
+		print STDOUT ';'.$annotation."\n"; #only adding annotation
+		
+	
 	}
-	elsif( $line_arr[2] eq 'three_prime_UTR' ){
-		my $current_threeprime_Solycid = $current_mRNA_Solycid.'.'.$three_prime_UTR_count;
-		$three_prime_UTR_count++;
-		$new_attr = 'ID=three_prime_UTR:'.$current_threeprime_Solycid.';Parent=mRNA:'.$current_mRNA_Solycid."\n";
-		for (0..7){
-			print STDOUT $line_arr[$_]."\t";
+	#SL3.0ch07	maker_ITAG	exon	41762	42298	.	+	.	ID=exon:Solyc07g005010.2.1.1;Parent=mRNA:Solyc07g005010.2.1
+	elsif ( $line_arr[2] eq 'exon' ){
+		my $exon_count;
+		foreach my $attr (@line_attr_arr){
+			my ($key,$value) = split (/=/, $attr);
+			if ( $key eq 'ID' ){
+				chomp $value; 
+				$value =~ s/^exon://;
+				($exon_count = $value) =~ s/\d$//; #get count
+				$value =~ s/\.\d\.//;
+				$current_Solycid = $value;
+			}
 		}
-		print STDOUT $new_attr;
+		
+		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
+			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
+			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
+			$new_attr = 'ID=exon:'.$current_Solycid_new.'.1'.$exon_count.';Parent=mRNA:'.$current_Solycid_new.'.1'."\n";
+
+			for (0..7){
+				print STDOUT $line_arr[$_]."\t";
+			}
+			print STDOUT $new_attr;
+		}
+		else{
+			print STDOUT $line;
+		}	
 	}
+	#SL3.0ch07	maker_ITAG	CDS	41762	42298	.	+	0	ID=CDS:Solyc07g005010.2.1.1;Parent=mRNA:Solyc07g005010.2.1
+	elsif ( $line_arr[2] eq 'CDS' ){
+		my $CDS_count;
+		foreach my $attr (@line_attr_arr){
+			my ($key,$value) = split (/=/, $attr);
+			if ( $key eq 'ID' ){
+				chomp $value; 
+				$value =~ s/^CDS://;
+				($CDS_count = $value) =~ s/\d$//; #get count
+				$value =~ s/\.\d\.//;
+				$current_Solycid = $value;
+			}
+		}
+		
+		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
+			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
+			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
+			$new_attr = 'ID=CDS:'.$current_Solycid_new.'.1'.$CDS_count.';Parent=mRNA:'.$current_Solycid_new.'.1'."\n";
+
+			for (0..7){
+				print STDOUT $line_arr[$_]."\t";
+			}
+			print STDOUT $new_attr;
+		}
+		else{
+			print STDOUT $line;
+		}	
+	}	
+	#SL3.0ch07	maker_ITAG	five_prime_UTR	16549	16768	.	+	.	ID=five_prime_UTR:Solyc07g005000.2.1.0;Parent=mRNA:Solyc07g005000.2.1
+	elsif ( $line_arr[2] eq 'five_prime_UTR' ){
+		my $five_prime_UTR_count;
+		foreach my $attr (@line_attr_arr){
+			my ($key,$value) = split (/=/, $attr);
+			if ( $key eq 'ID' ){
+				chomp $value; 
+				$value =~ s/^five_prime_UTR://;
+				($five_prime_UTR_count = $value) =~ s/\d$//; #get count
+				$value =~ s/\.\d\.//;
+				$current_Solycid = $value;
+			}
+		}
+		
+		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
+			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
+			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
+			$new_attr = 'ID=five_prime_UTR:'.$current_Solycid_new.'.1'.$five_prime_UTR_count.';Parent=mRNA:'.$current_Solycid_new.'.1'."\n";
+
+			for (0..7){
+				print STDOUT $line_arr[$_]."\t";
+			}
+			print STDOUT $new_attr;
+		}
+		else{
+			print STDOUT $line;
+		}	
+	}
+	#SL3.0ch07	maker_ITAG	three_prime_UTR	34898	35133	.	+	.	ID=three_prime_UTR:Solyc07g005000.2.1.0;Parent=mRNA:Solyc07g005000.2.1
+	elsif ( $line_arr[2] eq 'three_prime_UTR' ){
+		my $three_prime_UTR_count;
+		foreach my $attr (@line_attr_arr){
+			my ($key,$value) = split (/=/, $attr);
+			if ( $key eq 'ID' ){
+				chomp $value; 
+				$value =~ s/^three_prime_UTR://;
+				($three_prime_UTR_count = $value) =~ s/\d$//; #get count
+				$value =~ s/\.\d\.//;
+				$current_Solycid = $value;
+			}
+		}
+		
+		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
+			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
+			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
+			$new_attr = 'ID=three_prime_UTR:'.$current_Solycid_new.'.1'.$three_prime_UTR_count.';Parent=mRNA:'.$current_Solycid_new.'.1'."\n";
+
+			for (0..7){
+				print STDOUT $line_arr[$_]."\t";
+			}
+			print STDOUT $new_attr;
+		}
+		else{
+			print STDOUT $line;
+		}	
+	}	
 }
 
-unless ( open( OID, ">$new_id_output_file" ) ) {
-	print STDERR "Cannot open $new_id_output_file\n";
-	exit 1;
-}
-print OID $new_id_output;
-close(OID);
-
-print STDERR "\nNumber of genes without Solyc id assignments (ID_OUT_OF_RANGE): $outofrange_gene_counter\n";
 
 #----------------------------------------------------------------------------
 
@@ -546,7 +266,7 @@ sub help {
 
     Description:
 
-     Gets Solyc id from the mRNA record and assigns to gene and mRNA records. Generates a new Solyc id (skipping over multiples of 10 to avoid old ids) if no old id was passed through and assigns to gene and mRNA records. Generates a file with list of new Solyc ids. No need to check if any new id overlaps with a deprecated gene. Output GFF contains feature names in ITAG convention
+     For a Maker_ITAG GFF file produced by update_maker_names_gff.pl, this script updates the version number of the Solyc id if the gene model has been updated and adds in anotation fields to the attribute column Output GFF contains feature names in ITAG convention
 
 
     Usage:
@@ -555,6 +275,7 @@ sub help {
     Flags:
 
      -i  old GFF file (required)
+     -a  Tab separated file with version and annotation (required)
      -h  Help
 
 
@@ -575,16 +296,62 @@ EOF
 __END__
 
 
-# ITAG GFF3
-##gff-version 3
-##feature-ontology http://song.cvs.sourceforge.net/*checkout*/song/ontology/sofa.obo?revision=1.93
-##sequence-region SL2.50ch00 1 21805821
-SL2.50ch00	ITAG_eugene	gene	16437	18189	.	+	.	Alias=Solyc00g005000;ID=gene:Solyc00g005000.2;Name=Solyc00g005000.2;from_BOGAS=1;length=1753
-SL2.50ch00	ITAG_eugene	mRNA	16437	18189	.	+	.	ID=mRNA:Solyc00g005000.2.1;Name=Solyc00g005000.2.1;Note=Aspartic proteinase nepenthesin I (AHRD V1 **-- A9ZMF9_NEPAL)%3B contains Interpro domain(s)  IPR001461  Peptidase A1 ;Ontology_term=GO:0006508;Parent=gene:Solyc00g005000.2;from_BOGAS=1;interpro2go_term=GO:0006508;length=1753;nb_exon=2
-SL2.50ch00	ITAG_eugene	exon	16437	17275	.	+	.	ID=exon:Solyc00g005000.2.1.1;Parent=mRNA:Solyc00g005000.2.1;from_BOGAS=1
-SL2.50ch00	ITAG_eugene	five_prime_UTR	16437	16479	.	+	.	ID=five_prime_UTR:Solyc00g005000.2.1.0;Parent=mRNA:Solyc00g005000.2.1;from_BOGAS=1
-SL2.50ch00	ITAG_eugene	CDS	16480	17275	.	+	0	ID=CDS:Solyc00g005000.2.1.1;Parent=mRNA:Solyc00g005000.2.1;from_BOGAS=1
-SL2.50ch00	ITAG_eugene	intron	17276	17335	.	+	.	ID=intron:Solyc00g005000.2.1.1;Parent=mRNA:Solyc00g005000.2.1;from_BOGAS=1
-SL2.50ch00	ITAG_eugene	exon	17336	18189	.	+	0	ID=exon:Solyc00g005000.2.1.2;Parent=mRNA:Solyc00g005000.2.1;from_BOGAS=1
-SL2.50ch00	ITAG_eugene	CDS	17336	17940	.	+	2	ID=CDS:Solyc00g005000.2.1.2;Parent=mRNA:Solyc00g005000.2.1;from_BOGAS=1
-SL2.50ch00	ITAG_eugene	three_prime_UTR	17941	18189	.	+	.	ID=three_prime_UTR:Solyc00g005000.2.1.0;Parent=mRNA:Solyc00g005000.2.1;from_BOGAS=1
+# Maker ITAG GFF3
+SL3.0ch07	maker_ITAG	gene	16549	35133	.	+	.	Alias=Solyc07g005000;ID=gene:Solyc07g005000.2;Name=Solyc07g005000.2;length=18584
+SL3.0ch07	maker_ITAG	mRNA	16549	35133	.	+	.	ID=mRNA:Solyc07g005000.2.1;Name=Solyc07g005000.2.1;_AED=0.10
+SL3.0ch07	maker_ITAG	five_prime_UTR	16549	16768	.	+	.	ID=five_prime_UTR:Solyc07g005000.2.1.0;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	16549	17005	.	+	.	ID=exon:Solyc07g005000.2.1.1;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	16769	17005	.	+	0	ID=CDS:Solyc07g005000.2.1.1;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	19253	19327	.	+	.	ID=exon:Solyc07g005000.2.1.2;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	19253	19327	.	+	0	ID=CDS:Solyc07g005000.2.1.2;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	19480	19533	.	+	.	ID=exon:Solyc07g005000.2.1.3;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	19480	19533	.	+	0	ID=CDS:Solyc07g005000.2.1.3;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	20043	20108	.	+	.	ID=exon:Solyc07g005000.2.1.4;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	20043	20108	.	+	0	ID=CDS:Solyc07g005000.2.1.4;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	21090	21148	.	+	.	ID=exon:Solyc07g005000.2.1.5;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	21090	21148	.	+	0	ID=CDS:Solyc07g005000.2.1.5;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	21608	21684	.	+	.	ID=exon:Solyc07g005000.2.1.6;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	21608	21684	.	+	1	ID=CDS:Solyc07g005000.2.1.6;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	22176	22301	.	+	.	ID=exon:Solyc07g005000.2.1.7;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	22176	22301	.	+	2	ID=CDS:Solyc07g005000.2.1.7;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	23257	23291	.	+	.	ID=exon:Solyc07g005000.2.1.8;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	23257	23291	.	+	2	ID=CDS:Solyc07g005000.2.1.8;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	24248	24348	.	+	.	ID=exon:Solyc07g005000.2.1.9;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	24248	24348	.	+	0	ID=CDS:Solyc07g005000.2.1.9;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	24419	24514	.	+	.	ID=exon:Solyc07g005000.2.1.10;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	24419	24514	.	+	1	ID=CDS:Solyc07g005000.2.1.10;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	25782	25846	.	+	.	ID=exon:Solyc07g005000.2.1.11;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	25782	25846	.	+	1	ID=CDS:Solyc07g005000.2.1.11;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	26427	26498	.	+	.	ID=exon:Solyc07g005000.2.1.12;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	26427	26498	.	+	2	ID=CDS:Solyc07g005000.2.1.12;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	28705	28875	.	+	.	ID=exon:Solyc07g005000.2.1.13;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	28705	28875	.	+	2	ID=CDS:Solyc07g005000.2.1.13;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	29459	29658	.	+	.	ID=exon:Solyc07g005000.2.1.14;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	29459	29658	.	+	2	ID=CDS:Solyc07g005000.2.1.14;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	29779	29845	.	+	.	ID=exon:Solyc07g005000.2.1.15;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	29779	29845	.	+	0	ID=CDS:Solyc07g005000.2.1.15;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	30863	31038	.	+	.	ID=exon:Solyc07g005000.2.1.16;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	30863	31038	.	+	2	ID=CDS:Solyc07g005000.2.1.16;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	31356	31457	.	+	.	ID=exon:Solyc07g005000.2.1.17;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	31356	31457	.	+	0	ID=CDS:Solyc07g005000.2.1.17;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	32716	32763	.	+	.	ID=exon:Solyc07g005000.2.1.18;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	32716	32763	.	+	0	ID=CDS:Solyc07g005000.2.1.18;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	33107	33250	.	+	.	ID=exon:Solyc07g005000.2.1.19;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	33107	33250	.	+	0	ID=CDS:Solyc07g005000.2.1.19;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	33320	33415	.	+	.	ID=exon:Solyc07g005000.2.1.20;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	33320	33415	.	+	0	ID=CDS:Solyc07g005000.2.1.20;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	34031	34132	.	+	.	ID=exon:Solyc07g005000.2.1.21;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	34031	34132	.	+	0	ID=CDS:Solyc07g005000.2.1.21;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	CDS	34805	34897	.	+	0	ID=CDS:Solyc07g005000.2.1.22;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	exon	34805	35133	.	+	.	ID=exon:Solyc07g005000.2.1.22;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	three_prime_UTR	34898	35133	.	+	.	ID=three_prime_UTR:Solyc07g005000.2.1.0;Parent=mRNA:Solyc07g005000.2.1
+SL3.0ch07	maker_ITAG	gene	41762	45808	.	+	.	Alias=Solyc07g005010;ID=gene:Solyc07g005010.2;Name=Solyc07g005010.2;length=4046
+SL3.0ch07	maker_ITAG	mRNA	41762	45808	.	+	.	ID=mRNA:Solyc07g005010.2.1;Name=Solyc07g005010.2.1;_AED=0.03
+SL3.0ch07	maker_ITAG	exon	41762	42298	.	+	.	ID=exon:Solyc07g005010.2.1.1;Parent=mRNA:Solyc07g005010.2.1
+SL3.0ch07	maker_ITAG	CDS	41762	42298	.	+	0	ID=CDS:Solyc07g005010.2.1.1;Parent=mRNA:Solyc07g005010.2.1
+SL3.0ch07	maker_ITAG	exon	42918	44907	.	+	.	ID=exon:Solyc07g005010.2.1.2;Parent=mRNA:Solyc07g005010.2.1
+SL3.0ch07	maker_ITAG	CDS	42918	44907	.	+	0	ID=CDS:Solyc07g005010.2.1.2;Parent=mRNA:Solyc07g005010.2.1
+SL3.0ch07	maker_ITAG	CDS	45174	45478	.	+	2	ID=CDS:Solyc07g005010.2.1.3;Parent=mRNA:Solyc07g005010.2.1
+SL3.0ch07	maker_ITAG	exon	45174	45808	.	+	.	ID=exon:Solyc07g005010.2.1.3;Parent=mRNA:Solyc07g005010.2.1
+SL3.0ch07	maker_ITAG	three_prime_UTR	45479	45808	.	+	.	ID=three_prime_UTR:Solyc07g005010.2.1.0;Parent=mRNA:Solyc07g005010.2.1
+
