@@ -180,7 +180,8 @@ foreach my $line (@lines) {
 			if ( $key eq 'ID' ){
 				chomp $value; 
 				$value =~ s/^CDS://;
-				$CDS_count = $value =~ m/[\d]+$/; #get count
+				#$CDS_count = $value =~ m/[\d]+$/; #get count, not working in some cases
+				my @val_arr = split (/\./, $value); $CDS_count = $val_arr[3];
 				$value =~ s/\.\d\.[\d]+$//;
 				$current_Solycid = $value;
 			}
@@ -207,7 +208,8 @@ foreach my $line (@lines) {
 			if ( $key eq 'ID' ){
 				chomp $value; 
 				$value =~ s/^five_prime_UTR://;
-				$five_prime_UTR_count = $value =~ m/[\d]+$/; #get count
+				#$five_prime_UTR_count = $value =~ m/[\d]+$/; #get count, not working in some cases
+				my @val_arr = split (/\./, $value); $five_prime_UTR_count = $val_arr[3];
 				$value =~ s/\.\d\.[\d]+$//;
 				$current_Solycid = $value;
 			}
@@ -216,7 +218,7 @@ foreach my $line (@lines) {
 		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
 			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
 			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
-			$new_attr = 'ID=five_prime_UTR:'.$current_Solycid_new.'.1'.$five_prime_UTR_count.';Parent=mRNA:'.$current_Solycid_new.'.1'."\n";
+			$new_attr = 'ID=five_prime_UTR:'.$current_Solycid_new.'.1.'.$five_prime_UTR_count.';Parent=mRNA:'.$current_Solycid_new.'.1'."\n";
 
 			for (0..7){
 				print STDOUT $line_arr[$_]."\t";
@@ -234,7 +236,8 @@ foreach my $line (@lines) {
 			if ( $key eq 'ID' ){
 				chomp $value; 
 				$value =~ s/^three_prime_UTR://;
-				$three_prime_UTR_count = $value =~ m/[\d]+$/; #get count
+				#$three_prime_UTR_count = $value =~ m/[\d]+$/; #get count, not working in some cases
+				my @val_arr = split (/\./, $value); $three_prime_UTR_count = $val_arr[3];
 				$value =~ s/\.\d\.[\d]+$//;
 				$current_Solycid = $value;
 			}
@@ -243,7 +246,7 @@ foreach my $line (@lines) {
 		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
 			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
 			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
-			$new_attr = 'ID=three_prime_UTR:'.$current_Solycid_new.'.1'.$three_prime_UTR_count.';Parent=mRNA:'.$current_Solycid_new.'.1'."\n";
+			$new_attr = 'ID=three_prime_UTR:'.$current_Solycid_new.'.1.'.$three_prime_UTR_count.';Parent=mRNA:'.$current_Solycid_new.'.1'."\n";
 
 			for (0..7){
 				print STDOUT $line_arr[$_]."\t";
