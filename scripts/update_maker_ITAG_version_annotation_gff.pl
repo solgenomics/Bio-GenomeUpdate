@@ -52,12 +52,15 @@ my $line_counter = 0;
 my $current_Solycid;
 
 my @version_annotations        = split( /\n/, $input_version_annotation );
+my $annotation_line_count   = scalar(@version_annotations);
 my %solycid_new_version_hash;
 my %solycid_annotation_hash;
 
 # CREATE HASH OF NEW VERSION AND ANNOTATION
 foreach my $line (@version_annotations) {
 	$line_counter++;
+	print STDERR "\rParsing Annotation line ". $line_counter . " of ". $annotation_line_count . ' to populate hashes';
+	
 	chomp($line);
 	
 	my @line_arr = split ("\t", $line);
@@ -66,6 +69,7 @@ foreach my $line (@version_annotations) {
 	$solycid_annotation_hash{$line_arr[0]} = $line_arr[2];
 }
 
+$line_counter = 0;
 # WRITING OUT MODIFIED GFF3
 foreach my $line (@lines) {
 	$line_counter++;
@@ -81,7 +85,6 @@ foreach my $line (@lines) {
 	my @line_attr_arr = split (/\;/, $line_arr[8]);
 	my $new_attr;
 
-	#SL3.0ch07	maker_ITAG	gene	41762	45808	.	+	.	Alias=Solyc07g005010;ID=gene:Solyc07g005010.2;Name=Solyc07g005010.2;length=4046
 	if ( $line_arr[2] eq 'gene' ){
 		foreach my $attr (@line_attr_arr){
 			my ($key,$value) = split (/=/, $attr);
@@ -103,10 +106,9 @@ foreach my $line (@lines) {
 			print STDOUT $new_attr;
 		}
 		else{
-			print STDOUT $line; #no changes
+			print STDOUT $line."\n"; #no changes
 		}
 	}
-	#SL3.0ch07	maker_ITAG	mRNA	41762	45808	.	+	.	ID=mRNA:Solyc07g005010.2.1;Name=Solyc07g005010.2.1;_AED=0.03
 	elsif ( $line_arr[2] eq 'mRNA' ){
 		my $AED;
 		foreach my $attr (@line_attr_arr){
@@ -143,7 +145,6 @@ foreach my $line (@lines) {
 		
 	
 	}
-	#SL3.0ch07	maker_ITAG	exon	41762	42298	.	+	.	ID=exon:Solyc07g005010.2.1.1;Parent=mRNA:Solyc07g005010.2.1
 	elsif ( $line_arr[2] eq 'exon' ){
 		my $exon_count;
 		foreach my $attr (@line_attr_arr){
@@ -151,8 +152,9 @@ foreach my $line (@lines) {
 			if ( $key eq 'ID' ){
 				chomp $value; 
 				$value =~ s/^exon://;
-				($exon_count = $value) =~ s/\d$//; #get count
-				$value =~ s/\.\d\.//;
+				#$exon_count = $value =~ m/[\d]+$/; #get count for any exon count, not working in some cases
+				my @val_arr = split (/\./, $value); $exon_count = $val_arr[3];
+				$value =~ s/\.\d\.[\d]+$//; # remove mRNA and exon count
 				$current_Solycid = $value;
 			}
 		}
@@ -160,7 +162,7 @@ foreach my $line (@lines) {
 		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
 			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
 			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
-			$new_attr = 'ID=exon:'.$current_Solycid_new.'.1'.$exon_count.';Parent=mRNA:'.$current_Solycid_new.'.1'."\n";
+			$new_attr = 'ID=exon:'.$current_Solycid_new.'.1.'.$exon_count.';Parent=mRNA:'.$current_Solycid_new.'.1'."\n";
 
 			for (0..7){
 				print STDOUT $line_arr[$_]."\t";
@@ -168,10 +170,9 @@ foreach my $line (@lines) {
 			print STDOUT $new_attr;
 		}
 		else{
-			print STDOUT $line;
+			print STDOUT $line."\n";
 		}	
 	}
-	#SL3.0ch07	maker_ITAG	CDS	41762	42298	.	+	0	ID=CDS:Solyc07g005010.2.1.1;Parent=mRNA:Solyc07g005010.2.1
 	elsif ( $line_arr[2] eq 'CDS' ){
 		my $CDS_count;
 		foreach my $attr (@line_attr_arr){
@@ -179,8 +180,8 @@ foreach my $line (@lines) {
 			if ( $key eq 'ID' ){
 				chomp $value; 
 				$value =~ s/^CDS://;
-				($CDS_count = $value) =~ s/\d$//; #get count
-				$value =~ s/\.\d\.//;
+				$CDS_count = $value =~ m/[\d]+$/; #get count
+				$value =~ s/\.\d\.[\d]+$//;
 				$current_Solycid = $value;
 			}
 		}
@@ -188,7 +189,7 @@ foreach my $line (@lines) {
 		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
 			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
 			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
-			$new_attr = 'ID=CDS:'.$current_Solycid_new.'.1'.$CDS_count.';Parent=mRNA:'.$current_Solycid_new.'.1'."\n";
+			$new_attr = 'ID=CDS:'.$current_Solycid_new.'.1.'.$CDS_count.';Parent=mRNA:'.$current_Solycid_new.'.1'."\n";
 
 			for (0..7){
 				print STDOUT $line_arr[$_]."\t";
@@ -196,10 +197,9 @@ foreach my $line (@lines) {
 			print STDOUT $new_attr;
 		}
 		else{
-			print STDOUT $line;
+			print STDOUT $line."\n";
 		}	
 	}	
-	#SL3.0ch07	maker_ITAG	five_prime_UTR	16549	16768	.	+	.	ID=five_prime_UTR:Solyc07g005000.2.1.0;Parent=mRNA:Solyc07g005000.2.1
 	elsif ( $line_arr[2] eq 'five_prime_UTR' ){
 		my $five_prime_UTR_count;
 		foreach my $attr (@line_attr_arr){
@@ -207,8 +207,8 @@ foreach my $line (@lines) {
 			if ( $key eq 'ID' ){
 				chomp $value; 
 				$value =~ s/^five_prime_UTR://;
-				($five_prime_UTR_count = $value) =~ s/\d$//; #get count
-				$value =~ s/\.\d\.//;
+				$five_prime_UTR_count = $value =~ m/[\d]+$/; #get count
+				$value =~ s/\.\d\.[\d]+$//;
 				$current_Solycid = $value;
 			}
 		}
@@ -224,10 +224,9 @@ foreach my $line (@lines) {
 			print STDOUT $new_attr;
 		}
 		else{
-			print STDOUT $line;
+			print STDOUT $line."\n";
 		}	
 	}
-	#SL3.0ch07	maker_ITAG	three_prime_UTR	34898	35133	.	+	.	ID=three_prime_UTR:Solyc07g005000.2.1.0;Parent=mRNA:Solyc07g005000.2.1
 	elsif ( $line_arr[2] eq 'three_prime_UTR' ){
 		my $three_prime_UTR_count;
 		foreach my $attr (@line_attr_arr){
@@ -235,8 +234,8 @@ foreach my $line (@lines) {
 			if ( $key eq 'ID' ){
 				chomp $value; 
 				$value =~ s/^three_prime_UTR://;
-				($three_prime_UTR_count = $value) =~ s/\d$//; #get count
-				$value =~ s/\.\d\.//;
+				$three_prime_UTR_count = $value =~ m/[\d]+$/; #get count
+				$value =~ s/\.\d\.[\d]+$//;
 				$current_Solycid = $value;
 			}
 		}
@@ -252,10 +251,13 @@ foreach my $line (@lines) {
 			print STDOUT $new_attr;
 		}
 		else{
-			print STDOUT $line;
+			print STDOUT $line."\n";
 		}	
 	}	
 }
+
+print STDERR "\n";
+
 
 
 #----------------------------------------------------------------------------
