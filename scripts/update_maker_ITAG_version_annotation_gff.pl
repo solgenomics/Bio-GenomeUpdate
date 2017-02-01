@@ -60,9 +60,9 @@ my %solycid_annotation_hash;
 foreach my $line (@version_annotations) {
 	$line_counter++;
 	print STDERR "\rParsing Annotation line ". $line_counter . " of ". $annotation_line_count . ' to populate hashes';
-	
+
 	chomp($line);
-	
+
 	my @line_arr = split ("\t", $line);
 	$solycid_new_version_hash{$line_arr[0]} = $line_arr[1];
 	chomp $line_arr[2];
@@ -92,7 +92,7 @@ foreach my $line (@lines) {
 				chomp $value; $current_Solycid = $value; last;
 			}
 		}
-		
+
 		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
 			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
 			my $length = $line_arr[4] - $line_arr[3];
@@ -122,12 +122,14 @@ foreach my $line (@lines) {
 		}
 
 		$current_Solycid =~ s/\.\d$//;
-		
+
 		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
 			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
 			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
+
+			my $current_Solycid_gene = $current_Solycid_new;
 			$current_Solycid_new = $current_Solycid_new.'.1';
-			$new_attr = 'ID=mRNA:'.$current_Solycid_new.';Name='.$current_Solycid_new.';_AED='.$AED;
+			$new_attr = 'ID=mRNA:'.$current_Solycid_new.';Name='.$current_Solycid_new.';Parent=gene:'.$current_Solycid_gene.';_AED='.$AED;
 
 			for (0..7){
 				print STDOUT $line_arr[$_]."\t";
@@ -138,19 +140,19 @@ foreach my $line (@lines) {
 			chomp $line;
 			print STDOUT $line;
 		}
-		
+
 		die "$current_Solycid not present in annotation hash" if ! exists $solycid_annotation_hash{$current_Solycid};
 		my $annotation = $solycid_annotation_hash{$current_Solycid};
 		print STDOUT ';'.$annotation."\n"; #only adding annotation
-		
-	
+
+
 	}
 	elsif ( $line_arr[2] eq 'exon' ){
 		my $exon_count;
 		foreach my $attr (@line_attr_arr){
 			my ($key,$value) = split (/=/, $attr);
 			if ( $key eq 'ID' ){
-				chomp $value; 
+				chomp $value;
 				$value =~ s/^exon://;
 				#$exon_count = $value =~ m/[\d]+$/; #get count for any exon count, not working in some cases
 				my @val_arr = split (/\./, $value); $exon_count = $val_arr[3];
@@ -158,7 +160,7 @@ foreach my $line (@lines) {
 				$current_Solycid = $value;
 			}
 		}
-		
+
 		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
 			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
 			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
@@ -171,14 +173,14 @@ foreach my $line (@lines) {
 		}
 		else{
 			print STDOUT $line."\n";
-		}	
+		}
 	}
 	elsif ( $line_arr[2] eq 'CDS' ){
 		my $CDS_count;
 		foreach my $attr (@line_attr_arr){
 			my ($key,$value) = split (/=/, $attr);
 			if ( $key eq 'ID' ){
-				chomp $value; 
+				chomp $value;
 				$value =~ s/^CDS://;
 				#$CDS_count = $value =~ m/[\d]+$/; #get count, not working in some cases
 				my @val_arr = split (/\./, $value); $CDS_count = $val_arr[3];
@@ -186,7 +188,7 @@ foreach my $line (@lines) {
 				$current_Solycid = $value;
 			}
 		}
-		
+
 		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
 			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
 			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
@@ -199,14 +201,14 @@ foreach my $line (@lines) {
 		}
 		else{
 			print STDOUT $line."\n";
-		}	
-	}	
+		}
+	}
 	elsif ( $line_arr[2] eq 'five_prime_UTR' ){
 		my $five_prime_UTR_count;
 		foreach my $attr (@line_attr_arr){
 			my ($key,$value) = split (/=/, $attr);
 			if ( $key eq 'ID' ){
-				chomp $value; 
+				chomp $value;
 				$value =~ s/^five_prime_UTR://;
 				#$five_prime_UTR_count = $value =~ m/[\d]+$/; #get count, not working in some cases
 				my @val_arr = split (/\./, $value); $five_prime_UTR_count = $val_arr[3];
@@ -214,7 +216,7 @@ foreach my $line (@lines) {
 				$current_Solycid = $value;
 			}
 		}
-		
+
 		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
 			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
 			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
@@ -227,14 +229,14 @@ foreach my $line (@lines) {
 		}
 		else{
 			print STDOUT $line."\n";
-		}	
+		}
 	}
 	elsif ( $line_arr[2] eq 'three_prime_UTR' ){
 		my $three_prime_UTR_count;
 		foreach my $attr (@line_attr_arr){
 			my ($key,$value) = split (/=/, $attr);
 			if ( $key eq 'ID' ){
-				chomp $value; 
+				chomp $value;
 				$value =~ s/^three_prime_UTR://;
 				#$three_prime_UTR_count = $value =~ m/[\d]+$/; #get count, not working in some cases
 				my @val_arr = split (/\./, $value); $three_prime_UTR_count = $val_arr[3];
@@ -242,7 +244,7 @@ foreach my $line (@lines) {
 				$current_Solycid = $value;
 			}
 		}
-		
+
 		if ( $current_Solycid ne $solycid_new_version_hash{$current_Solycid} ){#if there is an updated version
 			die "$current_Solycid not present in version hash" if ! exists $solycid_new_version_hash{$current_Solycid};
 			my $current_Solycid_new = $solycid_new_version_hash{$current_Solycid};
@@ -255,8 +257,8 @@ foreach my $line (@lines) {
 		}
 		else{
 			print STDOUT $line."\n";
-		}	
-	}	
+		}
+	}
 }
 
 print STDERR "\n";
@@ -359,4 +361,3 @@ SL3.0ch07	maker_ITAG	CDS	42918	44907	.	+	0	ID=CDS:Solyc07g005010.2.1.2;Parent=mR
 SL3.0ch07	maker_ITAG	CDS	45174	45478	.	+	2	ID=CDS:Solyc07g005010.2.1.3;Parent=mRNA:Solyc07g005010.2.1
 SL3.0ch07	maker_ITAG	exon	45174	45808	.	+	.	ID=exon:Solyc07g005010.2.1.3;Parent=mRNA:Solyc07g005010.2.1
 SL3.0ch07	maker_ITAG	three_prime_UTR	45479	45808	.	+	.	ID=three_prime_UTR:Solyc07g005010.2.1.0;Parent=mRNA:Solyc07g005010.2.1
-
