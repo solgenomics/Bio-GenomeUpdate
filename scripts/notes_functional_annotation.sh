@@ -95,3 +95,17 @@
 
 	grep -Fv -f oldgenes.txt ITAG2.4_gene_models.gff3
 
+#10. Create TPF files for SL3.0
+#To verify that homopolymer corrections and contamination corrections has been good. We compare gap sizes betwwen SL2.93 and SL3.0 files:
+
+#-Extract gap sizes:
+perl -ne 'chomp;if( />(.*)/){$head = $1; $i=0; next};@a=split("",$_); foreach(@a){$i++;if($_ eq "N" && $s ==0 ){print "$head\t$i"; $s =1}elsif($s==1 && $_ ne "N"){print "\t$i\n";$s=0}}' SL3.0/SL3.0/SL3.0ch01.fa | awk '{ print $1,$2,$3,$3-$2 }' >SL3.0_chr01_gaps.txt
+perl -ne 'chomp;if( />(.*)/){$head = $1; $i=0; next};@a=split("",$_); foreach(@a){$i++;if($_ eq "N" && $s ==0 ){print "$head\t$i"; $s =1}elsif($s==1 && $_ ne "N"){print "\t$i\n";$s=0}}' SL3.0/SL2.93/chr01_master/chr01_master.chr.fasta | awk '{ print $1,$2,$3,$3-$2 }' >SL2.93_chr01_gaps.txt
+
+#-Compare:
+diff <(cut -d ' ' -f4 SL3.0_chr12_gaps.txt) <(cut -d ' ' -f4 SL2.93_chr12_gaps.txt) 
+
+#difference found at Chr00,chr01, chr10 and all of then was good and checked with Surya's pipeline
+
+
+
