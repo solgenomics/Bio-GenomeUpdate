@@ -48,10 +48,11 @@ if ($seed !~ /^[0-9]+$/){
 my $new_id_fasta_output_file   = 'renamed.'.${old_fasta_input_file};
 my $new_id_index_output_file   = 'index.'.${old_fasta_input_file};
 my @lines        = split( /\n/, $input_old_fasta );
-my $last_id      = 1;
-my $last_maker_id;
+my $last_id      = 0;
+my $last_maker_id= '';
 my $new_id_fasta_output;
 my $new_id_index_output;
+my $seq_counter  = 0;
 
 foreach my $line (@lines) {
 	chomp($line);
@@ -60,19 +61,25 @@ foreach my $line (@lines) {
 	if ( $line =~ m/^>/ ) {
 		#maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-1, maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-2,.....
 		#DcitrP00001
+		
 		#print $line."\n";
 		$line =~ s/^>//;		
 		$new_id_index_output = $new_id_index_output.$line;
 		
 		my $current_maker_id = $line;
-		$current_maker_id =~ s/[1-9]$//;
+		$current_maker_id =~ s/[0-9]+$//;
+		
+		if(($last_maker_id ne $current_maker_id) && ($seq_counter > 0)){
+			$last_id += 5;
+		}
+		
 		$line =~ s/^[\S]+-mRNA-//;
 		my $mRNA_rank = $line;
 		#print "$mRNA_rank\n";
 		
-		#presuming a gene space of <100,000 so 5 characters, e.g. 00001 - 99999
+		#presuming a gene space of <1,000,000 so 6 characters, e.g. 000001 - 999999
 		my @chars = split //,$last_id;
-		my $padding_count = 5 - scalar @chars;
+		my $padding_count = 6 - scalar @chars;
 		$new_id = $prefix;
 		foreach (1..$padding_count){
 			$new_id = $new_id.'0';
@@ -81,9 +88,9 @@ foreach my $line (@lines) {
 		if ($mRNA_rank == 1){
 			$new_id = $new_id.$last_id.'.1.'.$mRNA_rank;
 			$last_maker_id = $current_maker_id;
-			$last_id++;
 		}
 		elsif ($mRNA_rank > 1){
+			#checks if all the mRNAs of a gene are grouped together
 			if ($last_maker_id ne $current_maker_id){
 				die "Id of current seq $current_maker_id with mRNA rank > 1 is not equal to previous id $last_maker_id\n";
 			}
@@ -92,6 +99,8 @@ foreach my $line (@lines) {
 
 		$new_id_fasta_output = $new_id_fasta_output.">$new_id\n";
 		$new_id_index_output = $new_id_index_output."\t$new_id\n";
+		
+		$seq_counter++;
 	}
 	else{
 		$new_id_fasta_output = $new_id_fasta_output."$line\n";
@@ -120,7 +129,7 @@ sub help {
 
     Description:
 
-     Renames maker assigned gene names to gene name with version numbers. maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-1 becomes DcitrP00001.1.1. This is hard coded for <100,000 mRNAs. It checks if all the mRNAs of a gene are grouped together
+     Renames maker assigned gene names to gene name with version numbers. maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-1 becomes DcitrP00001.1.1. This is hard coded for <1,000,000 mRNAs. Counter skips over 5 gene models so manually curated genes can be added. It checks if all the mRNAs of a gene are grouped together but it does not check if all mRNAs are in order 1,2,3....
 
 
     Usage:
