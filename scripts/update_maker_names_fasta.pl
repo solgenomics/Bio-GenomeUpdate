@@ -6,7 +6,7 @@ update_maker_names_fasta.pl
 
 =head1 SYNOPSIS
 
-update_maker_names_gff.pl -i [old fasta file] -p [species acronym or prefix] -s [starting value for naming]
+update_maker_names_fasta.pl -i [old fasta file] -p [species acronym or prefix] -s [starting value for naming]
 
 =head1 COMMAND-LINE OPTIONS
 
