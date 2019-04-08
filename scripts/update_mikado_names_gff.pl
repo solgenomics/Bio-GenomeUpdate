@@ -23,14 +23,13 @@ use Getopt::Std;
 our ( $opt_i, $opt_h );
 getopts('i:h');
 if ($opt_h) {
-	help();
-	exit;
+    help();
+    exit;
 }
 if ( !$opt_i ) {
-	print
-"\nMikado GFF3 is required.
+    print "\nMikado GFF3 is required.
 See help below\n\n\n";
-	help();
+    help();
 }
 
 #get input files
@@ -39,7 +38,7 @@ my $input_old_gff      = read_file($old_gff_input_file)
   or die "Could not open Mikado GFF input file: $old_gff_input_file\n";
 
 my $new_id_output_file;
-$new_id_output_file   = $old_gff_input_file.'_new-ids.names';
+$new_id_output_file = $old_gff_input_file . '_new-ids.names';
 
 my @lines        = split( /\n/, $input_old_gff );
 my $line_count   = scalar(@lines);
@@ -48,72 +47,135 @@ my $gene_flag    = 0;
 my @gene_gff_line_arr;
 my $current_mRNA_Solycid;
 my $prev_mRNA_Solycid;
-my $new_id_output = '';
+my $new_id_output           = '';
 my $outofrange_gene_counter = 0;
 my %mRNA_Solycid_hash;
 
 #new
-my $species = 'Solyc';
-my $prefix = 'r';
-my $gene_counter = 0;
+my $species      = 'Solyc';
+my $prefix       = 'r';
+my $gene_counter = -1;
 my $lnc_RNA_counter;
 my $lnc_RNA_exon_counter;
 
-
 foreach my $line (@lines) {
-	$line_counter++;
-	chomp($line);
+    $line_counter++;
+    chomp($line);
 
-		if ( $line =~ m/^#/ ) {
-			next;
-		}
+    if ( $line =~ m/^#/ ) {
+				print STDOUT $line . "\n";
+				next;
+    }
 
-		print STDERR "\rParsing GFF3 line ". $line_counter . " of ". $line_count."\n";
-		if ( $line =~ /\tgene\t/ ) {
-			$lnc_RNA_counter = 1;
-			$lnc_RNA_exon_counter = 1;
+    # print STDERR "\rParsing GFF3 line "
+    #   . $line_counter . " of "
+    #   . $line_count . "\n";
+    if ( $line =~ /\tgene\t/ ) {
+        $lnc_RNA_counter      = 0;
+        $gene_counter++; # increment for next gene
 
-			my @line_arr = split ("\t", $line);
-			$line_arr[1] = 'mikado_ITAG'; #using source to reflect ITAG/eugene fed into maker
-			my $chr = $line_arr[0];
-			$chr =~ s/^SL4\.0ch//;
-			my $gene_count = sprintf("%05d", $gene_counter++);
-			my $gene_version = 1;
-			my $gene_id = $species . $chr . $prefix . $gene_count;
+        my @line_arr = split( "\t", $line );
+        $line_arr[1] =
+          'mikado_ITAG';    #using source to reflect ITAG/eugene fed into maker
+        my $chr = $line_arr[0];
+        $chr =~ s/^SL4\.0ch//;
+        my $gene_count   = sprintf( "%05d", $gene_counter );
+        my $gene_version = 1;
+        my $gene_id      = $species . $chr . $prefix . $gene_count;
 
-			my $new_attr = 'ID=gene:'.$gene_id.'.'.$gene_version.';Alias='.$gene_id.';Name='.$gene_id.'.'.$gene_version."\n";
-			for (0..7){
-				print STDOUT $line_arr[$_]."\t";
-			}
-		print STDOUT $new_attr;
-		}
-		elsif ( $line =~ /\tmRNA\t/ ) {
-			my @line_arr = split ("\t", $line);
-			$line_arr[1] = 'mikado_ITAG'; #using source to reflect ITAG/eugene fed into maker
-			my $chr = $line_arr[0];
-			$chr =~ s/^SL4\.0ch//;
-			my $gene_count = sprintf("%05d", $gene_counter++);
-			my $gene_version = 1;
-			my $gene_id = $species . $chr . $prefix . $gene_count;
+        my $new_attr =
+            'ID=gene:'
+          . $gene_id . '.'
+          . $gene_version
+          . ';Alias='
+          . $gene_id
+          . ';Name='
+          . $gene_id . '.'
+          . $gene_version . "\n";
 
-			my $new_attr = 'ID=gene:'.$gene_id.'.'.$version.';Alias='.$gene_id.';Name='.$gene_id.'.'.$version."\n";
-			for (0..7){
-				print STDOUT $line_arr[$_]."\t";
-			}
-			print STDOUT $new_attr;
-		}
+        for ( 0 .. 7 ) {
+            print STDOUT $line_arr[$_] . "\t";
+        }
+        print STDOUT $new_attr;
+    }
+    elsif ( $line =~ /\tmRNA\t/ ) {
+				$lnc_RNA_exon_counter = 1;
+				$lnc_RNA_counter++; # incrementing for next isoform, if any
+
+        my @line_arr = split( "\t", $line );
+        $line_arr[1] =
+          'mikado_ITAG';    #using source to reflect ITAG/eugene fed into maker
+        $line_arr[2] =
+          'lnc_RNA'
+          ; #using SO compatible long non-coding term http://www.sequenceontology.org/browser/current_svn/term/SO:0001877
+        my $chr = $line_arr[0];
+        $chr =~ s/^SL4\.0ch//;
+        my $gene_count   = sprintf( "%05d", $gene_counter );
+        my $gene_version = 1;
+        my $gene_id      = $species . $chr . $prefix . $gene_count;
+
+        my $new_attr =
+            'ID=lnc_RNA:'
+          . $gene_id . '.'
+          . $gene_version . '.'
+          . $lnc_RNA_counter
+          . ';Name='
+          . $gene_id . '.'
+          . $gene_version . '.'
+          . $lnc_RNA_counter
+          . ';Parent=gene:'
+          . $gene_id . '.'
+          . $gene_version . "\n";
+
+        for ( 0 .. 7 ) {
+            print STDOUT $line_arr[$_] . "\t";
+        }
+        print STDOUT $new_attr;
+    }
+    elsif ( $line =~ /\texon\t/ ) {
+        my @line_arr = split( "\t", $line );
+        $line_arr[1] =
+          'mikado_ITAG';    #using source to reflect ITAG/eugene fed into maker
+        my $chr = $line_arr[0];
+        $chr =~ s/^SL4\.0ch//;
+        my $gene_count   = sprintf( "%05d", $gene_counter );
+        my $gene_version = 1;
+        my $gene_id      = $species . $chr . $prefix . $gene_count;
+
+        my $new_attr =
+            'ID=exon:'
+          . $gene_id . '.'
+          . $gene_version . '.'
+					. $lnc_RNA_counter . '.'
+          . $lnc_RNA_exon_counter
+          . ';Name='
+          . $gene_id . '.'
+          . $gene_version . '.'
+					. $lnc_RNA_counter . '.'
+          . $lnc_RNA_exon_counter
+          . ';Parent=lnc_RNA:'
+          . $gene_id . '.'
+          . $gene_version . '.'
+          . $lnc_RNA_counter . "\n";
+
+        $lnc_RNA_exon_counter++;    # incrementing for next isoform, if any
+
+        for ( 0 .. 7 ) {
+            print STDOUT $line_arr[$_] . "\t";
+        }
+        print STDOUT $new_attr;
+    }
 }
-
 
 #----------------------------------------------------------------------------
 
 sub help {
-	print STDERR <<EOF;
+    print STDERR <<EOF;
   $0:
 
     Description:
 
-    Add gene, mRNA and exon ids in the ITAG convention to Mikado lnc_RNA predictions while discarding old ids. The mapping of old ids to new ids is written to a new-ids.names file. Alternative transcripts for a gene are allowed. Non-coding genes follow the Solyc00r000000 convention. Using a gap of 10 between successive ids.
+    Add gene, lnc_RNA and exon ids in the ITAG convention to Mikado lnc_RNA predictions while discarding old ids. The mapping of old ids to new ids is written to a new-ids.names file. Alternative transcripts for a gene are allowed. Non-coding genes follow the Solyc00r000000 convention. Using a gap of 10 between successive ids.
 
 
     Usage:
@@ -126,7 +188,7 @@ sub help {
 
 
 EOF
-	exit(1);
+    exit(1);
 }
 
 =head1 LICENSE
