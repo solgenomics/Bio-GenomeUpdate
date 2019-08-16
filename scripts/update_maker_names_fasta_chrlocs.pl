@@ -75,14 +75,14 @@ foreach my $line (@lines) {
 		$current_maker_id =~ s/[0-9]+$//;
 
 		if(($last_maker_id ne $current_maker_id) && ($seq_counter > 0)){
-			$last_id += 5;
+			$last_id += 10;
 		}
 
 		$line =~ s/^[\S]+-mRNA-//;
 		my $mRNA_rank = $line;
 		#print "$mRNA_rank\n";
 
-		#presuming a gene space of <1,00,000 so 6 characters, e.g. 00001 - 99999
+		#presuming a gene space of <1,00,000 so 6 characters, e.g. 00001 - 99999, was 1 mill earlier
 		my @chars = split //,$last_id;
 		my $padding_count = 5 - scalar @chars;
 		$new_id = $prefix;
@@ -112,14 +112,14 @@ foreach my $line (@lines) {
 	}
 
 }
-unless ( open( OID, ">$new_id_fasta_output_file" ) ) {
+unless ( open( OID, '>', "$new_id_fasta_output_file" ) ) {
 	print STDERR "Cannot open $new_id_fasta_output_file\n";
 	exit 1;
 }
 print OID $new_id_fasta_output;
 close(OID);
 
-unless ( open( OIX, ">$new_id_index_output_file" ) ) {
+unless ( open( OIX, '>', "$new_id_index_output_file" ) ) {
 	print STDERR "Cannot open $new_id_index_output_file\n";
 	exit 1;
 }
