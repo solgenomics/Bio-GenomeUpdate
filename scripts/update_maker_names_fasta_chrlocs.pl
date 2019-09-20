@@ -6,12 +6,13 @@ update_maker_names_fasta_chrlocs.pl
 
 =head1 SYNOPSIS
 
-update_maker_names_fasta.pl -i [old fasta file] -p [species acronym or prefix] -s [starting value for naming] -g [gff file with chromosomal location]
+update_maker_names_fasta_chrlocs.pl -i [old fasta file] -p [species acronym or prefix] -c [Prefix for chromosome in GFF]  -s [starting value for naming] -g [gff file with chromosomal location]
 
 =head1 COMMAND-LINE OPTIONS
 
  -i  Maker Fasta file (required)
  -p  Prefix for name, e.g DcitrP (required)
+ -c  Prefix for chromosome in GFF e.g. Dc3.0sc (required)
  -s  Starting seed, e.g. 1 (required)
  -g  GFF file with chromosomal location
  -h  Help
@@ -23,15 +24,15 @@ use warnings;
 use File::Slurp;
 use Getopt::Std;
 
-our ( $opt_i, $opt_p, $opt_s, $opt_g, $opt_h );
-getopts('i:p:s:g:h');
+our ( $opt_i, $opt_p, $opt_s, $opt_c, $opt_g, $opt_h );
+getopts('i:p:s:c:g:h');
 if ($opt_h) {
 	help();
 	exit;
 }
-if ( !$opt_i || !$opt_p || !$opt_s || !$opt_g) {
+if ( !$opt_i || !$opt_p || !$opt_c || !$opt_s || !$opt_g) {
 	print
-"\nOld Fasta file, name prefix, GFF file with location and starting seed number is required.
+"\nOld Fasta file, name prefix, chr prefix, GFF file with location and starting seed number is required.
 See help below\n\n\n";
 	help();
 }
@@ -41,6 +42,7 @@ my $old_fasta_input_file = $opt_i;
 my $input_old_fasta      = read_file($old_fasta_input_file)
 	or die "Could not open old fasta input file: $old_fasta_input_file\n";
 chomp $opt_p; my $prefix = $opt_p;
+chomp $opt_c; my $chrprefix = $opt_c;
 my $seed = $opt_s;
 if ($seed !~ /^[0-9]+$/){
 	die "$seed should be a number\n";
@@ -52,22 +54,44 @@ my $input_old_gff      = read_file($old_gff_input_file)
 my $new_id_fasta_output_file   = 'renamed.'.${old_fasta_input_file};
 my $new_id_index_output_file   = 'index.'.${old_fasta_input_file};
 my @lines        = split( /\n/, $input_old_fasta );
-my @gff_lines        = split( /\n/, $input_old_gff );
+my @gff_lines    = split( /\n/, $input_old_gff );
 my $last_id      = 0;
 my $last_maker_id= '';
 my $new_id_fasta_output;
-my $new_id_index_output;
+my $new_id_index_output = '';
 my $seq_counter  = 0;
+
+#hash of locations from mRNA for simplicity
+my %chr_location;
+foreach my $line (@gff_lines) {
+	if ($line =~ m/^#/){ next;}
+	my @gff_line_arr = split ( "\t", $line);
+	if ($gff_line_arr[2] eq 'mRNA'){
+		my $chr = $gff_line_arr[0];
+		$chr =~ s/\$chrprefix//; #remove genome version and sc, so only sc number
+		my @gff_line_attr_arr = split (/;/, $gff_line_arr[8]);
+		my $name;
+		foreach my $attr (@gff_line_attr_arr){
+				if ( $attr =~ m/^Name\=/ ){
+					$name = $attr;
+					$name =~ s/^Name\=//;
+					$chr_location{$name} = $chr;
+					last;
+				}
+		}
+	}
+}
+
+#print number of mRNAs
+print STDERR "\nNumber of mRNAs in GFF: ", scalar keys %chr_location, "\n\n";
 
 foreach my $line (@lines) {
 	chomp($line);
 	my $new_id;
 
 	if ( $line =~ m/^>/ ) {
-		#maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-1, maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-2,.....
-		#DcitrP00001
 
-		#print $line."\n";
+		print $line."\n";
 		$line =~ s/^>//;
 		$new_id_index_output = $new_id_index_output.$line;
 
@@ -75,7 +99,7 @@ foreach my $line (@lines) {
 		$current_maker_id =~ s/[0-9]+$//;
 
 		if(($last_maker_id ne $current_maker_id) && ($seq_counter > 0)){
-			$last_id += 10;
+			$last_id += 10; #namespace for 9 new genes now
 		}
 
 		$line =~ s/^[\S]+-mRNA-//;
@@ -85,7 +109,9 @@ foreach my $line (@lines) {
 		#presuming a gene space of <1,00,000 so 6 characters, e.g. 00001 - 99999, was 1 mill earlier
 		my @chars = split //,$last_id;
 		my $padding_count = 5 - scalar @chars;
-		$new_id = $prefix;
+
+		#prefix with chr number
+		$new_id = $prefix.$chr_location{$line};
 		foreach (1..$padding_count){
 			$new_id = $new_id.'0';
 		}
@@ -138,7 +164,7 @@ sub help {
 
 
     Usage:
-      update_maker_names_gff.pl
+      update_maker_names_gff_chrlocs.pl
 
     Flags:
 
