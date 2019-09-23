@@ -56,6 +56,7 @@ my $new_id_index_output_file   = 'index.'.${old_fasta_input_file};
 my @lines        = split( /\n/, $input_old_fasta );
 my @gff_lines    = split( /\n/, $input_old_gff );
 my $last_id      = 0;
+my $mRNA_rank;
 my $last_maker_id= '';
 my $new_id_fasta_output;
 my $new_id_index_output = '';
@@ -105,12 +106,13 @@ foreach my $line (@lines) {
 
 			if(($last_maker_id ne $current_maker_id) && ($seq_counter > 0)){
 				$last_id += 10; #namespace for 9 new genes now
+				$mRNA_rank = 1;
 			}
 
 			$line =~ s/^[\S]+-mRNA-//;#remove everything till rank
-			my $mRNA_rank = $line;
+			my $maker_mRNA_rank = $line;
 			
-			print STDERR "rank: $mRNA_rank\n";
+			print STDERR "rank: $maker_mRNA_rank\n";
 
 			#presuming a gene space of <1,00,000 so 6 characters, e.g. 00001 - 99999, was 1 mill earlier
 			my @chars = split //,$last_id;
@@ -122,11 +124,11 @@ foreach my $line (@lines) {
 				$new_id = $new_id.'0';
 			}
 
-			if ($mRNA_rank == 1){
+			if ($maker_mRNA_rank == 1){
 				$new_id = $new_id.$last_id.'.1.'.$mRNA_rank;
 				$last_maker_id = $current_maker_id;
 			}
-			elsif ($mRNA_rank > 1){
+			elsif ($maker_mRNA_rank > 1){
 				#checks if all the mRNAs of a gene are grouped together
 				if ($last_maker_id ne $current_maker_id){
 					#warning since isoforms are ordered by location so maker rank does not matter
@@ -134,6 +136,7 @@ foreach my $line (@lines) {
 				}
 				$new_id = $new_id.$last_id.'.1.'.$mRNA_rank;
 			}
+			$mRNA_rank++;#increment for next isoform
 		}
 		else{#presuming Apollo model so adding as new model. Apollo model *should* not overlap with maker model
 			my $current_apollo_id = $line;
