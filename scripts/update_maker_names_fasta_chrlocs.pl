@@ -56,9 +56,9 @@ my $new_id_index_output_file   = 'index.'.${old_fasta_input_file};
 my @lines        = split( /\n/, $input_old_fasta );
 my @gff_lines    = split( /\n/, $input_old_gff );
 my $last_id      = 0;
-my $mRNA_rank;
+my $mRNA_rank    = 1;
 my $last_maker_id= '';
-my $new_id_fasta_output;
+my $new_id_fasta_output = '';
 my $new_id_index_output = '';
 my $seq_counter  = 0;
 
