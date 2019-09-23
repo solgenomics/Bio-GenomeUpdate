@@ -89,7 +89,7 @@ foreach my $line (@lines) {
 	chomp($line);
 	my $new_id;
 
-	if ( $line =~ m/^>/ ) { #e.g. maker_curated_gene_coding_models.gff
+	if ( $line =~ m/^>/ ) { #e.g. >maker-DC3.0sc00-pred_gff_Mikado_loci-gene-18.21-mRNA-1
 
 		print STDERR "\n".$line."\n";
 		
@@ -99,40 +99,64 @@ foreach my $line (@lines) {
 
 		print STDERR "loc: $mRNA_chr_location\n";
 
-		my $current_maker_id = $line;
-		$current_maker_id =~ s/[0-9]+$//;#remove number suffix
+		if ( $line =~ /^maker/ ){ #if this is a make gene model
+			my $current_maker_id = $line;
+			$current_maker_id =~ s/[0-9]+$//;#remove number suffix
 
-		if(($last_maker_id ne $current_maker_id) && ($seq_counter > 0)){
-			$last_id += 10; #namespace for 9 new genes now
-		}
-
-		$line =~ s/^[\S]+-mRNA-//;#remove suffix
-		my $mRNA_rank = $line;
-		
-		print STDERR "rank: $mRNA_rank\n";
-
-		#presuming a gene space of <1,00,000 so 6 characters, e.g. 00001 - 99999, was 1 mill earlier
-		my @chars = split //,$last_id;
-		my $padding_count = 5 - scalar @chars;
-
-		#prefix with chr number and 0's
-		$new_id = $prefix.$mRNA_chr_location;
-		foreach (1..$padding_count){
-			$new_id = $new_id.'0';
-		}
-
-		if ($mRNA_rank == 1){
-			$new_id = $new_id.$last_id.'.1.'.$mRNA_rank;
-			$last_maker_id = $current_maker_id;
-		}
-		elsif ($mRNA_rank > 1){
-			#checks if all the mRNAs of a gene are grouped together
-			if ($last_maker_id ne $current_maker_id){
-				die "Id of current seq $current_maker_id with mRNA rank > 1 is not equal to previous id $last_maker_id\n";
+			if(($last_maker_id ne $current_maker_id) && ($seq_counter > 0)){
+				$last_id += 10; #namespace for 9 new genes now
 			}
-			$new_id = $new_id.$last_id.'.1.'.$mRNA_rank;
+
+			$line =~ s/^[\S]+-mRNA-//;#remove everything till rank
+			my $mRNA_rank = $line;
+			
+			print STDERR "rank: $mRNA_rank\n";
+
+			#presuming a gene space of <1,00,000 so 6 characters, e.g. 00001 - 99999, was 1 mill earlier
+			my @chars = split //,$last_id;
+			my $padding_count = 5 - scalar @chars;
+
+			#prefix with chr number and 0's
+			$new_id = $prefix.$mRNA_chr_location.'g';
+			foreach (1..$padding_count){
+				$new_id = $new_id.'0';
+			}
+
+			if ($mRNA_rank == 1){
+				$new_id = $new_id.$last_id.'.1.'.$mRNA_rank;
+				$last_maker_id = $current_maker_id;
+			}
+			elsif ($mRNA_rank > 1){
+				#checks if all the mRNAs of a gene are grouped together
+				if ($last_maker_id ne $current_maker_id){
+					#warning since isoforms are ordered by location so maker rank does not matter
+					print STDERR "Id of current seq $current_maker_id with mRNA rank > 1 is not equal to previous id $last_maker_id\n";
+				}
+				$new_id = $new_id.$last_id.'.1.'.$mRNA_rank;
+			}
+		}
+		else{#presuming Apollo model so adding as new model. Apollo model *should* not overlap with maker model
+			my $current_apollo_id = $line;
+			$current_apollo_id =~ s/[0-9]+$//;#remove number suffix
+
+			if( $seq_counter > 0 ){
+				$last_id += 10; #namespace for 9 new genes now
+			}
+
+			#presuming a gene space of <1,00,000 so 6 characters, e.g. 00001 - 99999, was 1 mill earlier
+			my @chars = split //,$last_id;
+			my $padding_count = 5 - scalar @chars;
+
+			#prefix with chr number and 0's
+			$new_id = $prefix.$mRNA_chr_location.'g';
+			foreach (1..$padding_count){
+				$new_id = $new_id.'0';
+			}
+
+			$new_id = $new_id.$last_id.'.1.1';#presuming 1st isoform
 		}
 
+		
 		$new_id_fasta_output = $new_id_fasta_output.">$new_id\n";
 		$new_id_index_output = $new_id_index_output."\t$new_id\n";
 
