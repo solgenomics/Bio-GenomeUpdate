@@ -55,21 +55,21 @@ my $new_id_fasta_output_file   = 'renamed.'.${old_fasta_input_file};
 my $new_id_index_output_file   = 'index.'.${old_fasta_input_file};
 my @lines        = split( /\n/, $input_old_fasta );
 my @gff_lines    = split( /\n/, $input_old_gff );
-my $last_id      = 0;
+my $last_id      = 990;
 my $mRNA_rank    = 1;
 my $last_maker_id= '';
 my $new_id_fasta_output = '';
 my $new_id_index_output = '';
 my $seq_counter  = 0;
 
-#hash of locations from mRNA for simplicity
-my %chr_location;
+my %chr_location;                  #hash of locations from mRNA for simplicity
+my %chr_location_counter;          #hash of mRNA counter for each chr
 foreach my $line (@gff_lines) {
 	if ($line =~ m/^#/){ next;}
 	my @gff_line_arr = split ( "\t", $line);
 	if ($gff_line_arr[2] eq 'mRNA'){
 		my $chr = $gff_line_arr[0];
-		$chr =~ s/$chrprefix//; #remove genome version and sc, so only sc number
+		$chr =~ s/$chrprefix//; #remove genome version and chr, so only chr number
 		my @gff_line_attr_arr = split (/;/, $gff_line_arr[8]);
 		my $ID;
 		foreach my $attr (@gff_line_attr_arr){
@@ -77,6 +77,9 @@ foreach my $line (@gff_lines) {
 					$ID = $attr;
 					$ID =~ s/^ID\=//;
 					$chr_location{$ID} = $chr;
+					if (! exists $chr_location_counter{$chr} ){
+						$chr_location_counter{$chr} = 990; #start gene count at 1000
+					}
 					last;
 				}
 		}
@@ -93,7 +96,7 @@ foreach my $line (@lines) {
 	if ( $line =~ m/^>/ ) { #e.g. >maker-DC3.0sc00-pred_gff_Mikado_loci-gene-18.21-mRNA-1
 
 		print STDERR "\n".$line."\n";
-		
+
 		$line =~ s/^>//;
 		$new_id_index_output = $new_id_index_output.$line;
 		my $mRNA_chr_location = $chr_location{$line};
@@ -105,13 +108,14 @@ foreach my $line (@lines) {
 			$current_maker_id =~ s/[0-9]+$//;#remove number suffix
 
 			if(($last_maker_id ne $current_maker_id) && ($seq_counter > 0)){
-				$last_id += 10; #namespace for 9 new genes now
+				$chr_location_counter{$mRNA_chr_location} += 10; #namespace for 9 new genes now
+				$last_id = $chr_location_counter{$mRNA_chr_location};
 				$mRNA_rank = 1;
 			}
 
 			$line =~ s/^[\S]+-mRNA-//;#remove everything till rank
 			my $maker_mRNA_rank = $line;
-			
+
 			print STDERR "rank: $maker_mRNA_rank\n";
 
 			#presuming a gene space of <1,00,000 so 6 characters, e.g. 00001 - 99999, was 1 mill earlier
@@ -143,7 +147,8 @@ foreach my $line (@lines) {
 			$current_apollo_id =~ s/[0-9]+$//;#remove number suffix
 
 			if( $seq_counter > 0 ){
-				$last_id += 10; #namespace for 9 new genes now
+				$chr_location_counter{$mRNA_chr_location} += 10; #namespace for 9 new genes now
+				$last_id = $chr_location_counter{$mRNA_chr_location};
 			}
 
 			#presuming a gene space of <1,00,000 so 6 characters, e.g. 00001 - 99999, was 1 mill earlier
@@ -159,7 +164,7 @@ foreach my $line (@lines) {
 			$new_id = $new_id.$last_id.'.1.1';#presuming 1st isoform
 		}
 
-		
+
 		$new_id_fasta_output = $new_id_fasta_output.">$new_id\n";
 		$new_id_index_output = $new_id_index_output."\t$new_id\n";
 
