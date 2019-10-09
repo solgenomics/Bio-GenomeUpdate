@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-add_OGSids_maker-apollo_GFF.pl
+add_OGSids_maker-apollo_gff.pl
 
 =head1 SYNOPSIS
 
@@ -28,34 +28,54 @@ use File::Slurp;
 use Getopt::Std;
 use Bio::GFF3::LowLevel qw (gff3_parse_feature  gff3_format_feature gff3_parse_attributes);
 
-our ( $opt_g, $opt_a, $opt_p, $opt_s, $opt_c, $opt_o, $opt_h );
-getopts('g:a:p:s:c:g:h');
+our ( $opt_g, $opt_a, $opt_f, $opt_p, $opt_s, $opt_c, $opt_o, $opt_h );
+getopts('g:a:f:p:s:c:o:h');
 if ($opt_h) {
   help();
   exit;
 }
-if ( !$opt_g || !$opt_a || !$opt_p || !$opt_c || !$opt_s || !$opt_o) {
+if ( !$opt_g || !$opt_a || !$opt_f || !$opt_p || !$opt_c || !$opt_s || !$opt_o) {
   print
-"\nOld GFF file, AHRD file, name prefix, chr prefix, starting seed, output GFF file is required.
+"\nOld GFF file, AHRD file, Apollo descriptions, name prefix, chr prefix, starting seed, output GFF file is required.
 See help below\n\n\n";
   help();
 }
 
-#get input files
+# get input files
 my $gff_input_file = $opt_g;
 my $gff_input   = read_file($gff_input_file)
-  or die "Could not open old fasta input file: $gff_input_file\n";
+  or die "Could not open old gff input file: $gff_input_file\n";
 my $ahrd_input_file = $opt_a;
 my $ahrd_input      = read_file($ahrd_input_file)
   or die "Could not open AHRD input file: $ahrd_input_file\n";
+my $apollo_desc_input_file = $opt_f;
+my $apollo_desc_input      = read_file($apollo_desc_input_file)
+  or die "Could not open Apollo description input file: $apollo_desc_input_file\n";
 chomp $opt_p; my $prefix = $opt_p;
 chomp $opt_c; my $chrprefix = $opt_c;
 my $seed = $opt_s;
 if ($seed !~ /^[0-9]+$/){ die "$seed should be a number\n"; }
 
-#output variables
+# output variables
 my ($gff_output, $index_output, $desc_output);
 
+# hash of Apollo descriptions
+my %apollo_curated_function;
+my @lines = split( /\n/, $apollo_desc_input );
+foreach my $line (@lines) {
+  chomp($line);
+  my @line_arr = split ("\t", $line);
+  $apollo_curated_function{$line_arr[0]}=$line_arr[1];            #apollo id = curated function
+}
+
+# hash of AHRD descriptions
+my %ahrd_function;
+@lines = split( /\n/, $ahrd_input );
+foreach my $line (@lines) {
+  chomp($line);
+  my @line_arr = split ("\t", $line);
+  $ahrd_function{$line_arr[0]}=$line_arr[1];                      # OGS id = AHRD function string
+}
 
 
 
