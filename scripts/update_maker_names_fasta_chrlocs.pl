@@ -208,7 +208,7 @@ sub help {
         -i  Maker Fasta file (required)
         -p  Prefix for name, e.g DcitrP (required)
         -s  Starting seed, e.g. 1 (required)
-		-c  Prefix for chromosome in GFF e.g. Dc3.0sc (required)
+				-c  Prefix for chromosome in GFF e.g. Dc3.0sc (required)
         -g  GFF file with chromosomal location (required)
         -h  Help
 
