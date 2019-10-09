@@ -197,7 +197,7 @@ sub help {
 
     Description:
 
-     Renames maker assigned gene names to gene name with version numbers. maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-1 becomes DcitrP00001.1.1. This is hard coded for <1,000,000 mRNAs. Counter skips over 10 gene models so manually curated genes can be added. It checks if all the mRNAs of a gene are grouped together but it does not check if all mRNAs are in order 1,2,3....
+     Renames maker and Apollo assigned gene names to gene name with version numbers. Creates an index file with old and new mRNA ids. maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-1 becomes DcitrP00001.1.1. This is hard coded for <1,000,000 mRNAs. Counter skips over 10 gene models so manually curated genes can be added. It checks if all the mRNAs of a gene are grouped together but it does not check if all mRNAs are in order 1,2,3....
 
 
     Usage:
@@ -208,7 +208,7 @@ sub help {
         -i  Maker Fasta file (required)
         -p  Prefix for name, e.g DcitrP (required)
         -s  Starting seed, e.g. 1 (required)
-				-c  Prefix for chromosome in GFF e.g. Dc3.0sc (required)
+		-c  Prefix for chromosome in GFF e.g. Dc3.0sc (required)
         -g  GFF file with chromosomal location (required)
         -h  Help
 
