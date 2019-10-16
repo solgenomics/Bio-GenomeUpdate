@@ -78,14 +78,34 @@ foreach my $line (@lines) {
 }
 
 
+@lines = split( /\n/, $gff_input );
+foreach my $line (@lines){
+  # get line
 
 
 
+  # if first or new gene, create the OGS id
+
+
+  # if mRNA
+
+    # increment the mRNA isoform count if this is the not the first mRNA for this gene
+
+
+    # get the AHRD func description, get the Apollo description if it exists
 
 
 
+    # create the func description string
 
 
+    # write the new mRNA record 
+
+  # if any other record, use the mRNA parent to create the gff record
+
+
+
+}
 
 
 
@@ -115,7 +135,10 @@ sub help {
 
      Renames maker and Apollo assigned gene names to gene name with version numbers, e.g.  maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-1 becomes DcitrP00001.1.1. Creates an index file with old and new mRNA ids. This is hard coded for <1,000,000 mRNAs. Counter skips over 10 gene models so manually curated genes can be added.
      
-    NOTE:
+    Output:
+     Index: maker/Apollo ids -> OGSv3 ids
+     Functional desc: OGSv3 id -> Func desc string
+     GFF file with formatted functional description and OGS ids
 
 
     Usage:
