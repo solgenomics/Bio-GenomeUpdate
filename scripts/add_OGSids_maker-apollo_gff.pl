@@ -26,7 +26,7 @@ use warnings;
 
 use File::Slurp;
 use Getopt::Std;
-use Bio::GFF3::LowLevel qw (gff3_parse_feature  gff3_format_feature gff3_parse_attributes);
+use Bio::GFF3::LowLevel qw (gff3_parse_feature gff3_format_feature gff3_parse_attributes);
 
 our ( $opt_g, $opt_a, $opt_f, $opt_p, $opt_s, $opt_c, $opt_o, $opt_h );
 getopts('g:a:f:p:s:c:o:h');
@@ -56,52 +56,64 @@ chomp $opt_c; my $chrprefix = $opt_c;
 my $seed = $opt_s;
 if ($seed !~ /^[0-9]+$/){ die "$seed should be a number\n"; }
 
-# output variables
-my ($gff_output, $index_output, $desc_output);
 
 # hash of Apollo descriptions
 my %apollo_curated_function;
 my @lines = split( /\n/, $apollo_desc_input );
 foreach my $line (@lines) {
-  chomp($line);
-  my @line_arr = split ("\t", $line);
-  $apollo_curated_function{$line_arr[0]}=$line_arr[1];            #apollo id = curated function
+	chomp($line);
+	my @line_arr = split ("\t", $line);
+	$apollo_curated_function{$line_arr[0]}=$line_arr[1];            #apollo id = curated function
 }
 
 # hash of AHRD descriptions
 my %ahrd_function;
 @lines = split( /\n/, $ahrd_input );
 foreach my $line (@lines) {
-  chomp($line);
-  my @line_arr = split ("\t", $line);
-  $ahrd_function{$line_arr[0]}=$line_arr[1];                      # OGS id = AHRD function string
+	chomp($line);
+	my @line_arr = split ("\t", $line);
+	$ahrd_function{$line_arr[0]}=$line_arr[1];                      # OGS id = AHRD function string
 }
+
+# output variables
+my ($gff_output, $index_output, $desc_output);
+# tracking variables
+my ($last_id);
+
+$gff_output   = '';                                                 # initialize
+$index_output = '';
+$desc_output  = '';
+$last_id      = 990;
 
 
 @lines = split( /\n/, $gff_input );
 foreach my $line (@lines){
-  # get line
+	# comments line
+	if ( $line=~ m/^#/ ){
+		$gff_output .= $line."\n";
+		next;
+	}
+
+	my $gff_feafures = gff3_parse_feature ($line);
+
+	# if first or new gene, create the OGS id
+
+
+	# if mRNA
+
+	# increment the mRNA isoform count if this is the not the first mRNA for this gene
+
+
+	# get the AHRD func description, get the Apollo description if it exists
 
 
 
-  # if first or new gene, create the OGS id
+	# create the func description string
 
 
-  # if mRNA
+	# write the new mRNA record 
 
-    # increment the mRNA isoform count if this is the not the first mRNA for this gene
-
-
-    # get the AHRD func description, get the Apollo description if it exists
-
-
-
-    # create the func description string
-
-
-    # write the new mRNA record 
-
-  # if any other record, use the mRNA parent to create the gff record
+	# if any other record, use the mRNA parent to create the gff record
 
 
 
@@ -131,29 +143,29 @@ sub help {
 	print STDERR <<EOF;
   $0:
 
-    Description:
+	Description:
 
-     Renames maker and Apollo assigned gene names to gene name with version numbers, e.g.  maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-1 becomes DcitrP00001.1.1. Creates an index file with old and new mRNA ids. This is hard coded for <1,000,000 mRNAs. Counter skips over 10 gene models so manually curated genes can be added.
-     
-    Output:
-     Index: maker/Apollo ids -> OGSv3 ids
-     Functional desc: OGSv3 id -> Func desc string
-     GFF file with formatted functional description and OGS ids
+	 Renames maker and Apollo assigned gene names to gene name with version numbers, e.g.  maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-1 becomes DcitrP00001.1.1. Creates an index file with old and new mRNA ids. This is hard coded for <1,000,000 mRNAs. Counter skips over 10 gene models so manually curated genes can be added.
+	 
+	Output:
+	 Index: maker/Apollo ids -> OGSv3 ids
+	 Functional desc: OGSv3 id -> Func desc string
+	 GFF file with formatted functional description and OGS ids
 
 
-    Usage:
-      cmdline_perldoc.pl -g [?? file] <other params>
-      
-    Flags:
+	Usage:
+	  cmdline_perldoc.pl -g [?? file] <other params>
+	  
+	Flags:
 
-		  -g  Merged Maker and Apollo GFF file (required)
-      -a  AHRD tab separated file for mRNA with Maker and Apollo ids, e.g. maker-DC3.0sc00-snap-gene-91.44-mRNA-1       Glycerol-3-phosphate dehydrogenase [NAD(P)+] (AHRD V3.11 *** tr|A0A0A9WH09|A0A0A9WH09_LYGHE) (required)
-      -f  Curated descriptions from Apollo, e.g. 18712462-6e8c-478a-83c8-a40c9d0be977  Dihydrolipoyl transacetylase (required)
-      -p  Prefix for name, e.g DcitrP (required)
-      -c  Prefix for chromosome in GFF e.g. Dc3.0sc (required)
-      -s  Starting seed, e.g. 1 (required)
-      -o  output GFF file with OGS ids
-      -h  Help
+	  -g  Merged Maker and Apollo GFF file (required)
+	  -a  AHRD tab separated file for mRNA with Maker and Apollo ids, e.g. maker-DC3.0sc00-snap-gene-91.44-mRNA-1       Glycerol-3-phosphate dehydrogenase [NAD(P)+] (AHRD V3.11 *** tr|A0A0A9WH09|A0A0A9WH09_LYGHE) (required)
+	  -f  Curated descriptions from Apollo, e.g. 18712462-6e8c-478a-83c8-a40c9d0be977  Dihydrolipoyl transacetylase (required)
+	  -p  Prefix for name, e.g DcitrP (required)
+	  -c  Prefix for chromosome in GFF e.g. Dc3.0sc (required)
+	  -s  Starting seed, e.g. 1 (required)
+	  -o  output GFF file with OGS ids
+	  -h  Help
 
 EOF
 	exit(1);
