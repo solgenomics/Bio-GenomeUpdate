@@ -27,6 +27,7 @@ use warnings;
 use File::Slurp;
 use Getopt::Std;
 use Bio::GFF3::LowLevel qw (gff3_parse_feature gff3_format_feature gff3_parse_attributes);
+use Switch;
 
 our ( $opt_g, $opt_a, $opt_f, $opt_p, $opt_s, $opt_c, $opt_o, $opt_h );
 getopts('g:a:f:p:s:c:o:h');
@@ -82,7 +83,8 @@ foreach my $line (@lines) {
 # output variables
 my ($gff_output, $index_output, $desc_output);
 # tracking variables
-my (%scaffold_last_gene_id, %gene_old_id_mRNA_last_rank, %gene_old_new_index, %mRNA_old_new_index);
+my (%scaffold_last_gene_id, %gene_old_id_mrna_last_rank, %gene_old_new_index, %mrna_old_new_index);
+my (%mrna_old_id_cds_last_rank, %mrna_old_id_exon_last_rank, %mrna_old_id_threeprimeutr_last_rank, %mrna_old_id_fiveprimeutr_last_rank);
 
 $gff_output   = '';                                                 # initialize
 $index_output = '';
@@ -149,8 +151,11 @@ foreach my $line (@lines){
 		#create mrna id
 		my $mrna_parent_new_id = $gene_old_new_index{$mrna_parent_old_id};
 		my $mrna_rank;
-		if ( exists $gene_old_id_mRNA_last_rank{$mrna_parent_old_id} ){
-			$mrna_rank = $gene_old_id_mRNA_last_rank{$mrna_parent_old_id}++;
+		if ( exists $gene_old_id_mrna_last_rank{$mrna_parent_old_id} ){
+			$mrna_rank = $gene_old_id_mrna_last_rank{$mrna_parent_old_id}++;
+		}
+		else{
+			$gene_old_id_mrna_last_rank{$mrna_parent_old_id} = $mrna_rank = 1;
 		}
 		my $mrna_new_id = $mrna_parent_new_id . '.' . $mrna_rank;
 
@@ -177,7 +182,7 @@ foreach my $line (@lines){
 		}
 
 		my $mrna_old_id = $gff_features->{'attribute'}->{'ID'};								# add mrna new id to mrna index
-		$mRNA_old_new_index{$mrna_old_id} = $mrna_new_id;
+		$mrna_old_new_index{$mrna_old_id} = $mrna_new_id;
 
 		my $mrna_aed  = $gff_features->{'attribute'}->{'_AED'};
 		my $mrna_eaed = $gff_features->{'attribute'}->{'_eAED'};
@@ -189,9 +194,63 @@ foreach my $line (@lines){
 
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
 	}
-
-	# if any other record (exon, UTRs, CDS)
+	# if any other child record (exon, UTRs, CDS)
 	# use the mRNA parent to create the gff record, can have multiple mRNA parents
+	elsif ( ($gff_features->{'type'} eq 'CDS') || ($gff_features->{'type'} eq 'exon')
+			|| ($gff_features->{'type'} eq 'three_prime_UTR') || ($gff_features->{'type'} eq 'five_prime_UTR')){
+
+		my $child_parent_new_id = '';
+		my $child_single_mrna_parent_old_id;												# get first or only parent
+		if ( $gff_features->{'attribute'}->{'Parent'} =~ /\,/ ){							# multiple parents
+			my @child_parents_arr = split (/\,/, $gff_features->{'attribute'}->{'Parent'});
+
+			foreach my $child_parent (@child_parents_arr){
+				if ( length $child_parent_new_id > 0 ){										# if not first parent
+					$child_parent_new_id = $child_parent_new_id. ',' .$mrna_old_new_index{$child_parent};
+				}
+				else{																		# if first parent
+					$child_parent_new_id = $mrna_old_new_index{$child_parent};
+					$child_single_mrna_parent_old_id  = $child_parent;
+				}
+			}
+		}
+		else{														
+			$child_parent_new_id = $mrna_old_new_index{$gff_features->{'attribute'}->{'Parent'}};# single parent
+			$child_single_mrna_parent_old_id  = $gff_features->{'attribute'}->{'Parent'} ;
+		}
+
+		# create child new id and record
+		my $child_rank;
+		my $child_attributes_hashref;
+		switch ( $gff_features->{'type'} ){
+			case 'CDS'{
+				if ( exists $mrna_old_id_cds_last_rank {$child_single_mrna_parent_old_id} ){
+					$child_rank = $mrna_old_id_cds_last_rank{$child_single_mrna_parent_old_id}++;
+				}
+				else{
+					$mrna_old_id_cds_last_rank{$child_single_mrna_parent_old_id} = $child_rank = 1;
+				}
+
+				# create id
+				my $cds_new_id = 'CDS:' . $mrna_old_new_index{$child_single_mrna_parent_old_id} . '.' . $child_rank;
+
+				# create attribute hashref
+				$child_attributes_hashref = gff3_parse_attributes ("ID=$cds_new_id;Name=$cds_new_id;Parent=$child_parent_new_id");
+			}
+
+			}
+			case 'exon'{
+				
+			}
+			case 'three_prime_UTR'{
+				
+			}
+			case 'five_prime_UTR'{
+				
+			}
+		}
+
+		# write the new child record
 
 
 
