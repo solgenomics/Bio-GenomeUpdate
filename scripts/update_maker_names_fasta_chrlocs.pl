@@ -13,7 +13,6 @@ update_maker_names_fasta_chrlocs.pl -i [old fasta file] -p [species acronym or p
  -i  Maker Fasta file (required)
  -p  Prefix for name, e.g DcitrP (required)
  -c  Prefix for chromosome in GFF e.g. Dc3.0sc (required)
- -s  Starting seed, e.g. 1 (required)
  -g  GFF file with chromosomal location
  -h  Help
 
@@ -24,13 +23,13 @@ use warnings;
 use File::Slurp;
 use Getopt::Std;
 
-our ( $opt_i, $opt_p, $opt_s, $opt_c, $opt_g, $opt_h );
+our ( $opt_i, $opt_p, $opt_c, $opt_g, $opt_h );
 getopts('i:p:s:c:g:h');
 if ($opt_h) {
 	help();
 	exit;
 }
-if ( !$opt_i || !$opt_p || !$opt_c || !$opt_s || !$opt_g) {
+if ( !$opt_i || !$opt_p || !$opt_c || !$opt_g) {
 	print
 "\nOld Fasta file, name prefix, chr prefix, GFF file with location and starting seed number is required.
 See help below\n\n\n";
@@ -43,10 +42,7 @@ my $input_old_fasta      = read_file($old_fasta_input_file)
 	or die "Could not open old fasta input file: $old_fasta_input_file\n";
 chomp $opt_p; my $prefix = $opt_p;
 chomp $opt_c; my $chrprefix = $opt_c;
-my $seed = $opt_s;
-if ($seed !~ /^[0-9]+$/){
-	die "$seed should be a number\n";
-}
+
 my $old_gff_input_file = $opt_g;
 my $input_old_gff      = read_file($old_gff_input_file)
 	or die "Could not open old fasta input file: $old_gff_input_file\n";
@@ -69,7 +65,7 @@ foreach my $line (@gff_lines) {
 	my @gff_line_arr = split ( "\t", $line);
 	if ($gff_line_arr[2] eq 'mRNA'){
 		my $chr = $gff_line_arr[0];
-		$chr =~ s/$chrprefix//; #remove genome version and chr, so only chr number
+			$chr =~ s/$chrprefix//; #remove genome version and chr, so only chr number
 		my @gff_line_attr_arr = split (/;/, $gff_line_arr[8]);
 		my $ID;
 		foreach my $attr (@gff_line_attr_arr){
@@ -103,7 +99,7 @@ foreach my $line (@lines) {
 
 		print STDERR "loc: $mRNA_chr_location\n";
 
-		if ( $line =~ /^maker/ ){ #if this is a make gene model
+		if ( $line =~ /^maker/ ){ #if this is a maker gene model
 			my $current_maker_id = $line;
 			$current_maker_id =~ s/[0-9]+$//;#remove number suffix
 
@@ -207,7 +203,6 @@ sub help {
 
         -i  Maker Fasta file (required)
         -p  Prefix for name, e.g DcitrP (required)
-        -s  Starting seed, e.g. 1 (required)
 				-c  Prefix for chromosome in GFF e.g. Dc3.0sc (required)
         -g  GFF file with chromosomal location (required)
         -h  Help
