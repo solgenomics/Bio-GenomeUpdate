@@ -35,12 +35,12 @@ if ($opt_h) {
   help();
   exit;
 }
-if ( !$opt_g || !$opt_a || !$opt_f || !$opt_p || !$opt_c || !$opt_s || !$opt_o) {
-  print
-"\nOld GFF file, AHRD file, Apollo descriptions, name prefix, chr prefix, starting seed, output GFF file is required.
-See help below\n\n\n";
-  help();
-}
+# if ( !$opt_g || !$opt_a || !$opt_f || !$opt_p || !$opt_c || !$opt_s || !$opt_o) {
+#   print
+# "\nOld GFF file, AHRD file, Apollo descriptions, name prefix, chr prefix, starting seed, output GFF file is required.
+# See help below\n\n\n";
+#   help();  
+# }
 
 # get input files
 my $gff_input_file = $opt_g;
@@ -54,9 +54,9 @@ my $apollo_desc_input      = read_file($apollo_desc_input_file)
   or die "Could not open Apollo description input file: $apollo_desc_input_file\n";
 chomp $opt_p; my $prefix = $opt_p;
 chomp $opt_c; my $chrprefix = $opt_c;
-my $seed = $opt_s;
-if ($seed !~ /^[0-9]+$/){ die "$seed should be a number\n"; }
-
+# my $seed = $opt_s;
+# if ($seed !~ /^[0-9]+$/){ die "$seed should be a number\n"; }
+my $seed = 990; #hack to start from 990 to match names in /export/species2/Diaphorina_citri/annotation/OGSv3.0/ahrd_final_OGS3_IDS.txt
 
 # hash of Apollo descriptions
 my %apollo_curated_function;
@@ -73,9 +73,11 @@ my (%ahrd_function, %ahrd_domain);
 foreach my $line (@lines) {
 	chomp($line);
 	my @line_arr = split ("\t", $line);
-	$ahrd_function{$line_arr[0]}=$line_arr[1];                      # maker id = AHRD function string
+	#$ahrd_function{$line_arr[0]}=$line_arr[1];                      # maker id = AHRD function string
+	$ahrd_function{$line_arr[0]}=$line_arr[1];                      # temp hack new OGSv3 id = AHRD function string
 	if ( defined $line_arr[2] ){
-		$ahrd_domain{$line_arr[0]}=$line_arr[2];					# maker id = AHRD comma separated domain string
+		#$ahrd_domain{$line_arr[0]}=$line_arr[2];					# maker id = AHRD comma separated domain string
+		$ahrd_domain{$line_arr[0]}=$line_arr[2];					# temp hack new OGSv3 id = AHRD comma separated domain string
 	}
 
 }
@@ -168,7 +170,8 @@ foreach my $line (@lines){
 			$mrna_desc = $apollo_curated_function{$gff_features->{'attribute'}->{'ID'}};
 		}
 		else{
-			$mrna_desc = $ahrd_function{$gff_features->{'attribute'}->{'ID'}};				# get AHRD description
+			#$mrna_desc = $ahrd_function{$gff_features->{'attribute'}->{'ID'}};				# get AHRD description
+			$mrna_desc = $ahrd_function{$mrna_new_id};										# temp hack to get AHRD description using new OGSv3 id
 		}
 
 		my $mrna_domain;
