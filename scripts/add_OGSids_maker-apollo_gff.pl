@@ -136,7 +136,7 @@ foreach my $line (@lines){
 		}
 		$gene_new_id = $gene_new_id . '.1';							# assign version 1
 
-		my $old_id = $gff_features->{'attribute'}->{'ID'};			# add gene_new_id to gene index
+		my $old_id = $gff_features->{'attributes'}->{'ID'};			# add gene_new_id to gene index
 		$gene_old_new_index{$old_id} = $gene_new_id;
 
 		# create the new GFF record
@@ -146,9 +146,9 @@ foreach my $line (@lines){
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
 	}
 	elsif ( $gff_features->{'type'} eq 'mRNA' ){					# if mRNA, increment the mRNA isoform count if this is the not the first mRNA for this gene
-		my $mrna_parent_old_id = $gff_features->{'attribute'}->{'Parent'};
+		my $mrna_parent_old_id = $gff_features->{'attributes'}->{'Parent'};
 
-		die "Exiting... \nFound multiple parents for mRNA ".$gff_features->{'attribute'}->{'ID'}."\n" if ( $mrna_parent_old_id =~ /\,/ );
+		die "Exiting... \nFound multiple parents for mRNA ".$gff_features->{'attributes'}->{'ID'}."\n" if ( $mrna_parent_old_id =~ /\,/ );
 		
 		#create mrna id
 		my $mrna_parent_new_id = $gene_old_new_index{$mrna_parent_old_id};
@@ -166,17 +166,17 @@ foreach my $line (@lines){
 		# # Only Apollo or AHRD desc, adding domains after | separator without IPR,GO,Pfam prefixes
 		# # can have special characters, not adding -RA -RB automatically for curated genes, that should be done by curators
 		my $mrna_desc;
-		if ( exists $apollo_curated_function{$gff_features->{'attribute'}->{'ID'}} ) {		# get the Apollo description if it exists
-			$mrna_desc = $apollo_curated_function{$gff_features->{'attribute'}->{'ID'}};
+		if ( exists $apollo_curated_function{$gff_features->{'attributes'}->{'ID'}} ) {		# get the Apollo description if it exists
+			$mrna_desc = $apollo_curated_function{$gff_features->{'attributes'}->{'ID'}};
 		}
 		else{
-			#$mrna_desc = $ahrd_function{$gff_features->{'attribute'}->{'ID'}};				# get AHRD description
+			#$mrna_desc = $ahrd_function{$gff_features->{'attributes'}->{'ID'}};				# get AHRD description
 			$mrna_desc = $ahrd_function{$mrna_new_id};										# temp hack to get AHRD description using new OGSv3 id
 		}
 
 		my $mrna_domain;
-		if ( exists $ahrd_domain{$gff_features->{'attribute'}->{'ID'}} ){					# add domains
-			$mrna_domain = $ahrd_domain{$gff_features->{'attribute'}->{'ID'}};
+		if ( exists $ahrd_domain{$gff_features->{'attributes'}->{'ID'}} ){					# add domains
+			$mrna_domain = $ahrd_domain{$gff_features->{'attributes'}->{'ID'}};
 			$mrna_domain =~ s/^,//;															# remove extra , e.g. ,PF12698
 			chomp $mrna_domain;
 		}
@@ -184,12 +184,12 @@ foreach my $line (@lines){
 			$mrna_desc = $mrna_desc. ' | ' .$mrna_domain;
 		}
 
-		my $mrna_old_id = $gff_features->{'attribute'}->{'ID'};								# add mrna new id to mrna index
+		my $mrna_old_id = $gff_features->{'attributes'}->{'ID'};								# add mrna new id to mrna index
 		$mrna_old_new_index{$mrna_old_id} = $mrna_new_id;
 
-		my $mrna_aed  = $gff_features->{'attribute'}->{'_AED'};
-		my $mrna_eaed = $gff_features->{'attribute'}->{'_eAED'};
-		my $mrna_qi   = $gff_features->{'attribute'}->{'_QI'};
+		my $mrna_aed  = $gff_features->{'attributes'}->{'_AED'};
+		my $mrna_eaed = $gff_features->{'attributes'}->{'_eAED'};
+		my $mrna_qi   = $gff_features->{'attributes'}->{'_QI'};
 
 		# write the new mRNA record
 		my $mrna_attributes_hashref = gff3_parse_attributes ("ID=$mrna_new_id;Name=$mrna_new_id;Note=$mrna_desc;Parent=$mrna_parent_new_id;_AED=$mrna_aed;_eAED=$mrna_eaed;;_QI=$mrna_qi");
@@ -204,8 +204,8 @@ foreach my $line (@lines){
 
 		my $child_parent_new_id = '';
 		my $child_single_mrna_parent_old_id;												# get first or only parent
-		if ( $gff_features->{'attribute'}->{'Parent'} =~ /\,/ ){							# multiple parents
-			my @child_parents_arr = split (/\,/, $gff_features->{'attribute'}->{'Parent'});
+		if ( $gff_features->{'attributes'}->{'Parent'} =~ /\,/ ){							# multiple parents
+			my @child_parents_arr = split (/\,/, $gff_features->{'attributes'}->{'Parent'});
 
 			foreach my $child_parent (@child_parents_arr){
 				if ( length $child_parent_new_id > 0 ){										# if not first parent
@@ -218,8 +218,8 @@ foreach my $line (@lines){
 			}
 		}
 		else{														
-			$child_parent_new_id = $mrna_old_new_index{$gff_features->{'attribute'}->{'Parent'}};# single parent
-			$child_single_mrna_parent_old_id  = $gff_features->{'attribute'}->{'Parent'} ;
+			$child_parent_new_id = $mrna_old_new_index{$gff_features->{'attributes'}->{'Parent'}};# single parent
+			$child_single_mrna_parent_old_id  = $gff_features->{'attributes'}->{'Parent'} ;
 		}
 
 		# create child new id and record
