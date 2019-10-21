@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+Does not work for mutiple regions in the same seq. Array parsing is broken
+
 =head1 NAME
 
 replace_with_Ns_fasta.pl
