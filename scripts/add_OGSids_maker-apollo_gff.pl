@@ -134,7 +134,7 @@ foreach my $line (@lines){
 		foreach (1..$padding_count){
 			$gene_new_id = $gene_new_id . '0';
 		}
-		$gene_new_id = $gene_new_id . '.1';							# assign version 1
+		$gene_new_id = $gene_new_id . $gene_id . '.1';							# assign version 1
 
 		my $old_id = $gff_features->{'attributes'}->{'ID'};			# add gene_new_id to gene index
 		$gene_old_new_index{$old_id} = $gene_new_id;
