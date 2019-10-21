@@ -67,18 +67,22 @@ foreach my $line (@lines) {
 }
 
 # hash of AHRD descriptions
-my %ahrd_function;
+my (%ahrd_function, %ahrd_domain);
 @lines = split( /\n/, $ahrd_input );
 foreach my $line (@lines) {
 	chomp($line);
 	my @line_arr = split ("\t", $line);
-	$ahrd_function{$line_arr[0]}=$line_arr[1];                      # OGS id = AHRD function string
+	$ahrd_function{$line_arr[0]}=$line_arr[1];                      # maker id = AHRD function string
+	if ( defined $line_arr[2] ){
+		$ahrd_domain{$line_arr[0]}=$line_arr[2];					# maker id = AHRD comma separated domain string
+	}
+
 }
 
 # output variables
 my ($gff_output, $index_output, $desc_output);
 # tracking variables
-my (%scaffold_last_gene_id, %gene_mRNA_last_rank, %gene_old_new_index, %mRNA_old_new_index);
+my (%scaffold_last_gene_id, %gene_old_id_mRNA_last_rank, %gene_old_new_index, %mRNA_old_new_index);
 
 $gff_output   = '';                                                 # initialize
 $index_output = '';
@@ -92,8 +96,7 @@ foreach my $line (@lines){
 	if ( $line=~ m/^#/ ){
 		$gff_output .= $line."\n";
 
-		#add seqid to hash assuming that sequence-region is present in a properly formatted GFF file
-		if ( $line=~ m/^##sequence-region/ ){
+		if ( $line=~ m/^##sequence-region/ ){						#add seqid to hash assuming that sequence-region is present in a properly formatted GFF file
 			##sequence-region   DC3.0sc00 1 34736251
 			my @seq_region = split ( ' ', $line);
 			$seq_region[1] =~ s/$chrprefix//;						#remove genome version and chr, so only chr number
@@ -105,54 +108,87 @@ foreach my $line (@lines){
 
 	my $gff_features = gff3_parse_feature ($line);
 
-	# if gene, create the OGS id Dcitr00g00990.1.1
-	if ( $gff_features->{'type'} eq 'gene' ){
+	if ( $gff_features->{'type'} eq 'gene' ){				# if gene, create the OGS id Dcitr00g00990.1.1
 		my $scaffold = $gff_features->{'seq_id'};
-		$scaffold    =~ s/$chrprefix//;						#remove genome version and chr, so only chr number
+		$scaffold    =~ s/$chrprefix//;						# remove genome version and chr, so only chr number
 
 		my $gene_id;
 		if ( $scaffold_last_gene_id{$scaffold} == $seed ) {	# first gene on scaffold
 			$gene_id = $seed;
 		}
 		else{
-			$scaffold_last_gene_id{$scaffold} += 10;		#namespace for 9 new genes now
+			$scaffold_last_gene_id{$scaffold} += 10;		# namespace for 9 new genes now
 			$gene_id = $scaffold_last_gene_id{$scaffold};
 		}
 
-		my $new_id;
+		my $gene_new_id;
 
 		my @chars = split //,$gene_id;
-		my $padding_count = 5 - scalar @chars;				#presuming a gene space of <1,00,000 so 6 characters, e.g. 00001 - 99999, was 1 mill earlier
+		my $padding_count = 5 - scalar @chars;				#p resuming a gene space of <1,00,000 per scaffold so 6 characters, e.g. 00001 - 99999, was 1 mill earlier
 		
-		$new_id = $prefix.$scaffold . 'g';					#prefix with chr number and 0's 
+		$gene_new_id = $prefix.$scaffold . 'g';					# prefix with chr number and 0's 
 		foreach (1..$padding_count){
-			$new_id = $new_id . '0';
+			$gene_new_id = $gene_new_id . '0';
 		}
-		$new_id = $new_id . '.1';							#assign version 1
+		$gene_new_id = $gene_new_id . '.1';							# assign version 1
 
-		#add new_id to gene index
-		my $old_id = $gff_features->{'attribute'}->{'ID'};
-		$gene_old_new_index{$old_id} = $new_id;
+		my $old_id = $gff_features->{'attribute'}->{'ID'};	# add gene_new_id to gene index
+		$gene_old_new_index{$old_id} = $gene_new_id;
 
-		#create the new GFF record
-		my $gene_attributes_hashref = gff3_parse_attributes ("ID=$new_id;Name=$new_id");
+		# create the new GFF record
+		my $gene_attributes_hashref = gff3_parse_attributes ("ID=$gene_new_id;Name=$gene_new_id");
 		$gff_features->{'attributes'} = $gene_attributes_hashref;
 
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
 	}
+	elsif ( $gff_features->{'type'} eq 'mRNA' ){			# if mRNA, increment the mRNA isoform count if this is the not the first mRNA for this gene
+		my $mrna_parent_old_id = $gff_features->{'attribute'}->{'Parent'};
+
+		die "Exiting... \nFound multiple parents for mRNA ".$gff_features->{'attribute'}->{'ID'}."\n" if ( $mrna_parent_old_id =~ /\,/ );
+		
+		#create mrna id
+		my $mrna_parent_new_id = $gene_old_new_index{$mrna_parent_old_id};
+		my $mrna_rank;
+		if ( exists $gene_old_id_mRNA_last_rank{$mrna_parent_old_id} ){
+			$mrna_rank = $gene_old_id_mRNA_last_rank{$mrna_parent_old_id}++;
+		}
+		my $mrna_new_id = $mrna_parent_new_id . '.' . $mrna_rank;
 
 
-	# if mRNA, increment the mRNA isoform count if this is the not the first mRNA for this gene
-	
+		# # create the func description string
+		# # Only Apollo or AHRD desc, adding domains after | separator without IPR,GO,Pfam prefixes
+		# # can have special characters, not adding -RA -RB automatically for curated genes, that should be done by curators
+		my $mrna_desc;
+		if ( exists $apollo_curated_function{$gff_features->{'attribute'}->{'ID'}} ) {		# get the Apollo description if it exists
+			$mrna_desc = $apollo_curated_function{$gff_features->{'attribute'}->{'ID'}};
+		}
+		else{
+			$mrna_desc = $ahrd_function{$gff_features->{'attribute'}->{'ID'}};				# get AHRD description
+		}
 
-	# get the AHRD func description, get the Apollo description if it exists
+		my $mrna_domain;
+		if ( exists $ahrd_domain{$gff_features->{'attribute'}->{'ID'}} ){					# add domains
+			$mrna_domain = $ahrd_domain{$gff_features->{'attribute'}->{'ID'}};
+			$mrna_domain =~ s/^,//;															# remove extra , e.g. ,PF12698
+			chomp $mrna_domain;
+		}
+		if ( defined $mrna_domain ){
+			$mrna_desc = $mrna_desc. ' | ' .$mrna_domain;
+		}
 
+		my $mrna_old_id = $gff_features->{'attribute'}->{'ID'};								# add mrna new id to mrna index
+		$mRNA_old_new_index{$mrna_old_id} = $mrna_new_id;
 
+		my $mrna_aed  = $gff_features->{'attribute'}->{'_AED'};
+		my $mrna_eaed = $gff_features->{'attribute'}->{'_eAED'};
+		my $mrna_qi   = $gff_features->{'attribute'}->{'_QI'};
 
-	# create the func description string
+		# write the new mRNA record
+		my $mrna_attributes_hashref = gff3_parse_attributes ("ID=$mrna_new_id;Name=$mrna_new_id;Note=$mrna_desc;Parent=$mrna_parent_new_id;_AED=$mrna_aed;_eAED=$mrna_eaed;;_QI=$mrna_qi");
+		$gff_features->{'attributes'} = $mrna_attributes_hashref;
 
-
-	# write the new mRNA record 
+		$gff_output = $gff_output . gff3_format_feature ($gff_features);
+	}
 
 	# if any other record (exon, UTRs, CDS)
 	# use the mRNA parent to create the gff record, can have multiple mRNA parents
@@ -187,7 +223,7 @@ sub help {
 
 	Description:
 
-	 Renames maker and Apollo assigned gene names to gene name with version numbers, e.g.  maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-1 becomes DcitrP00001.1.1. Creates an index file with old and new mRNA ids. This is hard coded for <1,000,000 mRNAs. Counter skips over 10 gene models so manually curated genes can be added.
+	 Renames maker and Apollo assigned gene names to gene name with version numbers, e.g.  maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-1 becomes DcitrP00001.1.1. Creates an index file with old and new mRNA ids. This is hard coded for <99,999 mRNAs per scaffold. Counter skips over 10 gene models so manually curated genes can be added later.
 	 
 	Output:
 	 Index: maker/Apollo ids -> OGSv3 ids
@@ -196,7 +232,8 @@ sub help {
 
 
 	Usage:
-	  cmdline_perldoc.pl -g [?? file] <other params>
+	  add_OGSids_maker-apollo_GFF.pl -g [old Merged Maker and Apollo GFF file] -a [AHRD file for mRNA with Maker and Apollo ids] -p [species acronym or prefix] -c [Prefix for chromosome in GFF]  -s [starting value for naming] -o [output formatted gff file with OGS ids]
+
 	  
 	Flags:
 
