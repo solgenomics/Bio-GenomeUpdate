@@ -146,18 +146,18 @@ foreach my $line (@lines){
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
 	}
 	elsif ( $gff_features->{'type'} eq 'mRNA' ){					# if mRNA, increment the mRNA isoform count if this is the not the first mRNA for this gene
-		my $mrna_parent_old_id = $gff_features->{'attributes'}->{'Parent'};
+		my @mrna_parent_old_id_arr = $gff_features->{'attributes'}->{'Parent'};				# returns an arrayref
 
-		die "Exiting... \nFound multiple parents for mRNA ".$gff_features->{'attributes'}->{'ID'}."\n" if ( $mrna_parent_old_id =~ /\,/ );
+		die "Exiting... \nFound multiple parents for mRNA ".$gff_features->{'attributes'}->{'ID'}."\n" if ( scalar @mrna_parent_old_id_arr > 1 );
 		
 		#create mrna id
-		my $mrna_parent_new_id = $gene_old_new_index{$mrna_parent_old_id};
+		my $mrna_parent_new_id = $gene_old_new_index{$mrna_parent_old_id_arr[0]};
 		my $mrna_rank;
-		if ( exists $gene_old_id_mrna_last_rank{$mrna_parent_old_id} ){
-			$mrna_rank = $gene_old_id_mrna_last_rank{$mrna_parent_old_id}++;
+		if ( exists $gene_old_id_mrna_last_rank{$mrna_parent_old_id_arr[0]} ){
+			$mrna_rank = $gene_old_id_mrna_last_rank{$mrna_parent_old_id_arr[0]}++;
 		}
 		else{
-			$gene_old_id_mrna_last_rank{$mrna_parent_old_id} = $mrna_rank = 1;
+			$gene_old_id_mrna_last_rank{$mrna_parent_old_id_arr[0]} = $mrna_rank = 1;
 		}
 		my $mrna_new_id = $mrna_parent_new_id . '.' . $mrna_rank;
 
