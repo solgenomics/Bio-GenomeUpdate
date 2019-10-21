@@ -108,31 +108,31 @@ foreach my $line (@lines){
 
 	my $gff_features = gff3_parse_feature ($line);
 
-	if ( $gff_features->{'type'} eq 'gene' ){				# if gene, create the OGS id Dcitr00g00990.1.1
+	if ( $gff_features->{'type'} eq 'gene' ){						# if gene, create the OGS id Dcitr00g00990.1.1
 		my $scaffold = $gff_features->{'seq_id'};
-		$scaffold    =~ s/$chrprefix//;						# remove genome version and chr, so only chr number
+		$scaffold    =~ s/$chrprefix//;								# remove genome version and chr, so only chr number
 
 		my $gene_id;
-		if ( $scaffold_last_gene_id{$scaffold} == $seed ) {	# first gene on scaffold
+		if ( $scaffold_last_gene_id{$scaffold} == $seed ) {			# first gene on scaffold
 			$gene_id = $seed;
 		}
 		else{
-			$scaffold_last_gene_id{$scaffold} += 10;		# namespace for 9 new genes now
+			$scaffold_last_gene_id{$scaffold} += 10;				# namespace for 9 new genes now
 			$gene_id = $scaffold_last_gene_id{$scaffold};
 		}
 
 		my $gene_new_id;
 
 		my @chars = split //,$gene_id;
-		my $padding_count = 5 - scalar @chars;				#p resuming a gene space of <1,00,000 per scaffold so 6 characters, e.g. 00001 - 99999, was 1 mill earlier
+		my $padding_count = 5 - scalar @chars;						#presuming a gene space of <1,00,000 per scaffold so 6 characters, e.g. 00001 - 99999, was 1 mill earlier
 		
-		$gene_new_id = $prefix.$scaffold . 'g';					# prefix with chr number and 0's 
+		$gene_new_id = $prefix.$scaffold . 'g';						# prefix with chr number and 0's 
 		foreach (1..$padding_count){
 			$gene_new_id = $gene_new_id . '0';
 		}
 		$gene_new_id = $gene_new_id . '.1';							# assign version 1
 
-		my $old_id = $gff_features->{'attribute'}->{'ID'};	# add gene_new_id to gene index
+		my $old_id = $gff_features->{'attribute'}->{'ID'};			# add gene_new_id to gene index
 		$gene_old_new_index{$old_id} = $gene_new_id;
 
 		# create the new GFF record
@@ -141,7 +141,7 @@ foreach my $line (@lines){
 
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
 	}
-	elsif ( $gff_features->{'type'} eq 'mRNA' ){			# if mRNA, increment the mRNA isoform count if this is the not the first mRNA for this gene
+	elsif ( $gff_features->{'type'} eq 'mRNA' ){					# if mRNA, increment the mRNA isoform count if this is the not the first mRNA for this gene
 		my $mrna_parent_old_id = $gff_features->{'attribute'}->{'Parent'};
 
 		die "Exiting... \nFound multiple parents for mRNA ".$gff_features->{'attribute'}->{'ID'}."\n" if ( $mrna_parent_old_id =~ /\,/ );
