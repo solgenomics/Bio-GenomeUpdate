@@ -83,14 +83,14 @@ foreach my $line (@lines) {
 }
 
 # output variables
-my ($gff_output, $index_output, $desc_output);
+my ($gff_output, $index_output, $curated_desc_output);
 # tracking variables
 my (%scaffold_last_gene_id, %gene_old_id_mrna_last_rank, %gene_old_new_index, %mrna_old_new_index);
 my (%mrna_old_id_cds_last_rank, %mrna_old_id_exon_last_rank, %mrna_old_id_threeprimeutr_last_rank, %mrna_old_id_fiveprimeutr_last_rank);
 
 $gff_output   = '';                                                 # initialize
 $index_output = '';
-$desc_output  = '';
+$curated_desc_output  = '';
 
 
 @lines = split( /\n/, $gff_input );
@@ -139,7 +139,7 @@ foreach my $line (@lines){
 
 		# create the new GFF record
 		my $gene_attributes_hashref;
-		if ( !defined $gff_features->{'source'}){					#Apollo as source
+		if ( !defined $gff_features->{'source'}){					#Apollo as source as no source in apollo exported GFF
 			$gff_features->{'source'} = 'Apollo';
 			$gene_attributes_hashref = gff3_parse_attributes ("ID=$gene_new_id;Name=$gene_new_id;Method=ManualCuration");
 		}
@@ -201,7 +201,11 @@ foreach my $line (@lines){
 			my $mrna_attributes_hashref = gff3_parse_attributes ("ID=$mrna_new_id;Name=$mrna_new_id;Note=$mrna_desc;Parent=$mrna_parent_new_id;_AED=$mrna_aed;_eAED=$mrna_eaed;;_QI=$mrna_qi");
 			$gff_features->{'attributes'} = $mrna_attributes_hashref;
 		}
-		else{																						# apollo mRNA
+		else{																						# apollo mRNA as no source in apollo exported GFF
+			# write curated_desc_output
+			$curated_desc_output = $curated_desc_output . $mrna_new_id . "\t" . $mrna_desc . "\t" . 
+			$mrna_domain . "\t" . $gff_features->{'attributes'}->{'owner'}->[0] . "\n";
+
 			# write the new mRNA record
 			$gff_features->{'source'} = 'Apollo';
 			my $mrna_attributes_hashref = gff3_parse_attributes ("ID=$mrna_new_id;Name=$mrna_new_id;Note=$mrna_desc;Parent=$mrna_parent_new_id;method=ManualCuration");
@@ -307,11 +311,14 @@ foreach my $line (@lines){
 chomp $opt_o;
 open my $OGFF, '>', "$opt_o" or die "Cannot open $opt_o\n";
 open my $OINDEX, '>', "index_mRNA.$opt_o" or die  "Cannot open index_mRNA.$opt_o\n";
+open my $OCURDESC, '>', "curated_ID_desc_owner.$opt_o" or die  "Cannot open index_mRNA.$opt_o\n";
 
 print $OGFF $gff_output;
 close $OGFF;
 print $OINDEX $index_output;
 close $OINDEX;
+print $OCURDESC $curated_desc_output;
+close $OCURDESC;
 
 
 #----------------------------------------------------------------------------
@@ -326,6 +333,7 @@ sub help {
 	 
 	Output:
 	 Index: maker/Apollo ids -> OGS ids
+	 Curated genes: IGS id, description, domains, owner
 	 GFF file with formatted functional description and OGS ids
 
 
