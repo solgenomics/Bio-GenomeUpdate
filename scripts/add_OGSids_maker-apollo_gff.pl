@@ -204,8 +204,8 @@ foreach my $line (@lines){
 
 		my $child_parent_new_id = '';
 		my $child_single_mrna_parent_old_id;												# get first or only parent
-		if ( $gff_features->{'attributes'}->{'Parent'} =~ /\,/ ){							# multiple parents
-			my @child_parents_arr = split (/\,/, $gff_features->{'attributes'}->{'Parent'});
+		if ( scalar @{$gff_features->{'attributes'}->{'Parent'}} > 1 ){						# multiple parents in arrayref
+			my @child_parents_arr = $gff_features->{'attributes'}->{'Parent'};
 
 			foreach my $child_parent (@child_parents_arr){
 				if ( length $child_parent_new_id > 0 ){										# if not first parent
@@ -217,9 +217,9 @@ foreach my $line (@lines){
 				}
 			}
 		}
-		else{														
-			$child_parent_new_id = $mrna_old_new_index{$gff_features->{'attributes'}->{'Parent'}};# single parent
-			$child_single_mrna_parent_old_id  = $gff_features->{'attributes'}->{'Parent'} ;
+		else{																				# single parent in arrayref
+			$child_parent_new_id = $mrna_old_new_index{$gff_features->{'attributes'}->{'Parent'}->[0]};
+			$child_single_mrna_parent_old_id  = $gff_features->{'attributes'}->{'Parent'}->[0] ;
 		}
 
 		# create child new id and record
