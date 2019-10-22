@@ -138,7 +138,15 @@ foreach my $line (@lines){
 		$gene_old_new_index{$old_id} = $gene_new_id;
 
 		# create the new GFF record
-		my $gene_attributes_hashref = gff3_parse_attributes ("ID=$gene_new_id;Name=$gene_new_id");
+		my $gene_attributes_hashref;
+		if ( !defined $gff_features->{'source'}){					#Apollo as source
+			$gff_features->{'source'} = 'Apollo';
+			$gene_attributes_hashref = gff3_parse_attributes ("ID=$gene_new_id;Name=$gene_new_id;Method=ManualCuration");
+		}
+		else{
+			$gene_attributes_hashref = gff3_parse_attributes ("ID=$gene_new_id;Name=$gene_new_id");
+		}
+				
 		$gff_features->{'attributes'} = $gene_attributes_hashref;
 
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
@@ -195,7 +203,8 @@ foreach my $line (@lines){
 		}
 		else{																						# apollo mRNA
 			# write the new mRNA record
-			my $mrna_attributes_hashref = gff3_parse_attributes ("ID=$mrna_new_id;Name=$mrna_new_id;Note=$mrna_desc;Parent=$mrna_parent_new_id");
+			$gff_features->{'source'} = 'Apollo';
+			my $mrna_attributes_hashref = gff3_parse_attributes ("ID=$mrna_new_id;Name=$mrna_new_id;Note=$mrna_desc;Parent=$mrna_parent_new_id;method=ManualCuration");
 			$gff_features->{'attributes'} = $mrna_attributes_hashref;
 		}
 
@@ -289,6 +298,10 @@ foreach my $line (@lines){
 		}
 
 		# write the new child record
+		if ( !defined $gff_features->{'source'}){					#Apollo as source
+			$gff_features->{'source'} = 'Apollo';
+		}
+		
 		$gff_features->{'attributes'} = $child_attributes_hashref;
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
 	}
