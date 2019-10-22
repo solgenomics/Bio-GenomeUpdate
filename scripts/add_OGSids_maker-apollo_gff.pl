@@ -184,13 +184,20 @@ foreach my $line (@lines){
 		my $mrna_old_id = $gff_features->{'attributes'}->{'ID'}->[0];								# add mrna new id to mrna index
 		$mrna_old_new_index{$mrna_old_id} = $mrna_new_id;
 
-		my $mrna_aed  = $gff_features->{'attributes'}->{'_AED'}->[0];
-		my $mrna_eaed = $gff_features->{'attributes'}->{'_eAED'}->[0];
-		my $mrna_qi   = $gff_features->{'attributes'}->{'_QI'}->[0];
+		if ( $gff_features->{'source'} eq 'maker'){													# maker mRNA
+			my $mrna_aed  = $gff_features->{'attributes'}->{'_AED'}->[0];
+			my $mrna_eaed = $gff_features->{'attributes'}->{'_eAED'}->[0];
+			my $mrna_qi   = $gff_features->{'attributes'}->{'_QI'}->[0];
 
-		# write the new mRNA record
-		my $mrna_attributes_hashref = gff3_parse_attributes ("ID=$mrna_new_id;Name=$mrna_new_id;Note=$mrna_desc;Parent=$mrna_parent_new_id;_AED=$mrna_aed;_eAED=$mrna_eaed;;_QI=$mrna_qi");
-		$gff_features->{'attributes'} = $mrna_attributes_hashref;
+			# write the new mRNA record
+			my $mrna_attributes_hashref = gff3_parse_attributes ("ID=$mrna_new_id;Name=$mrna_new_id;Note=$mrna_desc;Parent=$mrna_parent_new_id;_AED=$mrna_aed;_eAED=$mrna_eaed;;_QI=$mrna_qi");
+			$gff_features->{'attributes'} = $mrna_attributes_hashref;
+		}
+		else{																						# apollo mRNA
+			# write the new mRNA record
+			my $mrna_attributes_hashref = gff3_parse_attributes ("ID=$mrna_new_id;Name=$mrna_new_id;Note=$mrna_desc;Parent=$mrna_parent_new_id");
+			$gff_features->{'attributes'} = $mrna_attributes_hashref;
+		}
 
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
 	}
@@ -202,9 +209,9 @@ foreach my $line (@lines){
 		my $child_parent_new_id = '';
 		my $child_single_mrna_parent_old_id;												# get first or only parent
 		if ( scalar @{$gff_features->{'attributes'}->{'Parent'}} > 1 ){						# multiple parents in arrayref
-			my @child_parents_arr = $gff_features->{'attributes'}->{'Parent'};
+			my $child_parents_arref = $gff_features->{'attributes'}->{'Parent'};
 
-			foreach my $child_parent (@child_parents_arr){
+			foreach my $child_parent (@{$child_parents_arref}){
 				if ( length $child_parent_new_id > 0 ){										# if not first parent
 					$child_parent_new_id = $child_parent_new_id. ',' .$mrna_old_new_index{$child_parent};
 				}
