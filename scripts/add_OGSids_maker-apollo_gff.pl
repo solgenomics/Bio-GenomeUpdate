@@ -298,10 +298,6 @@ foreach my $line (@lines){
 		}
 
 		# write the new child record
-		if ( !defined $gff_features->{'source'}){					#Apollo as source
-			$gff_features->{'source'} = 'Apollo';
-		}
-		
 		$gff_features->{'attributes'} = $child_attributes_hashref;
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
 	}
