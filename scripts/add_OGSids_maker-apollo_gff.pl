@@ -118,12 +118,12 @@ foreach my $line (@lines){
 
 		my $gene_id;
 		if ( $scaffold_last_gene_id{$scaffold} == $seed ) {			# first gene on scaffold
-			$gene_id = $seed;
+			$gene_id = $seed;			
 		}
 		else{
-			$scaffold_last_gene_id{$scaffold} = $scaffold_last_gene_id{$scaffold} + 10;				# namespace for 9 new genes now
 			$gene_id = $scaffold_last_gene_id{$scaffold};
 		}
+		$scaffold_last_gene_id{$scaffold} += 10;					# increment for 2nd gene, namespace for 9 new genes now
 
 		my $gene_new_id;
 
