@@ -298,14 +298,11 @@ foreach my $line (@lines){
 chomp $opt_o;
 open my $OGFF, '>', "$opt_o" or die "Cannot open $opt_o\n";
 open my $OINDEX, '>', "index_mRNA.$opt_o" or die  "Cannot open index_mRNA.$opt_o\n";
-open my $ODESC, '>', "desc_mRNA.$opt_o" or die "Cannot open desc_mRNA.$opt_o\n";
 
 print $OGFF $gff_output;
 close $OGFF;
 print $OINDEX $index_output;
 close $OINDEX;
-print $ODESC $desc_output;
-close $ODESC;
 
 
 #----------------------------------------------------------------------------
@@ -319,8 +316,7 @@ sub help {
 	 Renames maker and Apollo assigned gene names to gene name with version numbers, e.g.  maker-ScVcwli_1-pred_gff_maker-gene-0.0-mRNA-1 becomes DcitrP00001.1.1. Creates an index file with old and new mRNA ids. This is hard coded for <99,999 mRNAs per scaffold. Counter skips over 10 gene models so manually curated genes can be added later.
 	 
 	Output:
-	 Index: maker/Apollo ids -> OGSv3 ids
-	 Functional desc: OGSv3 id -> Func desc string
+	 Index: maker/Apollo ids -> OGS ids
 	 GFF file with formatted functional description and OGS ids
 
 
