@@ -121,7 +121,7 @@ foreach my $line (@lines){
 			$gene_id = $seed;
 		}
 		else{
-			$scaffold_last_gene_id{$scaffold} += 10;				# namespace for 9 new genes now
+			$scaffold_last_gene_id{$scaffold} = $scaffold_last_gene_id{$scaffold} + 10;				# namespace for 9 new genes now
 			$gene_id = $scaffold_last_gene_id{$scaffold};
 		}
 
@@ -184,7 +184,7 @@ foreach my $line (@lines){
 		my $mrna_old_id = $gff_features->{'attributes'}->{'ID'}->[0];								# add mrna new id to mrna index
 		$mrna_old_new_index{$mrna_old_id} = $mrna_new_id;
 
-		if ( $gff_features->{'source'} eq 'maker'){													# maker mRNA
+		if ( (defined $gff_features->{'source'}) && ($gff_features->{'source'} eq 'maker') ){													# maker mRNA
 			my $mrna_aed  = $gff_features->{'attributes'}->{'_AED'}->[0];
 			my $mrna_eaed = $gff_features->{'attributes'}->{'_eAED'}->[0];
 			my $mrna_qi   = $gff_features->{'attributes'}->{'_QI'}->[0];
@@ -217,7 +217,7 @@ foreach my $line (@lines){
 				}
 				else{																		# if first parent
 					$child_parent_new_id = $mrna_old_new_index{$child_parent};
-					$child_single_mrna_parent_old_id  = $child_parent;
+					$child_single_mrna_parent_old_id  = $child_parent;						# using the first parent
 				}
 			}
 		}
