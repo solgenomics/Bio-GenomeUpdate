@@ -134,9 +134,9 @@ foreach my $line (@lines){
 		foreach (1..$padding_count){
 			$gene_new_id = $gene_new_id . '0';
 		}
-		$gene_new_id = $gene_new_id . $gene_id . '.1';							# assign version 1
+		$gene_new_id = $gene_new_id . $gene_id . '.1';				# assign version 1
 
-		my $old_id = $gff_features->{'attributes'}->{'ID'};			# add gene_new_id to gene index
+		my $old_id = $gff_features->{'attributes'}->{'ID'}->[0];	# add gene_new_id to gene index
 		$gene_old_new_index{$old_id} = $gene_new_id;
 
 		# create the new GFF record
@@ -146,18 +146,15 @@ foreach my $line (@lines){
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
 	}
 	elsif ( $gff_features->{'type'} eq 'mRNA' ){					# if mRNA, increment the mRNA isoform count if this is the not the first mRNA for this gene
-		my @mrna_parent_old_id_arr = $gff_features->{'attributes'}->{'Parent'};				# returns an arrayref
-
-		die "Exiting... \nFound multiple parents for mRNA ".$gff_features->{'attributes'}->{'ID'}."\n" if ( scalar @mrna_parent_old_id_arr > 1 );
 		
 		#create mrna id
-		my $mrna_parent_new_id = $gene_old_new_index{$mrna_parent_old_id_arr[0]};
+		my $mrna_parent_new_id = $gene_old_new_index{$gff_features->{'attributes'}->{'Parent'}->[0]};
 		my $mrna_rank;
-		if ( exists $gene_old_id_mrna_last_rank{$mrna_parent_old_id_arr[0]} ){
-			$mrna_rank = $gene_old_id_mrna_last_rank{$mrna_parent_old_id_arr[0]}++;
+		if ( exists $gene_old_id_mrna_last_rank{$gff_features->{'attributes'}->{'Parent'}->[0]} ){
+			$mrna_rank = $gene_old_id_mrna_last_rank{$gff_features->{'attributes'}->{'Parent'}->[0]}++;
 		}
 		else{
-			$gene_old_id_mrna_last_rank{$mrna_parent_old_id_arr[0]} = $mrna_rank = 1;
+			$gene_old_id_mrna_last_rank{$gff_features->{'attributes'}->{'Parent'}->[0]} = $mrna_rank = 1;
 		}
 		my $mrna_new_id = $mrna_parent_new_id . '.' . $mrna_rank;
 
@@ -166,17 +163,17 @@ foreach my $line (@lines){
 		# # Only Apollo or AHRD desc, adding domains after | separator without IPR,GO,Pfam prefixes
 		# # can have special characters, not adding -RA -RB automatically for curated genes, that should be done by curators
 		my $mrna_desc;
-		if ( exists $apollo_curated_function{$gff_features->{'attributes'}->{'ID'}} ) {		# get the Apollo description if it exists
-			$mrna_desc = $apollo_curated_function{$gff_features->{'attributes'}->{'ID'}};
+		if ( exists $apollo_curated_function{$gff_features->{'attributes'}->{'ID'}->[0]} ) {		# get the Apollo description if it exists
+			$mrna_desc = $apollo_curated_function{$gff_features->{'attributes'}->{'ID'}->[0]};
 		}
 		else{
-			#$mrna_desc = $ahrd_function{$gff_features->{'attributes'}->{'ID'}};				# get AHRD description
+			#$mrna_desc = $ahrd_function{$gff_features->{'attributes'}->{'ID'}->[0]};				# get AHRD description
 			$mrna_desc = $ahrd_function{$mrna_new_id};										# temp hack to get AHRD description using new OGSv3 id
 		}
 
 		my $mrna_domain;
-		if ( exists $ahrd_domain{$gff_features->{'attributes'}->{'ID'}} ){					# add domains
-			$mrna_domain = $ahrd_domain{$gff_features->{'attributes'}->{'ID'}};
+		if ( exists $ahrd_domain{$gff_features->{'attributes'}->{'ID'}->[0]} ){					# add domains
+			$mrna_domain = $ahrd_domain{$gff_features->{'attributes'}->{'ID'}->[0]};
 			$mrna_domain =~ s/^,//;															# remove extra , e.g. ,PF12698
 			chomp $mrna_domain;
 		}
@@ -184,12 +181,12 @@ foreach my $line (@lines){
 			$mrna_desc = $mrna_desc. ' | ' .$mrna_domain;
 		}
 
-		my $mrna_old_id = $gff_features->{'attributes'}->{'ID'};								# add mrna new id to mrna index
+		my $mrna_old_id = $gff_features->{'attributes'}->{'ID'}->[0];								# add mrna new id to mrna index
 		$mrna_old_new_index{$mrna_old_id} = $mrna_new_id;
 
-		my $mrna_aed  = $gff_features->{'attributes'}->{'_AED'};
-		my $mrna_eaed = $gff_features->{'attributes'}->{'_eAED'};
-		my $mrna_qi   = $gff_features->{'attributes'}->{'_QI'};
+		my $mrna_aed  = $gff_features->{'attributes'}->{'_AED'}->[0];
+		my $mrna_eaed = $gff_features->{'attributes'}->{'_eAED'}->[0];
+		my $mrna_qi   = $gff_features->{'attributes'}->{'_QI'}->[0];
 
 		# write the new mRNA record
 		my $mrna_attributes_hashref = gff3_parse_attributes ("ID=$mrna_new_id;Name=$mrna_new_id;Note=$mrna_desc;Parent=$mrna_parent_new_id;_AED=$mrna_aed;_eAED=$mrna_eaed;;_QI=$mrna_qi");
