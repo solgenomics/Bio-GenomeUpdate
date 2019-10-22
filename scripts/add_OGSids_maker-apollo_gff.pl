@@ -93,7 +93,6 @@ $index_output = '';
 $desc_output  = '';
 
 
-
 @lines = split( /\n/, $gff_input );
 foreach my $line (@lines){
 	# comments line
@@ -106,7 +105,6 @@ foreach my $line (@lines){
 			$seq_region[1] =~ s/$chrprefix//;						#remove genome version and chr, so only chr number
 			$scaffold_last_gene_id{$seq_region[1]} = $seed; 		#init counter from 990 to match with logic in update_maker_names_fasta_chrlocs.pl???
 		}
-
 		next;
 	}
 
@@ -151,11 +149,12 @@ foreach my $line (@lines){
 		my $mrna_parent_new_id = $gene_old_new_index{$gff_features->{'attributes'}->{'Parent'}->[0]};
 		my $mrna_rank;
 		if ( exists $gene_old_id_mrna_last_rank{$gff_features->{'attributes'}->{'Parent'}->[0]} ){
-			$mrna_rank = $gene_old_id_mrna_last_rank{$gff_features->{'attributes'}->{'Parent'}->[0]}++;
+			$mrna_rank = $gene_old_id_mrna_last_rank{$gff_features->{'attributes'}->{'Parent'}->[0]};
 		}
 		else{
 			$gene_old_id_mrna_last_rank{$gff_features->{'attributes'}->{'Parent'}->[0]} = $mrna_rank = 1;
 		}
+		$gene_old_id_mrna_last_rank{$gff_features->{'attributes'}->{'Parent'}->[0]}++;				# increment for 2nd isoform
 		my $mrna_new_id = $mrna_parent_new_id . '.' . $mrna_rank;
 
 
@@ -168,13 +167,14 @@ foreach my $line (@lines){
 		}
 		else{
 			#$mrna_desc = $ahrd_function{$gff_features->{'attributes'}->{'ID'}->[0]};				# get AHRD description
-			$mrna_desc = $ahrd_function{$mrna_new_id};										# temp hack to get AHRD description using new OGSv3 id
+			die "No desc for $mrna_new_id in Mirella's OGSv3 AHRD file" if ( !exists $ahrd_function{$mrna_new_id}); # temp hack to get AHRD description using new OGSv3 id
+			$mrna_desc = $ahrd_function{$mrna_new_id};										
 		}
 
 		my $mrna_domain;
-		if ( exists $ahrd_domain{$gff_features->{'attributes'}->{'ID'}->[0]} ){					# add domains
+		if ( exists $ahrd_domain{$gff_features->{'attributes'}->{'ID'}->[0]} ){						# add domains
 			$mrna_domain = $ahrd_domain{$gff_features->{'attributes'}->{'ID'}->[0]};
-			$mrna_domain =~ s/^,//;															# remove extra , e.g. ,PF12698
+			$mrna_domain =~ s/^,//;																	# remove extra , e.g. ,PF12698
 			chomp $mrna_domain;
 		}
 		if ( defined $mrna_domain ){
@@ -184,7 +184,7 @@ foreach my $line (@lines){
 		my $mrna_old_id = $gff_features->{'attributes'}->{'ID'}->[0];								# add mrna new id to mrna index
 		$mrna_old_new_index{$mrna_old_id} = $mrna_new_id;
 
-		if ( (defined $gff_features->{'source'}) && ($gff_features->{'source'} eq 'maker') ){													# maker mRNA
+		if ( (defined $gff_features->{'source'}) && ($gff_features->{'source'} eq 'maker') ){		# maker mRNA
 			my $mrna_aed  = $gff_features->{'attributes'}->{'_AED'}->[0];
 			my $mrna_eaed = $gff_features->{'attributes'}->{'_eAED'}->[0];
 			my $mrna_qi   = $gff_features->{'attributes'}->{'_QI'}->[0];
@@ -293,10 +293,6 @@ foreach my $line (@lines){
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
 	}
 }
-
-
-
-
 
 # write output files
 chomp $opt_o;
