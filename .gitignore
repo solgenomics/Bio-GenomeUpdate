@@ -1,4 +1,5 @@
 *~
+*.out
 *.index
 .includepath
 .project
@@ -7,4 +8,5 @@ error.messages.filename
 errors.filename
 filename.error.messages
 test.fas
+test.fa
 /temp/*
