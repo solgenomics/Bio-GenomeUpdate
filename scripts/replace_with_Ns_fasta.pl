@@ -1,7 +1,5 @@
 #!/usr/bin/perl -w
 
-print STDERR "Does not work for mutiple regions in the same seq. Array parsing is broken. Use bedtools maskfasta\n\n"
-
 =head1 NAME
 
 replace_with_Ns_fasta.pl Does not work for mutiple regions in the same seq. Array parsing is broken. Use bedtools maskfasta
@@ -26,6 +24,8 @@ use File::Slurp;
 use Bio::Seq;
 use Bio::SeqIO;
 
+
+print STDERR "Does not work for mutiple regions in the same seq. Array parsing is broken. Use bedtools maskfasta\n\n";
 
 our ( $opt_f, $opt_i, $opt_h );
 getopts('f:i:h');
