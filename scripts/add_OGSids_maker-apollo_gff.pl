@@ -85,11 +85,13 @@ foreach my $line (@lines) {
 # output variables
 my ($gff_output, $index_output, $curated_desc_output);
 # tracking variables
-my (%scaffold_last_gene_id, %gene_old_id_mrna_last_rank, %gene_old_new_index, %mrna_old_new_index);
+my (%scaffold_last_gene_id, %gene_old_id_mrna_last_rank, %gene_old_new_index, %mrna_old_new_index, $gene_counter, $mrna_counter);
 my (%mrna_old_id_cds_last_rank, %mrna_old_id_exon_last_rank, %mrna_old_id_threeprimeutr_last_rank, %mrna_old_id_fiveprimeutr_last_rank);
 
 $gff_output   = '';                                                 # initialize
 $index_output = '';
+$gene_counter = 0;
+$mrna_counter = 0;
 $curated_desc_output  = '';
 
 
@@ -114,9 +116,11 @@ foreach my $line (@lines){
 		my $scaffold = $gff_features->{'seq_id'};
 		$scaffold    =~ s/$chrprefix//;								# remove genome version and chr, so only chr number
 
+		die "$scaffold not defined using ##sequence-region for $line\n" if ( !exists $scaffold_last_gene_id{$scaffold} );
+
 		my $gene_id;
 		if ( $scaffold_last_gene_id{$scaffold} == $seed ) {			# first gene on scaffold
-			$gene_id = $seed;			
+			$gene_id = $seed;
 		}
 		else{
 			$gene_id = $scaffold_last_gene_id{$scaffold};
@@ -146,13 +150,20 @@ foreach my $line (@lines){
 		else{
 			$gene_attributes_hashref = gff3_parse_attributes ("ID=$gene_new_id;Name=$gene_new_id");
 		}
-				
+		
 		$gff_features->{'attributes'} = $gene_attributes_hashref;
-
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
+
+		$gene_counter++;
+
+		if ( $gene_counter % 10 == 0 ){
+			print STDERR "\rParsing gene number $gene_counter\n";
+		}
 	}
 	elsif ( $gff_features->{'type'} eq 'mRNA' ){					# if mRNA, increment the mRNA isoform count if this is the not the first mRNA for this gene
 		
+		die "Multiple parents for mRNA in $line\n" if ( scalar @{$gff_features->{'attributes'}->{'Parent'}} > 1 );
+
 		#create mrna id
 		my $mrna_parent_new_id = $gene_old_new_index{$gff_features->{'attributes'}->{'Parent'}->[0]};
 		my $mrna_rank;
@@ -176,7 +187,7 @@ foreach my $line (@lines){
 		else{
 			#$mrna_desc = $ahrd_function{$gff_features->{'attributes'}->{'ID'}->[0]};				# get AHRD description
 			die "No desc for $mrna_new_id in Mirella's OGSv3 AHRD file" if ( !exists $ahrd_function{$mrna_new_id}); # temp hack to get AHRD description using new OGSv3 id
-			$mrna_desc = $ahrd_function{$mrna_new_id};										
+			$mrna_desc = $ahrd_function{$mrna_new_id};
 		}
 
 		my $mrna_domain;
@@ -213,6 +224,7 @@ foreach my $line (@lines){
 		}
 
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
+		$mrna_counter++;
 	}
 	# if any other child record (exon, UTRs, CDS)
 	# use the mRNA parent to create the gff record, can have multiple mRNA parents
@@ -222,6 +234,9 @@ foreach my $line (@lines){
 		my $child_parent_new_id = '';
 		my $child_single_mrna_parent_old_id;												# get first or only parent
 		if ( scalar @{$gff_features->{'attributes'}->{'Parent'}} > 1 ){						# multiple parents in arrayref
+			
+			print STDERR "Multiple parents found for child in $line";
+
 			my $child_parents_arref = $gff_features->{'attributes'}->{'Parent'};
 
 			foreach my $child_parent (@{$child_parents_arref}){
@@ -304,6 +319,9 @@ foreach my $line (@lines){
 		# write the new child record
 		$gff_features->{'attributes'} = $child_attributes_hashref;
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
+	}
+	else{
+		die "Unhandled record in GFFn\n$line\n\nExiting...";
 	}
 }
 
