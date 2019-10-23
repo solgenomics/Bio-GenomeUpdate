@@ -388,6 +388,7 @@ __DATA__
 
 
 Maker and Apollo file
+----------------------
 ##sequence-region   DC3.0sc00 1 34736251
 DC3.0sc00       maker   gene    91478   95809   .       -       .       ID=maker-DC3.0sc00-pred_gff_Mikado_loci-gene-1.7;Name=maker-DC3.0sc00-pre
 DC3.0sc00       maker   mRNA    91478   95809   .       -       .       ID=maker-DC3.0sc00-pred_gff_Mikado_loci-gene-1.7-mRNA-1;Parent=maker-DC3.
@@ -425,7 +426,8 @@ DC3.0sc00       .       exon    3454130 3454726 .       -       .       ID=ade1d
 ###
 
 
-AHRD file
+AHRD description
+----------------
 augustus-DC3.0sc00-processed-gene-318.13-mRNA-1	Heat shock protein Hsp20 (AHRD V3.11 *** tr|A0A2N3UBE4|A0A2N3UBE4_9BACT)	IPR002068,PF00011
 augustus-DC3.0sc00-processed-gene-31.91-mRNA-1	Protein tweety homolog (AHRD V3.11 *** tr|A0A0K8THM1|A0A0K8THM1_LYGHE)	IPR006990,PF04906
 augustus-DC3.0sc00-processed-gene-31.93-mRNA-1	Protein tweety homolog (AHRD V3.11 *** tr|A0A0K8THM1|A0A0K8THM1_LYGHE)	IPR006990,PF04906
@@ -434,6 +436,7 @@ PR021151,PF05916
 
 
 Apollo curated description
+--------------------------
 312f7c3a-8a38-4bc9-8e12-9ef46f2203ad    S-phase kinase associated protein 1
 22300a7a-3dfa-4b4e-8f84-9e9e899ad2c8    Alcohol Dehydrogenase Class 3
 fae5f81b-9d66-46dd-accb-a20f10342ae5    Interference hedgehog
