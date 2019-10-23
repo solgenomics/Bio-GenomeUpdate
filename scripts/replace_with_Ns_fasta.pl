@@ -1,10 +1,10 @@
 #!/usr/bin/perl -w
 
-Does not work for mutiple regions in the same seq. Array parsing is broken
+print STDERR "Does not work for mutiple regions in the same seq. Array parsing is broken. Use bedtools maskfasta\n\n"
 
 =head1 NAME
 
-replace_with_Ns_fasta.pl
+replace_with_Ns_fasta.pl Does not work for mutiple regions in the same seq. Array parsing is broken. Use bedtools maskfasta
 
 =head1 SYNOPSIS
 
@@ -102,7 +102,7 @@ sub help {
 
     Description:
 
-     Replaces the region in the fasta file with small Ns (n)
+     Replaces the region in the fasta file with small Ns (n). Does not work for mutiple regions in the same seq. Array parsing is broken. Use bedtools maskfasta.
     
 
 
