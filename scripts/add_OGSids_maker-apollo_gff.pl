@@ -384,3 +384,57 @@ EOF
 
 =cut
 
+__DATA__
+
+
+Maker and Apollo file
+##sequence-region   DC3.0sc00 1 34736251
+DC3.0sc00       maker   gene    91478   95809   .       -       .       ID=maker-DC3.0sc00-pred_gff_Mikado_loci-gene-1.7;Name=maker-DC3.0sc00-pre
+DC3.0sc00       maker   mRNA    91478   95809   .       -       .       ID=maker-DC3.0sc00-pred_gff_Mikado_loci-gene-1.7-mRNA-1;Parent=maker-DC3.
+DC3.0sc00       maker   three_prime_UTR 91478   92623   .       -       .       ID=maker-DC3.0sc00-pred_gff_Mikado_loci-gene-1.7-mRNA-1:three_pri
+DC3.0sc00       maker   exon    91478   92627   .       -       .       ID=maker-DC3.0sc00-pred_gff_Mikado_loci-gene-1.7-mRNA-1:1;Parent=maker-DC
+DC3.0sc00       maker   CDS     92624   92627   .       -       1       ID=maker-DC3.0sc00-pred_gff_Mikado_loci-gene-1.7-mRNA-1:cds;Parent=maker-
+DC3.0sc00       maker   CDS     95379   95767   .       -       0       ID=maker-DC3.0sc00-pred_gff_Mikado_loci-gene-1.7-mRNA-1:cds;Parent=maker-
+DC3.0sc00       maker   exon    95379   95809   .       -       .       ID=maker-DC3.0sc00-pred_gff_Mikado_loci-gene-1.7-mRNA-1:2;Parent=maker-DC
+DC3.0sc00       maker   five_prime_UTR  95768   95809   .       -       .       ID=maker-DC3.0sc00-pred_gff_Mikado_loci-gene-1.7-mRNA-1:five_prim
+###
+DC3.0sc00       .       gene    3440778 3454726 .       -       .       ID=804d5524-b17a-4c54-afff-fa7625d97f13;owner=kkercher2017@my.fit.edu;dat
+DC3.0sc00       .       mRNA    3440778 3454726 .       -       .       ID=8988b2bf-3893-4932-a4cc-31606a2a300c;Parent=804d5524-b17a-4c54-afff-fa
+DC3.0sc00       .       CDS     3440778 3440885 .       -       0       ID=8048c322-47c4-49ed-a7a5-7d75b9040dcc;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       exon    3440778 3440885 .       -       .       ID=3c2dfd5f-7bd0-46fa-aa7e-a81a28cf740a;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       exon    3443362 3443580 .       -       .       ID=866eb680-539f-475e-8087-ce7ebb736293;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       CDS     3443362 3443580 .       -       0       ID=8048c322-47c4-49ed-a7a5-7d75b9040dcc;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       CDS     3444910 3444988 .       -       1       ID=8048c322-47c4-49ed-a7a5-7d75b9040dcc;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       exon    3444910 3444988 .       -       .       ID=5052b312-14c3-4e07-a7d5-d6db579076df;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       exon    3445185 3445354 .       -       .       ID=f4077db7-7e8f-47cb-8a0d-e168718de592;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       CDS     3445185 3445354 .       -       0       ID=8048c322-47c4-49ed-a7a5-7d75b9040dcc;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       CDS     3446911 3447073 .       -       1       ID=8048c322-47c4-49ed-a7a5-7d75b9040dcc;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       exon    3446911 3447073 .       -       .       ID=65505803-156d-4716-a79e-9e78caf8f524;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       CDS     3447452 3447653 .       -       2       ID=8048c322-47c4-49ed-a7a5-7d75b9040dcc;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       exon    3447452 3447653 .       -       .       ID=1dc6c007-6550-4834-8f5a-c710b0e6ca48;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       exon    3447919 3447995 .       -       .       ID=5894da40-ed11-4c1f-a7f1-522bf837a386;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       CDS     3447919 3447995 .       -       1       ID=8048c322-47c4-49ed-a7a5-7d75b9040dcc;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       CDS     3449837 3449953 .       -       1       ID=8048c322-47c4-49ed-a7a5-7d75b9040dcc;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       exon    3449837 3449953 .       -       .       ID=2cf185bf-1496-44bc-8349-c1450ef31fb9;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       CDS     3450976 3451222 .       -       2       ID=8048c322-47c4-49ed-a7a5-7d75b9040dcc;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       exon    3450976 3451222 .       -       .       ID=0a26640c-d064-4bcf-8153-5c27b5f99412;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       CDS     3451597 3451879 .       -       0       ID=8048c322-47c4-49ed-a7a5-7d75b9040dcc;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       exon    3451597 3451900 .       -       .       ID=33c9c3a2-c28b-430d-9829-73e220d04b30;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       exon    3453648 3454101 .       -       .       ID=229a7df0-8b92-44c6-bee5-45788ff12974;Parent=8988b2bf-3893-4932-a4cc-31
+DC3.0sc00       .       exon    3454130 3454726 .       -       .       ID=ade1d2e1-199a-4ad2-90dd-5bb2d137c20d;Parent=8988b2bf-3893-4932-a4cc-31
+###
+
+
+AHRD file
+augustus-DC3.0sc00-processed-gene-318.13-mRNA-1	Heat shock protein Hsp20 (AHRD V3.11 *** tr|A0A2N3UBE4|A0A2N3UBE4_9BACT)	IPR002068,PF00011
+augustus-DC3.0sc00-processed-gene-31.91-mRNA-1	Protein tweety homolog (AHRD V3.11 *** tr|A0A0K8THM1|A0A0K8THM1_LYGHE)	IPR006990,PF04906
+augustus-DC3.0sc00-processed-gene-31.93-mRNA-1	Protein tweety homolog (AHRD V3.11 *** tr|A0A0K8THM1|A0A0K8THM1_LYGHE)	IPR006990,PF04906
+augustus-DC3.0sc00-processed-gene-325.9-mRNA-1	DNA replication complex GINS protein PSF1 (AHRD V3.11 *** tr|A0A146M5X8|A0A146M5X8_LYGHE)	I
+PR021151,PF05916
+
+
+Apollo curated description
+312f7c3a-8a38-4bc9-8e12-9ef46f2203ad    S-phase kinase associated protein 1
+22300a7a-3dfa-4b4e-8f84-9e9e899ad2c8    Alcohol Dehydrogenase Class 3
+fae5f81b-9d66-46dd-accb-a20f10342ae5    Interference hedgehog
+43292adb-c368-4b74-94af-77a897bbeeb2    Timeless 2 part A
