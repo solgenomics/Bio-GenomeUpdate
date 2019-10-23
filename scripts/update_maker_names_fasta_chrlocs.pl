@@ -171,19 +171,16 @@ foreach my $line (@lines) {
 	}
 
 }
-unless ( open( OID, '>', "$new_id_fasta_output_file" ) ) {
-	print STDERR "Cannot open $new_id_fasta_output_file\n";
-	exit 1;
-}
-print OID $new_id_fasta_output;
-close(OID);
 
-unless ( open( OIX, '>', "$new_id_index_output_file" ) ) {
-	print STDERR "Cannot open $new_id_index_output_file\n";
-	exit 1;
-}
-print OIX $new_id_index_output;
-close(OIX);
+
+open my $OID, '>', "$new_id_fasta_output_file" or die "Cannot open $new_id_fasta_output_file\n";
+print $OID $new_id_fasta_output;
+close($OID);
+
+open my $OIX, '>', "$new_id_index_output_file" or die "Cannot open $new_id_index_output_file\n";
+print $OIX $new_id_index_output;
+close($OIX);
+
 
 #----------------------------------------------------------------------------
 
