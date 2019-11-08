@@ -73,11 +73,11 @@ my (%ahrd_function, %ahrd_domain);
 foreach my $line (@lines) {
 	chomp($line);
 	my @line_arr = split ("\t", $line);
-	#$ahrd_function{$line_arr[0]}=$line_arr[1];                      # maker id = AHRD function string
-	$ahrd_function{$line_arr[0]}=$line_arr[1];                      # temp hack new OGSv3 id = AHRD function string
+	$ahrd_function{$line_arr[0]}=$line_arr[1];                      # maker id = AHRD function string
+	#$ahrd_function{$line_arr[0]}=$line_arr[1];                      # temp hack new OGSv3 id = AHRD function string
 	if ( defined $line_arr[2] ){
-		#$ahrd_domain{$line_arr[0]}=$line_arr[2];					# maker id = AHRD comma separated domain string
-		$ahrd_domain{$line_arr[0]}=$line_arr[2];					# temp hack new OGSv3 id = AHRD comma separated domain string
+		$ahrd_domain{$line_arr[0]}=$line_arr[2];					# maker id = AHRD comma separated domain string
+		#$ahrd_domain{$line_arr[0]}=$line_arr[2];					# temp hack new OGSv3 id = AHRD comma separated domain string
 	}
 
 }
