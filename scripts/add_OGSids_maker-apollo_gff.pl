@@ -351,7 +351,7 @@ sub help {
 	 
 	Output:
 	 Index: maker/Apollo ids -> OGS ids
-	 Curated genes: IGS id, description, domains, owner
+	 Curated genes: OGS id, description, domains, owner
 	 GFF file with formatted functional description and OGS ids
 
 
