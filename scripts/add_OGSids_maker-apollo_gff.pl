@@ -183,9 +183,11 @@ foreach my $line (@lines){
 			$mrna_desc = $apollo_curated_function{$gff_features->{'attributes'}->{'ID'}->[0]};
 		}
 		else{
-			#$mrna_desc = $ahrd_function{$gff_features->{'attributes'}->{'ID'}->[0]};				# get AHRD description
-			die "No desc for $mrna_new_id in Mirella's OGSv3 AHRD file" if ( !exists $ahrd_function{$mrna_new_id}); # temp hack to get AHRD description using new OGSv3 id
-			$mrna_desc = $ahrd_function{$mrna_new_id};
+			# check if mNRA id exists in the AHRD file
+			die "No desc for ".$gff_features->{'attributes'}->{'ID'}->[0]." in AHRD file" if ( !exists $ahrd_function{$gff_features->{'attributes'}->{'ID'}->[0]}); 
+			$mrna_desc = $ahrd_function{$gff_features->{'attributes'}->{'ID'}->[0]};				# get AHRD description
+			#die "No desc for $mrna_new_id in Mirella's OGSv3 AHRD file" if ( !exists $ahrd_function{$mrna_new_id}); # temp hack to get AHRD description using new OGSv3 id
+			#$mrna_desc = $ahrd_function{$mrna_new_id};
 		}
 
 		my $mrna_domain;
