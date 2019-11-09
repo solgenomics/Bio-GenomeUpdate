@@ -85,6 +85,7 @@ my ($gff_output, $index_output, $curated_desc_output);
 # tracking variables
 my (%scaffold_last_gene_id, %gene_old_id_mrna_last_rank, %gene_old_new_index, %mrna_old_new_index, $gene_counter, $mrna_counter);
 my (%mrna_old_id_cds_last_rank, %mrna_old_id_exon_last_rank, %mrna_old_id_threeprimeutr_last_rank, %mrna_old_id_fiveprimeutr_last_rank);
+my (%mrna_old_id_noncanonical_threeprimesplicesite_last_rank, %mrna_old_id_noncanonical_fiveprimesplicesite_last_rank);
 
 $gff_output   = '';                                                 # initialize
 $index_output = '';
@@ -233,9 +234,9 @@ foreach my $line (@lines){
 
 		my $child_parent_new_id = '';
 		my $child_single_mrna_parent_old_id;												# get first or only parent
-		if ( scalar @{$gff_features->{'attributes'}->{'Parent'}} > 1 ){						# multiple parents in arrayref
+		if ( scalar @{$gff_features->{'attributes'}->{'Parent'}} > 1 ){						# multiple parents in arrayref !!!
 			
-			print STDERR "Multiple parents found for child in $line";
+			#print STDERR "Multiple parents found for child in $line\n";
 
 			my $child_parents_arref = $gff_features->{'attributes'}->{'Parent'};
 
@@ -300,6 +301,20 @@ foreach my $line (@lines){
 				# create attribute hashref
 				$child_attributes_hashref = gff3_parse_attributes ("ID=$threeprimeutr_new_id;Name=$threeprimeutr_new_id;Parent=$child_parent_new_id");
 			}
+			case 'non_canonical_three_prime_splice_site'{
+				if ( exists $mrna_old_id_noncanonical_threeprimesplicesite_last_rank {$child_single_mrna_parent_old_id} ){
+					$child_rank = $mrna_old_id_noncanonical_threeprimesplicesite_last_rank{$child_single_mrna_parent_old_id}++;
+				}
+				else{
+					$mrna_old_id_noncanonical_threeprimesplicesite_last_rank{$child_single_mrna_parent_old_id} = $child_rank = 1;
+				}
+
+				# create id
+				my $noncanonical_threeprimesplicesite_new_id = 'non_canonical_three_prime_splice_site:' . $mrna_old_new_index{$child_single_mrna_parent_old_id} . '.' . $child_rank;
+
+				# create attribute hashref
+				$child_attributes_hashref = gff3_parse_attributes ("ID=$noncanonical_threeprimesplicesite_new_id;Name=$noncanonical_threeprimesplicesite_new_id;Parent=$child_parent_new_id");
+			}
 			case 'five_prime_UTR'{
 				if ( exists $mrna_old_id_fiveprimeutr_last_rank {$child_single_mrna_parent_old_id} ){
 					$child_rank = $mrna_old_id_fiveprimeutr_last_rank{$child_single_mrna_parent_old_id}++;
@@ -314,6 +329,20 @@ foreach my $line (@lines){
 				# create attribute hashref
 				$child_attributes_hashref = gff3_parse_attributes ("ID=$fiveprimeutr_new_id;Name=$fiveprimeutr_new_id;Parent=$child_parent_new_id");
 			}
+			case 'non_canonical_five_prime_splice_site'{
+				if ( exists $mrna_old_id_noncanonical_fiveprimesplicesite_last_rank {$child_single_mrna_parent_old_id} ){
+					$child_rank = $mrna_old_id_noncanonical_fiveprimesplicesite_last_rank{$child_single_mrna_parent_old_id}++;
+				}
+				else{
+					$mrna_old_id_noncanonical_fiveprimesplicesite_last_rank{$child_single_mrna_parent_old_id} = $child_rank = 1;
+				}
+
+				# create id
+				my $noncanonical_fiveprimesplicesite_new_id = 'non_canonical_five_prime_splice_site:' . $mrna_old_new_index{$child_single_mrna_parent_old_id} . '.' . $child_rank;
+
+				# create attribute hashref
+				$child_attributes_hashref = gff3_parse_attributes ("ID=$noncanonical_fiveprimesplicesite_new_id;Name=$noncanonical_fiveprimesplicesite_new_id;Parent=$child_parent_new_id");
+			}
 		}
 
 		# write the new child record
@@ -321,7 +350,7 @@ foreach my $line (@lines){
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
 	}
 	else{
-		die "Unhandled record in GFFn\n$line\n\nExiting...";
+		print STDERR "Unhandled record in GFF\n$line\n";										# for genome edit records: insertion_artifact, deletion_artifact, stop_codon_read_through, substitution_artifact
 	}
 }
 
