@@ -172,8 +172,10 @@ foreach my $line (@lines){
 		else{
 			$gene_old_id_mrna_last_rank{$gff_features->{'attributes'}->{'Parent'}->[0]} = $mrna_rank = 1;
 		}
-		$gene_old_id_mrna_last_rank{$gff_features->{'attributes'}->{'Parent'}->[0]}++;				# increment for 2nd isoform
+		$gene_old_id_mrna_last_rank{$gff_features->{'attributes'}->{'Parent'}->[0]}++;				# increment for next isoform
 		my $mrna_new_id = $mrna_parent_new_id . '.' . $mrna_rank;
+
+		$index_output = $index_output . $gff_features->{'attributes'}->{'ID'}->[0] . "\t" . $mrna_new_id . "\n";
 
 
 		# create the func description string
