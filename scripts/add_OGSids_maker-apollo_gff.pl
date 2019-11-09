@@ -197,6 +197,7 @@ foreach my $line (@lines){
 		if ( exists $ahrd_domain{$gff_features->{'attributes'}->{'ID'}->[0]} ){						# add domains
 			$mrna_domain = $ahrd_domain{$gff_features->{'attributes'}->{'ID'}->[0]};
 			$mrna_domain =~ s/^,//;																	# remove extra , e.g. ,PF12698
+			$mrna_domain =~ s/\|/,/g;																# replace | between GO terms with ,
 			chomp $mrna_domain;
 		}
 		if ( defined $mrna_domain ){
@@ -218,7 +219,7 @@ foreach my $line (@lines){
 		else{																						# apollo mRNA as no source in apollo exported GFF
 			# write curated_desc_output
 			$curated_desc_output = $curated_desc_output . $mrna_new_id . "\t" . $mrna_desc . "\t" . 
-			$mrna_domain . "\t" . $gff_features->{'attributes'}->{'owner'}->[0] . "\n";
+			$gff_features->{'attributes'}->{'owner'}->[0] . "\n";
 
 			# write the new mRNA record
 			$gff_features->{'source'} = 'Apollo';
