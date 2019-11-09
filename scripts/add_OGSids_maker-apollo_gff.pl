@@ -233,7 +233,9 @@ foreach my $line (@lines){
 	# if any other child record (exon, UTRs, CDS)
 	# use the mRNA parent to create the gff record, can have multiple mRNA parents
 	elsif ( ($gff_features->{'type'} eq 'CDS') || ($gff_features->{'type'} eq 'exon')
-			|| ($gff_features->{'type'} eq 'three_prime_UTR') || ($gff_features->{'type'} eq 'five_prime_UTR')){
+			|| ($gff_features->{'type'} eq 'three_prime_UTR') || ($gff_features->{'type'} eq 'five_prime_UTR')
+			|| ($gff_features->{'type'} eq 'non_canonical_three_prime_splice_site')
+			|| ($gff_features->{'type'} eq 'non_canonical_five_prime_splice_site') ){
 
 		my $child_parent_new_id = '';
 		my $child_single_mrna_parent_old_id;												# get first or only parent
