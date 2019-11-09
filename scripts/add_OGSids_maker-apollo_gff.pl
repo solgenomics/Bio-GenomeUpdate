@@ -84,7 +84,7 @@ foreach my $line (@lines) {
 my ($gff_output, $index_output, $curated_desc_output);
 # tracking variables
 my (%scaffold_last_gene_id, %gene_old_id_mrna_last_rank, %gene_old_new_index, %mrna_old_new_index, $gene_counter, $mrna_counter);
-my (%mrna_old_id_cds_last_rank, %mrna_old_id_exon_last_rank, %mrna_old_id_threeprimeutr_last_rank, %mrna_old_id_fiveprimeutr_last_rank);
+my (%mrna_old_id_exon_last_rank, %mrna_old_id_threeprimeutr_last_rank, %mrna_old_id_fiveprimeutr_last_rank);
 my (%mrna_old_id_noncanonical_threeprimesplicesite_last_rank, %mrna_old_id_noncanonical_fiveprimesplicesite_last_rank);
 
 $gff_output   = '';                                                 # initialize
