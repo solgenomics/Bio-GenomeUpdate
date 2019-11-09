@@ -265,15 +265,17 @@ foreach my $line (@lines){
 		my $child_attributes_hashref;
 		switch ( $gff_features->{'type'} ){
 			case 'CDS'{
-				if ( exists $mrna_old_id_cds_last_rank {$child_single_mrna_parent_old_id} ){
-					$child_rank = $mrna_old_id_cds_last_rank{$child_single_mrna_parent_old_id}++;
-				}
-				else{
-					$mrna_old_id_cds_last_rank{$child_single_mrna_parent_old_id} = $child_rank = 1;
-				}
+				# if ( exists $mrna_old_id_cds_last_rank {$child_single_mrna_parent_old_id} ){
+				# 	$child_rank = $mrna_old_id_cds_last_rank{$child_single_mrna_parent_old_id}++;
+				# }
+				# else{
+				# 	$mrna_old_id_cds_last_rank{$child_single_mrna_parent_old_id} = $child_rank = 1;
+				# }
 
 				# create id
-				my $cds_new_id = 'CDS:' . $mrna_old_new_index{$child_single_mrna_parent_old_id} . '.' . $child_rank;
+				# my $cds_new_id = 'CDS:' . $mrna_old_new_index{$child_single_mrna_parent_old_id} . '.' . $child_rank;
+				my $cds_new_id = 'CDS:' . $mrna_old_new_index{$child_single_mrna_parent_old_id};	# no need for rank as multi line
+																									# CDS feature with same name for each mRNA
 
 				# create attribute hashref
 				$child_attributes_hashref = gff3_parse_attributes ("ID=$cds_new_id;Name=$cds_new_id;Parent=$child_parent_new_id");
