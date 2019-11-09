@@ -144,7 +144,7 @@ foreach my $line (@lines){
 		my $gene_attributes_hashref;
 		if ( !defined $gff_features->{'source'}){					#Apollo as source as no source in apollo exported GFF
 			$gff_features->{'source'} = 'Apollo';
-			$gene_attributes_hashref = gff3_parse_attributes ("ID=$gene_new_id;Name=$gene_new_id;Method=ManualCuration");
+			$gene_attributes_hashref = gff3_parse_attributes ("ID=$gene_new_id;Name=$gene_new_id;method=ManualCuration");
 		}
 		else{
 			$gene_attributes_hashref = gff3_parse_attributes ("ID=$gene_new_id;Name=$gene_new_id");
