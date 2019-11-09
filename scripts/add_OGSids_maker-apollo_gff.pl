@@ -35,12 +35,12 @@ if ($opt_h) {
   help();
   exit;
 }
-# if ( !$opt_g || !$opt_a || !$opt_f || !$opt_p || !$opt_c || !$opt_s || !$opt_o) {
-#   print
-# "\nOld GFF file, AHRD file, Apollo descriptions, name prefix, chr prefix, starting seed, output GFF file is required.
-# See help below\n\n\n";
-#   help();  
-# }
+if ( !$opt_g || !$opt_a || !$opt_f || !$opt_p || !$opt_c || !$opt_s || !$opt_o) {
+  print
+"\nOld GFF file, AHRD file, Apollo descriptions, name prefix, chr prefix, starting seed, output GFF file is required.
+See help below\n\n\n";
+  help();  
+}
 
 # get input files
 my $gff_input_file = $opt_g;
@@ -54,9 +54,9 @@ my $apollo_desc_input      = read_file($apollo_desc_input_file)
   or die "Could not open Apollo description input file: $apollo_desc_input_file\n";
 chomp $opt_p; my $prefix = $opt_p;
 chomp $opt_c; my $chrprefix = $opt_c;
-# my $seed = $opt_s;
-# if ($seed !~ /^[0-9]+$/){ die "$seed should be a number\n"; }
-my $seed = 990; #hack to start from 990 to match names in /export/species2/Diaphorina_citri/annotation/OGSv3.0/ahrd_final_OGS3_IDS.txt
+my $seed = $opt_s;
+if ($seed !~ /^[0-9]+$/){ die "$seed should be a number\n"; }
+#my $seed = 990; #hack to start from 990 to match names in /export/species2/Diaphorina_citri/annotation/OGSv3.0/ahrd_final_OGS3_IDS.txt
 
 # hash of Apollo descriptions
 my %apollo_curated_function;
@@ -175,9 +175,9 @@ foreach my $line (@lines){
 		my $mrna_new_id = $mrna_parent_new_id . '.' . $mrna_rank;
 
 
-		# # create the func description string
-		# # Only Apollo or AHRD desc, adding domains after | separator without IPR,GO,Pfam prefixes
-		# # can have special characters, not adding -RA -RB automatically for curated genes, that should be done by curators
+		# create the func description string
+		# Only Apollo or AHRD desc, adding domains after | separator without IPR,GO,Pfam prefixes
+		# can have special characters, not adding -RA -RB automatically for curated genes, that should be done by curators
 		my $mrna_desc;
 		if ( exists $apollo_curated_function{$gff_features->{'attributes'}->{'ID'}->[0]} ) {		# get the Apollo description if it exists
 			$mrna_desc = $apollo_curated_function{$gff_features->{'attributes'}->{'ID'}->[0]};
