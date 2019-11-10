@@ -155,9 +155,10 @@ foreach my $line (@lines){
 
 		$gene_counter++;
 
-		if ( $gene_counter % 10 == 0 ){
-			print STDERR "\rParsing gene number $gene_counter\n";
-		}
+		# if ( $gene_counter % 10 == 0 ){
+		# 	print STDERR "\rParsing gene number $gene_counter";
+		# }
+		print STDERR "\rParsing gene number $gene_counter";
 	}
 	elsif ( $gff_features->{'type'} eq 'mRNA' ){					# if mRNA, increment the mRNA isoform count if this is the not the first mRNA for this gene
 		
@@ -238,26 +239,17 @@ foreach my $line (@lines){
 			|| ($gff_features->{'type'} eq 'non_canonical_five_prime_splice_site') ){
 
 		my $child_parent_new_id = '';
-		my $child_single_mrna_parent_old_id;												# get first or only parent
-		if ( scalar @{$gff_features->{'attributes'}->{'Parent'}} > 1 ){						# multiple parents in arrayref !!!
-			
-			#print STDERR "Multiple parents found for child in $line\n";
+		my $child_single_mrna_parent_old_id;												
 
-			my $child_parents_arref = $gff_features->{'attributes'}->{'Parent'};
-
-			foreach my $child_parent (@{$child_parents_arref}){
-				if ( length $child_parent_new_id > 0 ){										# if not first parent
-					$child_parent_new_id = $child_parent_new_id. ',' .$mrna_old_new_index{$child_parent};
-				}
-				else{																		# if first parent
-					$child_parent_new_id = $mrna_old_new_index{$child_parent};
-					$child_single_mrna_parent_old_id  = $child_parent;						# using the first parent
-				}
-			}
-		}
-		else{																				# single parent in arrayref
-			$child_parent_new_id = $mrna_old_new_index{$gff_features->{'attributes'}->{'Parent'}->[0]};
+		if ( $gff_features->{'type'} ne 'exon'){											# get only parent
+			$child_parent_new_id = $mrna_old_new_index{$gff_features->
+				{'attributes'}->{'Parent'}->[0]};											# single parent in arrayref for everything except exons
 			$child_single_mrna_parent_old_id  = $gff_features->{'attributes'}->{'Parent'}->[0] ;
+		}
+
+		if ( (scalar @{$gff_features->{'attributes'}->{'Parent'}} > 1)
+			&& ($gff_features->{'type'} ne 'exon') ){										# multiple parents in arrayref of non exon feature!!!
+			die "Multiple parents found for non-exon child in $line\n";
 		}
 
 		# create child new id and record
@@ -281,8 +273,29 @@ foreach my $line (@lines){
 				$child_attributes_hashref = gff3_parse_attributes ("ID=$cds_new_id;Name=$cds_new_id;Parent=$child_parent_new_id");
 			}
 			case 'exon'{
+				if ( scalar @{$gff_features->{'attributes'}->{'Parent'}} > 1 ){						# multiple parents in arrayref !!!
+					
+					# print STDERR "Multiple parents found for exon child in $line\n";
+
+					my $child_parents_arref = $gff_features->{'attributes'}->{'Parent'};
+
+					foreach my $child_parent (@{$child_parents_arref}){
+						if ( length $child_parent_new_id > 0 ){										# if not first parent
+							$child_parent_new_id = $child_parent_new_id. ',' .$mrna_old_new_index{$child_parent};
+						}
+						else{																		# if first parent
+							$child_parent_new_id = $mrna_old_new_index{$child_parent};				# using the first parent even if its the second parent that is the 
+							$child_single_mrna_parent_old_id  = $child_parent;						# source of the name since exon will be shared whatever the name
+						}
+					}
+				}
+				else{																				# single parent in arrayref
+					$child_parent_new_id = $mrna_old_new_index{$gff_features->{'attributes'}->{'Parent'}->[0]};
+					$child_single_mrna_parent_old_id  = $gff_features->{'attributes'}->{'Parent'}->[0] ;
+				}
+
 				if ( exists $mrna_old_id_exon_last_rank {$child_single_mrna_parent_old_id} ){
-					$child_rank = $mrna_old_id_exon_last_rank{$child_single_mrna_parent_old_id}++;
+					$child_rank = ++$mrna_old_id_exon_last_rank{$child_single_mrna_parent_old_id};	# pre assignment increment
 				}
 				else{
 					$mrna_old_id_exon_last_rank{$child_single_mrna_parent_old_id} = $child_rank = 1;
@@ -312,7 +325,7 @@ foreach my $line (@lines){
 			}
 			case 'non_canonical_three_prime_splice_site'{
 				if ( exists $mrna_old_id_noncanonical_threeprimesplicesite_last_rank {$child_single_mrna_parent_old_id} ){
-					$child_rank = $mrna_old_id_noncanonical_threeprimesplicesite_last_rank{$child_single_mrna_parent_old_id}++;
+					$child_rank = ++$mrna_old_id_noncanonical_threeprimesplicesite_last_rank{$child_single_mrna_parent_old_id};	# pre assignment increment
 				}
 				else{
 					$mrna_old_id_noncanonical_threeprimesplicesite_last_rank{$child_single_mrna_parent_old_id} = $child_rank = 1;
@@ -342,7 +355,7 @@ foreach my $line (@lines){
 			}
 			case 'non_canonical_five_prime_splice_site'{
 				if ( exists $mrna_old_id_noncanonical_fiveprimesplicesite_last_rank {$child_single_mrna_parent_old_id} ){
-					$child_rank = $mrna_old_id_noncanonical_fiveprimesplicesite_last_rank{$child_single_mrna_parent_old_id}++;
+					$child_rank = ++$mrna_old_id_noncanonical_fiveprimesplicesite_last_rank{$child_single_mrna_parent_old_id};	# pre assignment increment
 				}
 				else{
 					$mrna_old_id_noncanonical_fiveprimesplicesite_last_rank{$child_single_mrna_parent_old_id} = $child_rank = 1;
@@ -361,9 +374,11 @@ foreach my $line (@lines){
 		$gff_output = $gff_output . gff3_format_feature ($gff_features);
 	}
 	else{
-		print STDERR "Unhandled record in GFF\n$line\n";										# for genome edit records: insertion_artifact, deletion_artifact, stop_codon_read_through, substitution_artifact
+		print STDERR "\nUnhandled record in GFF\n$line\n";										# for genome edit records: insertion_artifact, deletion_artifact, stop_codon_read_through, substitution_artifact
 	}
 }
+
+print STDERR "\nDone!!\n";
 
 # write output files
 chomp $opt_o;
@@ -391,7 +406,7 @@ sub help {
 	 
 	Output:
 	 Index: maker/Apollo ids -> OGS ids
-	 Curated genes: OGS id, description, domains, owner
+	 Curated genes: OGS id, description, owner
 	 GFF file with formatted functional description and OGS ids
 
 
