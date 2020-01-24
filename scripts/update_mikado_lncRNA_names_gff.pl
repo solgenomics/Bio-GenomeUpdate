@@ -52,7 +52,8 @@ my $outofrange_gene_counter = 0;
 my %mRNA_Solycid_hash;
 
 #new
-my $species      = 'Solyc';
+#my $species      = 'Solyc'; tomato ITAG
+my $species      = 'Dcitr'; # Dcitr OGSv3
 my $prefix       = 'r';
 my $gene_counter = -1;
 my $lnc_RNA_counter;
@@ -82,9 +83,11 @@ foreach my $line (@lines) {
 
         my @line_arr = split( "\t", $line );
         $line_arr[1] =
-          'mikado_ITAG';    #using source to reflect ITAG/eugene fed into maker
+          # 'mikado_ITAG';    #using source to reflect ITAG/eugene fed into maker
+        'mikado_OGSv3';    #using source to reflect mikado/OGSv3 fed into maker
         my $chr = $line_arr[0];
-        $chr =~ s/^SL4\.0ch//;
+        # $chr =~ s/^SL4\.0ch//; # tomato
+        $chr =~ s/^DC3\.0sc//; # Dcitr
         my $gene_count   = sprintf( "%06d", $gene_counter );
         my $gene_version = 1;
         my $gene_id      = $species . $chr . $prefix . $gene_count;
@@ -104,18 +107,20 @@ foreach my $line (@lines) {
         }
         print STDOUT $new_attr;
     }
-    elsif ( $line =~ /\tmRNA\t/ ) {
+    elsif ( $line =~ /\tlncRNA\t/ ) {
 				$lnc_RNA_exon_counter = 1;
 				$lnc_RNA_counter++; # incrementing for next isoform, if any
 
         my @line_arr = split( "\t", $line );
         $line_arr[1] =
-          'mikado_ITAG';    #using source to reflect ITAG/eugene fed into maker
+          # 'mikado_ITAG';    #using source to reflect ITAG/eugene fed into maker
+        'mikado_OGSv3';    #using source to reflect mikado/OGSv3 fed into maker
         $line_arr[2] =
           'lnc_RNA'
           ; #using SO compatible long non-coding term http://www.sequenceontology.org/browser/current_svn/term/SO:0001877
         my $chr = $line_arr[0];
-        $chr =~ s/^SL4\.0ch//;
+        # $chr =~ s/^SL4\.0ch//; #tomato
+        $chr =~ s/^DC3\.0sc//; # Dcitr
         my $gene_count   = sprintf( "%06d", $gene_counter );
         my $gene_version = 1;
         my $gene_id      = $species . $chr . $prefix . $gene_count;
@@ -140,10 +145,13 @@ foreach my $line (@lines) {
     }
     elsif ( $line =~ /\texon\t/ ) {
         my @line_arr = split( "\t", $line );
+        # $line_arr[1] =
+        #   'mikado_ITAG';    #using source to reflect ITAG/eugene fed into maker for tomato
         $line_arr[1] =
-          'mikado_ITAG';    #using source to reflect ITAG/eugene fed into maker
+          'mikado_OGSv3';    #using source to reflect ITAG/eugene fed into maker for OGSv3
         my $chr = $line_arr[0];
-        $chr =~ s/^SL4\.0ch//;
+        # $chr =~ s/^SL4\.0ch//; #tomato
+        $chr =~ s/^DC3\.0sc//; # Dcitr
         my $gene_count   = sprintf( "%06d", $gene_counter );
         my $gene_version = 1;
         my $gene_id      = $species . $chr . $prefix . $gene_count;
